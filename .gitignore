@@ -1,0 +1,78 @@
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+
+venv/
+env/
+.venv/
+ENV/
+
+# If your venv is one level above (like in sipzy_project/)
+../venv/
+
+# ---- Django Files ----
+# Local database (contains test data, should not be shared)
+db.sqlite3
+
+# Collected static files (auto-generated)
+staticfiles/
+
+# User uploaded media files (not source code)
+media/
+
+# ---- Environment Variables ----
+# Contains sensitive data (SECRET_KEY, DB passwords, etc.)
+.env
+
+# ---- IDE & Editor Files ----
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ---- OS-specific Junk ----
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ---- Logs ----
+*.log
+logs/
+*.pid
+
+# ---- Testing & Coverage ----
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+.cache
+nosetests.xml
+coverage/
+
+# ---- Migrations (optional ignore for local dev, not recommended for team) ----
+# Uncomment this if you want to ignore migration files during rapid dev
+# */migrations/*
+# !*/migrations/__init__.py
+
+# ---- PyInstaller ----
+# Files created by PyInstaller
+*.manifest
+*.spec
+
+# ---- Jupyter Notebooks ----
+.ipynb_checkpoints
+
+# ---- Backup Files ----
+*.bak
+*.old
+*.tmp
+
+
