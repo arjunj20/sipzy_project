@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Sipzy{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #F8F9FA;
+    }
+  </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+
+  <!-- 🔹 HEADER -->
+<header class="w-full px-6 md:px-12 py-4 flex justify-between items-center bg-gradient-to-r from-[#B7472A] to-[#8D3A28] text-white shadow-2xl sticky top-0 z-50 backdrop-blur-sm">
+    <!-- Logo -->
+    <div class="flex items-center gap-3 cursor-pointer hover-shine">
+        <img src="/static/images/logo-removebg-preview 1.png" alt="Sipzy Logo" class="h-14 md:h-16 float-animation" />
+    </div>
+
+    <!-- Nav -->
+    <nav class="hidden md:flex gap-8 text-sm font-medium">
+        <a href="#" class="hover:text-yellow-300 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-yellow-300 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">Home</a>
+        <a href="#" class="hover:text-yellow-300 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-yellow-300 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">Shop</a>
+        <a href="#" class="hover:text-yellow-300 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-yellow-300 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">Contact Us</a>
+        <a href="#" class="hover:text-yellow-300 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-yellow-300 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">About Us</a>
+    </nav>
+
+    <!-- Icons -->
+    <div class="flex gap-5 items-center">
+        <a href="{% url 'user_login' %}" class="hover:scale-110 transition-transform duration-300">
+            <img src="/static/images/Cart.png" alt="Cart" class="h-6 w-6" />
+        </a>
+        
+        <div class="w-px h-6 bg-white/30"></div>
+        
+        <a href="{% url 'user_login' %}" class="hover:scale-110 transition-transform duration-300">
+            <img src="/static/images/Person.png" alt="Account" class="h-6 w-6" />
+        </a>
+        
+        <a href="{% url 'user_login' %}" class="hover:scale-110 transition-transform duration-300">
+            <img src="/static/images/Line 1.png" alt="Wishlist" class="h-6 w-6" />
+        </a>
+        
+        <!-- <a href="{% url 'user_login' %}" class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-xs font-semibold hover:bg-white/30 transition-all duration-300">
+            Log In
+        </a> -->
+    </div>
+</header>
+  <!-- 🔸 CONTENT BLOCK -->
+  <main class="flex-grow">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <!-- 🔹 FOOTER -->
+<footer class="bg-[#B7472A] text-white py-12 px-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-sm max-w-6xl mx-auto">
+        <!-- Column 1 -->
+        <div>
+            <h3 class="font-bold mb-4 text-lg">SHOP</h3>
+            <ul class="space-y-2">
+                <li><a href="#" class="hover:text-yellow-300 transition-colors">Indoor Plants</a></li>
+                <li><a href="#" class="hover:text-yellow-300 transition-colors">Outdoor Plants</a></li>
+            </ul>
+        </div>
+
+        <!-- Column 2 -->
+        <div>
+            <h3 class="font-bold mb-4 text-lg">SUPPORT</h3>
+            <ul class="space-y-2">
+                <li><a href="#" class="hover:text-yellow-300 transition-colors">Order Status</a></li>
+                <li><a href="#" class="hover:text-yellow-300 transition-colors">Product Support</a></li>
+                <li><a href="#" class="hover:text-yellow-300 transition-colors">Shipping & Return Policy</a></li>
+                <li><a href="#" class="hover:text-yellow-300 transition-colors">Complaint Registration</a></li>
+            </ul>
+        </div>
+
+        <!-- Column 3 -->
+        <div>
+            <h3 class="font-bold mb-4 text-lg">ABOUT US</h3>
+            <ul class="space-y-2">
+                <li><a href="#" class="hover:text-yellow-300 transition-colors">Contact Us</a></li>
+                <li><a href="#" class="hover:text-yellow-300 transition-colors">Privacy Policy</a></li>
+                <li><a href="#" class="hover:text-yellow-300 transition-colors">Terms of use</a></li>
+                <li><a href="#" class="hover:text-yellow-300 transition-colors">FAQ</a></li>
+            </ul>
+        </div>
+
+        <!-- Column 4 -->
+        <div>
+            <h3 class="font-bold mb-4 text-lg">CONTACT</h3>
+            <div class="space-y-2">
+                <p>Email: <a href="mailto:sipzy@gmail.com" class="underline hover:text-yellow-300">sipzy@gmail.com</a></p>
+                <p>Phone: +91 8888888888</p>
+            </div>
+            
+            <h3 class="font-bold mt-6 mb-3 text-lg">CONNECT WITH US</h3>
+            <div class="flex space-x-4">
+                <a href="#" class="hover:scale-110 transition-transform">
+                    <img src="{% static 'images/Vector.png' %}" alt="Instagram" class="h-6 w-6">
+                </a>
+                <a href="#" class="hover:scale-110 transition-transform">
+                    <img src="{% static 'images/Vector (1).png' %}" alt="Facebook" class="h-6 w-6">
+                </a>
+                <a href="#" class="hover:scale-110 transition-transform">
+                    <img src="{% static 'images/Vector (2).png' %}" alt="X" class="h-6 w-6">
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logo + Copyright -->
+    <div class="flex flex-col justify-center items-center mt-12 pt-8 border-t border-white/20">
+        <img src="{% static 'images/logo-removebg-preview 1.png' %}" alt="Sipzy Footer Logo" class="h-12 w-auto mb-4">
+        <p class="text-sm">© 2024 Sipzy. All Rights Reserved.</p>
+    </div>
+</footer> 
+</body>
+</html>
