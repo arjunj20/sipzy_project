@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}OTP Verification - Sipzy{% endblock %}
+
+{% block content %}
+<section class="flex flex-col md:flex-row justify-center items-center py-12 px-6 bg-[#F8F9FA]">
+  <div class="bg-white rounded-2xl shadow-md flex flex-col md:flex-row w-full max-w-4xl overflow-hidden">
+
+    <!-- Left illustration -->
+    <div class="bg-[#F8F9FA] flex justify-center items-center p-8 md:w-1/2">
+      <img src="{% static 'images/illu 1.png' %}" alt="Bottle Illustration" class="w-64 md:w-72 h-auto">
+    </div>
+
+    <!-- Right OTP Section -->
+    <div class="md:w-1/2 bg-[#F8F9FA] flex flex-col justify-center items-center p-10">
+      <h2 class="text-3xl font-semibold text-[#000] mb-6">Otp Verification</h2>
+
+      <p class="text-green-700 mb-4">Enter your OTP sent to your email</p>
+
+      <!-- OTP Input Fields -->
+      <form method="POST" class="flex flex-col items-center space-y-6">
+        {% csrf_token %}
+        <div class="flex space-x-4">
+          <input type="text" maxlength="1" name="otp1" class="w-12 h-12 text-center text-xl border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B7472A]" >
+          <input type="text" maxlength="1" name="otp2" class="w-12 h-12 text-center text-xl border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B7472A]" >
+          <input type="text" maxlength="1" name="otp3" class="w-12 h-12 text-center text-xl border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B7472A]" >
+          <input type="text" maxlength="1" name="otp4" class="w-12 h-12 text-center text-xl border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B7472A]" >
+          <input type="text" maxlength="1" name="otp5" class="w-12 h-12 text-center text-xl border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B7472A]" >
+          <input type="text" maxlength="1" name="otp6" class="w-12 h-12 text-center text-xl border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#B7472A]" >
+        </div>
+
+        <!-- Resend timer -->
+       <p id="timer" class="text-red-600 font-medium text-sm">OTP expires in: 05:00</p>
+       
+
+        <!-- Buttons -->
+        <div class="flex space-x-4 mt-4">
+          <button type="submit" class="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition">Submit</button>
+          <a href="{% url 'user_signup' %}" class="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 transition">Cancel</a>
+        </div>
+      </form>
+
+      <form method="POST" action="{% url 'resend_otp' %}">
+    {% csrf_token %}
+     <button id="resendBtn" type="submit" class="text-[#B7472A] hover:underline hidden">
+      Resend OTP
+  </button>
+   {% if error %}
+    {% for key, msg in error.items %}
+        <p class="text-red-600 text-sm mt-1">{{ msg }}</p>
+    {% endfor %}
+{% endif %} 
+</form>
+
+    </div>
+  </div>
+</section>
+<script>
+let timeLeft = {{ remaining_time }};
+const timerDisplay = document.getElementById("timer");
+const resendBtn = document.getElementById("resendBtn");
+
+if (timeLeft <= 0) {
+    timerDisplay.textContent = "OTP expired — please resend.";
+    resendBtn.classList.remove("hidden");
+} else {
+    resendBtn.classList.add("hidden");
+}
+
+const countdown = setInterval(() => {
+  if (timeLeft <= 0) {
+    clearInterval(countdown);
+    timerDisplay.textContent = "OTP expired — please resend.";
+    resendBtn.classList.remove("hidden");
+    return;
+  }
+
+  let minutes = Math.floor(timeLeft / 60);
+  let seconds = timeLeft % 60;
+
+  timerDisplay.textContent = `OTP expires in: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  timeLeft--;
+
+}, 1000);
+
+
+</script>
+
+{% endblock %}
