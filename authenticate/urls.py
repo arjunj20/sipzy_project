@@ -11,6 +11,10 @@ urlpatterns = [
     path('landing-page/', views.landing_page, name="landing_page"),
     path('home-page/', views.user_homepage, name="user_homepage"),
     path('user-logout/', views.user_logout, name="user_logout"),
+    path('forgot-password/', views.forgot_password, name="forgot_password"),
+    path('forgot-password-otp/', views.forgot_password_otp, name="forgot_password_otp"),
+    path('reset-password/', views.reset_password, name="reset_password"),
+    path("resend-forgot-otp/", views.resend_forgot_otp, name="resend_forgot_otp"),
 
     
 ]

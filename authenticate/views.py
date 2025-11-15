@@ -15,6 +15,7 @@ from django.contrib.auth.hashers import make_password
 
 
 
+
 @never_cache
 def user_signup(request):
 
@@ -214,6 +215,137 @@ def user_logout(request):
         user.save()
         logout(request)
     return redirect("user_homepage")
+
+@never_cache
+def forgot_password(request):
+
+    errors = {}
+
+    if request.method == "POST":
+        email = request.POST.get("email")
+
+        if not email:
+            errors["email"] = "email is required"
+        elif not CustomUser.objects.filter(email=email).exists():
+            errors["email"] = "Email is not registered"
+        if errors:
+            return render(request, "forgot_password.html", {"errors": errors})
+        
+        otp = str(random.randint(100000, 999999))
+
+        request.session["forgot_email"] = email
+        request.session["forgot_otp"] = otp
+        request.session["forgot_otp_time"] = timezone.now().isoformat()
+
+        send_mail(
+            subject="Sipzy - Password Reset OTP",
+            message=f"Hello,\n\nYour OTP for resetting your Sipzy password is {otp}. "
+                    f"It will expire in 5 minutes.\n\nThank you!",
+            from_email="sipzy505@gmail.com",
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        return redirect("forgot_password_otp")
+
+    return render(request, "forgot_password.html")
+
+
+@never_cache
+def forgot_password_otp(request):
+    error = ""
+
+    email = request.session.get("forgot_email")
+    session_otp = request.session.get("forgot_otp")
+    otp_time = request.session.get("forgot_otp_time")
+
+    if not email or not session_otp:
+        return redirect("forgot_password")
+
+    if request.method == "POST":
+        otp = (
+            request.POST.get("otp1")
+            + request.POST.get("otp2")
+            + request.POST.get("otp3")
+            + request.POST.get("otp4")
+            + request.POST.get("otp5")
+            + request.POST.get("otp6")
+        )
+
+        otp_datetime = parse_datetime(otp_time)
+        now = timezone.now()
+        diff = (now - otp_datetime).total_seconds()
+
+        if diff > 300: 
+            error = "OTP expired. Request a new one."
+        elif otp != session_otp:
+            error = "Incorrect OTP"
+        else:
+            request.session["forgot_verified"] = True
+            return redirect("reset_password")
+    return render(request, "forgot_password_otp.html", {"error": error})
+
+
+@never_cache
+def reset_password(request):
+    email = request.session.get("forgot_email")
+    verified = request.session.get("forgot_verified")
+
+    if not email or not verified:
+        return redirect("forgot_password")
+
+    errors = {}
+
+    if request.method == "POST":
+        password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if not password:
+            errors["password"] = "Password is required"
+
+        elif len(password) < 6:
+            errors["password"] = "Password must be at least 6 characters long"
+
+
+        if password != confirm_password:
+            errors["confirm_password"] = "Passwords do not match"
+
+        if not errors:
+            user = CustomUser.objects.get(email=email)
+            user.password = make_password(password)
+            user.save()
+
+            request.session.pop("forgot_email", None)
+            request.session.pop("forgot_otp", None)
+            request.session.pop("forgot_otp_time", None)
+            request.session.pop("forgot_verified", None)
+
+            return redirect("user_login")
+    return render(request, "reset_password.html", {"errors": errors})
+
+@never_cache
+def resend_forgot_otp(request):
+    email = request.session.get("forgot_email")
+
+    if not email:
+        return redirect("forgot_password")
+
+    otp = str(random.randint(100000, 999999))
+
+    request.session["forgot_otp"] = otp
+    request.session["forgot_otp_time"] = timezone.now().isoformat()
+
+    send_mail(
+        subject="Sipzy - Password Reset OTP (Resent)",
+        message=f"Hello,\n\nYour new OTP for resetting your Sipzy password is {otp}. "
+                f"It will expire in 5 minutes.\n\nThank you!",
+        from_email="sipzy505@gmail.com",
+        recipient_list=[email],
+        fail_silently=False,
+    )
+
+    return redirect("forgot_password_otp")
+
+
 
 
 
