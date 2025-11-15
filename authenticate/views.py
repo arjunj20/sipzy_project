@@ -1,20 +1,28 @@
 from django.shortcuts import render, redirect
 from .models import CustomUser
 
+from django.views.decorators.cache import never_cache
 import random
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 import datetime
 from django.contrib.auth import authenticate, login, logout
+from allauth.socialaccount.models import SocialAccount
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password
 
 
 
 
-
+@never_cache
 def user_signup(request):
 
+    if request.user.is_authenticated and not request.user.is_superuser:
+        return redirect("user_homepage")
+    
     errors={}
+
     if request.method == 'POST':
         fullname = request.POST.get("fullname")
         email = request.POST.get("email")
@@ -45,11 +53,11 @@ def user_signup(request):
         
 
         otp = random.randint(100000, 999999)
-
+        
         request.session["signup_data"] = {
             'fullname': fullname,
             'email': email,
-            'password': password,
+            "password": make_password(password),
             'otp': otp,
             "otp_time": timezone.now().isoformat()
 
@@ -67,9 +75,10 @@ def user_signup(request):
 
     return render(request, "user_signup.html")
 
-
+@never_cache
 def user_signupotp(request):
-
+    if request.user.is_authenticated and not request.user.is_superuser:
+        return redirect("user_homepage")
     error = {}
     signup_data = request.session.get("signup_data")
     if not signup_data:
@@ -113,8 +122,9 @@ def user_signupotp(request):
 
     return render(request, "user_signupotp.html", {"remaining_time": remaining_time})
 
-
+@never_cache
 def resend_otp(request):
+
     signup_data = request.session.get("signup_data")
 
     if not signup_data:
@@ -138,16 +148,34 @@ def resend_otp(request):
     )
     return redirect("user_signupotp")
 
-
+@never_cache
 def user_homepage(request):
-    return render(request, "user_home.html")
 
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("landing_page")
+    user = request.user
+    fullname = user.fullname
 
+    if not fullname:
+        google_account = SocialAccount.objects.filter(user=user, provider="google").first()
+        if google_account:
+            fullname = google_account.extra_data.get("name") 
+
+    return render(request, "user_home.html", {"fullname": fullname})
+
+@never_cache
 def landing_page(request):
+    if request.user.is_authenticated and not request.user.is_superuser:
+        return redirect("user_homepage")
+  
     return render(request, "landing.html")
 
+@never_cache
 def user_login(request):
+    
 
+    if request.user.is_authenticated and not request.user.is_superuser:
+        return redirect("user_homepage")
     errors = {}
 
     if request.method == 'POST':
@@ -178,13 +206,15 @@ def user_login(request):
 
     return render(request, "user_login.html")
 
-
+@never_cache
 def user_logout(request):
     user = request.user
     if request.user.is_authenticated and not request.user.is_superuser:
         user.is_loggedin = False
         user.save()
         logout(request)
-    return redirect("user_login")
+    return redirect("user_homepage")
+
+
 
 
