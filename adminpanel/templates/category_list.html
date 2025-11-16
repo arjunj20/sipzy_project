@@ -1,0 +1,556 @@
+{% extends "admin_base.html" %}
+{% load static %}
+
+{% block title %}Category Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-out;
+    }
+    
+    .animate-slide-in {
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    .modal-overlay {
+        backdrop-filter: blur(5px);
+    }
+    
+    .status-active {
+        background-color: #10B981;
+        color: white;
+    }
+    
+    .status-inactive {
+        background-color: #EF4444;
+        color: white;
+    }
+    
+    .table-row:hover {
+        background-color: #F9FAFB;
+        transform: translateY(-1px);
+        transition: all 0.2s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Main Content -->
+<div class="flex-1 p-6 md:p-8 overflow-y-auto">
+    <!-- Header Section -->
+    <div class="mb-8 animate-fade-in">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Category Management</h1>
+                <p class="text-gray-600 mt-2">Manage product categories and their properties</p>
+            </div>
+            <button 
+                onclick="openCreateModal()"
+                class="mt-4 md:mt-0 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center"
+            >
+                <i class="fas fa-plus-circle mr-2"></i>
+                Create New Category
+            </button>
+        </div>
+    </div>
+
+     <!-- search Table -->
+    <form method="GET" class="flex gap-2 mb-4">
+    <input 
+        type="text"
+        name="search"
+        value="{{ search_query }}"
+        placeholder="Search categories..."
+        class="px-4 py-2 border rounded-lg">
+
+    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">
+        Search
+    </button>
+
+    <a href="{% url 'category_list' %}" 
+       class="px-4 py-2 bg-gray-300 rounded-lg">
+       Clear
+    </a>
+</form>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-md p-6 animate-fade-in" style="animation-delay: 0.1s;">
+            <div class="flex items-center">
+                <div class="p-3 rounded-lg bg-blue-100 text-blue-600 mr-4">
+                    <i class="fas fa-tags text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Total Categories</p>
+                    <h3 class="text-2xl font-bold text-gray-800">{{ total_categories|default:"15" }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 animate-fade-in" style="animation-delay: 0.2s;">
+            <div class="flex items-center">
+                <div class="p-3 rounded-lg bg-green-100 text-green-600 mr-4">
+                    <i class="fas fa-check-circle text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Active Categories</p>
+                    <h3 class="text-2xl font-bold text-gray-800">{{ active_categories|default:"12" }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 animate-fade-in" style="animation-delay: 0.3s;">
+            <div class="flex items-center">
+                <div class="p-3 rounded-lg bg-red-100 text-red-600 mr-4">
+                    <i class="fas fa-times-circle text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Inactive Categories</p>
+                    <h3 class="text-2xl font-bold text-gray-800">{{ inactive_categories|default:"3" }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Categories Table -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden animate-fade-in" style="animation-delay: 0.4s;">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">All Categories</h2>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 text-sm font-medium">
+                        <th class="py-4 px-6 text-left">ID</th>
+                        <th class="py-4 px-6 text-left">Category Name</th>
+                        <th class="py-4 px-6 text-left">Description</th>
+                        <th class="py-4 px-6 text-left">Status</th>
+                        <th class="py-4 px-6 text-left">Created Date</th>
+                        <th class="py-4 px-6 text-center">Actions</th>
+                    </tr>
+                </thead>
+              <tbody class="divide-y divide-gray-200">
+    {% for cat in categories %}
+    <tr class="table-row hover:bg-gray-50 transition-all duration-200">
+        <td class="py-4 px-6 text-gray-700">{{ cat.id }}</td>
+
+        <td class="py-4 px-6">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-box text-blue-600"></i>
+                </div>
+                <span class="font-medium text-gray-800">{{ cat.name }}</span>
+            </div>
+        </td>
+
+        <td class="py-4 px-6 text-gray-600">{{ cat.description }}</td>
+
+        <td class="py-4 px-6">
+            {% if cat.is_active %}
+            <span class="status-active px-3 py-1 rounded-full text-xs font-medium">Active</span>
+            {% else %}
+            <span class="status-inactive px-3 py-1 rounded-full text-xs font-medium">Inactive</span>
+            {% endif %}
+        </td>
+
+        <td class="py-4 px-6 text-gray-500">{{ cat.created_at|date:"Y-m-d" }}</td>
+
+        <td class="py-4 px-6">
+            <div class="flex justify-center space-x-2">
+                <button 
+                    onclick="openEditModal('{{ cat.id }}','{{ cat.name }}','{{ cat.description }}','{{ cat.is_active }}')"
+                    class="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-edit"></i>
+                </button>
+
+                <a href="{% url 'category_delete' cat.id %}"
+                   class="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-trash"></i>
+                </a>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+       <div class="px-6 py-4 flex justify-between">
+    <div class="text-sm text-gray-600">
+        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+    </div>
+
+    <div class="flex space-x-2">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+           class="px-3 py-1 bg-gray-200 rounded-lg">Previous</a>
+        {% endif %}
+
+        <span class="px-3 py-1 bg-blue-600 text-white rounded-lg">
+            {{ page_obj.number }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+           class="px-3 py-1 bg-gray-200 rounded-lg">Next</a>
+        {% endif %}
+    </div>
+</div>
+
+    </div>
+</div>
+
+<!-- Create Category Modal -->
+<div id="createModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-in">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-gray-800">Create New Category</h3>
+                <button onclick="closeCreateModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Form -->
+          <form id="createForm" method="POST" action="{% url 'category_add' %}" class="p-6 space-y-4">
+    {% csrf_token %}
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Category Name *</label>
+        <input type="text" name="name" required class="w-full px-4 py-3 border rounded-lg">
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+        <textarea name="description" rows="3" class="w-full px-4 py-3 border rounded-lg"></textarea>
+    </div>
+
+    <div class="flex items-center">
+        <input type="checkbox" name="active" checked>
+        <label class="ml-2 text-sm text-gray-700">Active Category</label>
+    </div>
+
+    <div class="px-6 py-4 border-t flex justify-end space-x-3">
+        <button type="button" onclick="closeCreateModal()" class="px-6 py-2 border rounded-lg">
+            Cancel
+        </button>
+
+        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg">
+            Create Category
+        </button>
+    </div>
+</form>
+
+            
+            <!-- Modal Footer -->
+            <!-- <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                <button 
+                    onclick="closeCreateModal()"
+                    class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                >
+                    Cancel
+                </button>
+                <button 
+                type="submit"
+                    onclick="submitCreateForm()"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center"
+                >
+                    <i class="fas fa-plus-circle mr-2"></i>
+                    Create Category
+                </button>
+            </div> -->
+        </div>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div id="editModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-in">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-gray-800">Edit Category</h3>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Form -->
+           <form id="editForm" method="POST" action="" class="p-6 space-y-4" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" id="editCategoryId" name="id">
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Category Name *</label>
+        <input 
+            type="text" 
+            id="editCategoryName" 
+            name="name"
+            required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg"
+        >
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+        <textarea 
+            id="editCategoryDescription" 
+            name="description"
+            rows="3"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg"
+        ></textarea>
+    </div>
+
+    <div class="flex items-center">
+        <input 
+            type="checkbox" 
+            id="editCategoryActive" 
+            name="active"
+            class="w-4 h-4 text-blue-600 border-gray-300 rounded"
+        >
+        <label class="ml-2 text-sm text-gray-700">Active Category</label>
+    </div>
+
+    <div class="px-6 py-4 border-t flex justify-end space-x-3">
+        <button 
+            type="button"
+            onclick="closeEditModal()"
+            class="px-6 py-2 border border-gray-300 rounded-lg"
+        >
+            Cancel
+        </button>
+
+        <button 
+            type="submit"
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg"
+        >
+            Update Category
+        </button>
+    </div>
+</form>
+
+            
+            <!-- Modal Footer -->
+            <!-- <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                <button 
+                    onclick="closeEditModal()"
+                    class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                >
+                    Cancel
+                </button>
+                <button 
+                    onclick="submitEditForm()"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center"
+                >
+                    <i class="fas fa-save mr-2"></i>
+                    Update Category
+                </button>
+            </div> -->
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-in">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Delete Category</h3>
+                <p class="text-gray-600 mb-6">
+                    Are you sure you want to delete "<span id="deleteCategoryName" class="font-medium"></span>"? 
+                    This action cannot be undone.
+                </p>
+                <div class="flex justify-center space-x-3">
+                    <button 
+                        onclick="closeDeleteModal()"
+                        class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onclick="confirmDeleteAction()"
+                        class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center"
+                    >
+                        <i class="fas fa-trash mr-2"></i>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Modal Management
+    function openCreateModal() {
+        document.getElementById('createModal').classList.remove('hidden');
+        document.getElementById('categoryName').focus();
+    }
+    
+    function closeCreateModal() {
+        document.getElementById('createModal').classList.add('hidden');
+        document.getElementById('createForm').reset();
+    }
+    
+    function openEditModal(id, name, description, isActive) {
+    document.getElementById('editCategoryId').value = id;
+    document.getElementById('editCategoryName').value = name;
+    document.getElementById('editCategoryDescription').value = description;
+    document.getElementById('editCategoryActive').checked = (isActive === "True");
+
+    document.getElementById('editForm').action = `/admin-panel/category-edit/${id}/`;
+
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+    
+    function closeEditModal() {
+        document.getElementById('editModal').classList.add('hidden');
+    }
+    
+    let categoryToDelete = null;
+    
+    function confirmDelete(id, name) {
+        categoryToDelete = id;
+        document.getElementById('deleteCategoryName').textContent = name;
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+        categoryToDelete = null;
+    }
+    
+    // Form Submissions
+    function submitCreateForm() {
+        const form = document.getElementById('createForm');
+        const formData = new FormData(form);
+        
+        // Add loading state
+        const submitBtn = document.querySelector('#createModal button[onclick="submitCreateForm()"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating...';
+        submitBtn.disabled = true;
+        
+        // Simulate API call
+        setTimeout(() => {
+            // In real implementation, submit to Django backend
+            console.log('Creating category:', Object.fromEntries(formData));
+            
+            // Show success message
+            showNotification('Category created successfully!', 'success');
+            
+            // Reset and close
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            closeCreateModal();
+            
+            // In real app, you would refresh the table data here
+        }, 1500);
+    }
+    
+    function submitEditForm() {
+        const form = document.getElementById('editForm');
+        const formData = new FormData(form);
+        
+        // Add loading state
+        const submitBtn = document.querySelector('#editModal button[onclick="submitEditForm()"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+        submitBtn.disabled = true;
+        
+        // Simulate API call
+        setTimeout(() => {
+            // In real implementation, submit to Django backend
+            console.log('Updating category:', Object.fromEntries(formData));
+            
+            // Show success message
+            showNotification('Category updated successfully!', 'success');
+            
+            // Reset and close
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            closeEditModal();
+            
+            // In real app, you would refresh the table data here
+        }, 1500);
+    }
+    
+    function confirmDeleteAction() {
+        // Add loading state
+        const deleteBtn = document.querySelector('#deleteModal button[onclick="confirmDeleteAction()"]');
+        const originalText = deleteBtn.innerHTML;
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Deleting...';
+        deleteBtn.disabled = true;
+        
+        // Simulate API call
+        setTimeout(() => {
+            // In real implementation, call delete endpoint
+            console.log('Deleting category:', categoryToDelete);
+            
+            // Show success message
+            showNotification('Category deleted successfully!', 'success');
+            
+            // Reset and close
+            deleteBtn.innerHTML = originalText;
+            deleteBtn.disabled = false;
+            closeDeleteModal();
+            
+            // In real app, you would refresh the table data here
+        }, 1500);
+    }
+    
+    // Notification function
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white animate-fade-in ${
+            type === 'success' ? 'bg-green-500' : 
+            type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+        }`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation' : 'info'}-circle mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+    
+    // Close modals on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeCreateModal();
+            closeEditModal();
+            closeDeleteModal();
+        }
+    });
+</script>
+{% endblock %}

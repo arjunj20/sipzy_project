@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'authenticate',
     'adminpanel',
+    'products',
 
 
     # allauth requirements
