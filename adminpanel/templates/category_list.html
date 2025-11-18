@@ -171,11 +171,16 @@
 
         <td class="py-4 px-6">
             <div class="flex justify-center space-x-2">
-                <button 
-                    onclick="openEditModal('{{ cat.id }}','{{ cat.name }}','{{ cat.description }}','{{ cat.is_active }}')"
-                    class="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors duration-200">
-                    <i class="fas fa-edit"></i>
-                </button>
+               <button  
+    class="edit-btn p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition-colors duration-200"
+    data-id="{{ cat.id }}"
+    data-name="{{ cat.name }}"
+    data-description="{{ cat.description }}"
+    data-active="{{ cat.is_active }}"
+>
+    <i class="fas fa-edit"></i>
+</button>
+
 
                 <a href="{% url 'category_delete' cat.id %}"
                    class="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition-colors duration-200">
@@ -441,6 +446,17 @@
         document.getElementById('deleteModal').classList.add('hidden');
         categoryToDelete = null;
     }
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        openEditModal(
+            this.dataset.id,
+            this.dataset.name,
+            this.dataset.description,
+            this.dataset.active
+        );
+    });
+});
+
     
     // Form Submissions
     function submitCreateForm() {
