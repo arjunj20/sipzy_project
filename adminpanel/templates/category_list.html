@@ -93,7 +93,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Total Categories</p>
-                    <h3 class="text-2xl font-bold text-gray-800">{{ total_categories|default:"15" }}</h3>
+                    <h3 class="text-2xl font-bold text-gray-800">{{ total_categories.total}}</h3>
                 </div>
             </div>
         </div>
@@ -105,7 +105,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Active Categories</p>
-                    <h3 class="text-2xl font-bold text-gray-800">{{ active_categories|default:"12" }}</h3>
+                    <h3 class="text-2xl font-bold text-gray-800">{{ count }}</h3>
                 </div>
             </div>
         </div>
@@ -117,7 +117,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Inactive Categories</p>
-                    <h3 class="text-2xl font-bold text-gray-800">{{ inactive_categories|default:"3" }}</h3>
+                    <h3 class="text-2xl font-bold text-gray-800">{{ inactive_count}}</h3>
                 </div>
             </div>
         </div>

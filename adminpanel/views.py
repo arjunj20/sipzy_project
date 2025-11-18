@@ -3,9 +3,8 @@ from products.models import Category
 
 from django.views.decorators.cache import never_cache
 from django.contrib.auth import authenticate, login, logout
-from django.db.models import Q
+from django.db.models import Q,Count
 from django.core.paginator import Paginator
-
 
 
 @never_cache
@@ -15,6 +14,7 @@ def admin_dashboard(request):
         return redirect('admin_login')
     
     return render(request, "admin_dashboard.html")
+
 
 @never_cache
 def admin_login(request):
@@ -55,12 +55,21 @@ def category_list(request):
     search_query = request.GET.get("search", "")
 
     categories = Category.objects.all().order_by("-created_at")
+    total_categories = Category.objects.aggregate(total=Count('id'))
+    active_categories = Category.objects.filter(is_active=True)
+    count = 0
+    for i in active_categories:
+        if i.is_active == True:
+            count += 1
 
     if search_query:
         categories = categories.filter(
             Q(name__icontains=search_query)|
             Q(description__icontains=search_query)
         )   
+
+    inactive_categories = Category.objects.filter(is_active=False)
+    inactive_count = inactive_categories.count()
 
     paginator = Paginator(categories, 5)
     page_number = request.GET.get("page")
@@ -69,7 +78,10 @@ def category_list(request):
     context = {
         "categories": page_obj,
         "search_query": search_query,
-        "page_obj": page_obj
+        "page_obj": page_obj,
+        "total_categories": total_categories,
+        "count": count,
+        'inactive_count': inactive_count
         }
 
     return render(request, "category_list.html", context)
