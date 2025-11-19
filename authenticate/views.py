@@ -58,7 +58,7 @@ def user_signup(request):
         request.session["signup_data"] = {
             'fullname': fullname,
             'email': email,
-            "password": make_password(password),
+            "password": password,
             'otp': otp,
             "otp_time": timezone.now().isoformat()
 
@@ -223,11 +223,16 @@ def forgot_password(request):
 
     if request.method == "POST":
         email = request.POST.get("email")
-
+        user = CustomUser.objects.filter(email=email)
         if not email:
             errors["email"] = "email is required"
         elif not CustomUser.objects.filter(email=email).exists():
             errors["email"] = "Email is not registered"
+        # elif user.is_superuser == True:
+        #     errors["email"] = "email is not applicable"
+        for i in user:
+            if i.is_superuser:
+                errors["email"] = "email is not applicable"
         if errors:
             return render(request, "forgot_password.html", {"errors": errors})
         

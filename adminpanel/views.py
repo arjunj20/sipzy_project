@@ -93,12 +93,37 @@ def category_add(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
     
+    errors = {}
     if request.method == "POST":
         name = request.POST.get("name")
         description = request.POST.get("description")
         active = request.POST.get("active") == "on"
 
-        Category.objects.create( name=name, description=description, is_active=active, 
+        if name and Category.objects.filter(name__iexact=name).exists():
+            errors["name"] = "This category is exists.."
+        elif not name:
+            errors["name"] = "Name must be filled..."
+
+        if not description:
+            errors["description"] = "description must be filled.."
+        else:
+            word_count = len(description.split())
+            if word_count < 3:
+                errors["description"] = "description must have atleast 3 words"
+
+       
+
+        if errors:
+            categories = Category.objects.all().order_by("-id")
+            return render(request, "category_list.html", {
+                "errors": errors,
+                "name": name,
+                "description": description,
+                "active": active,
+                "open_create_modal": True,
+                "categories": categories,
+            })
+        Category.objects.create( name=name, description=description, is_active=active
         )
         return redirect("category_list")
 
@@ -122,17 +147,50 @@ def category_edit(request, id):
 
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
+
     category = get_object_or_404(Category, id=id)
 
+    errors = {}
+
     if request.method == "POST":
-        category.name = request.POST.get("name")
-        category.description = request.POST.get("description")
-        category.is_active = request.POST.get("active") == "on"
+        name = request.POST.get("name", "").strip()
+        description = request.POST.get("description", "").strip()
+        active = request.POST.get("active") == "on"
+
+        if not name:
+            errors["name"] = "Name is required"
+        elif Category.objects.filter(name__iexact=name).exclude(id=id).exists():
+            errors["name"] = "Name already taken"
+
+        if not description:
+            errors["description"] = "Description is required"
+        elif len(description.split()) < 3:
+            errors["description"] = "Description must contain at least 3 words"
+
+        if errors:
+            categories = Category.objects.all().order_by("-id")
+
+            return render(request, "category_list.html", {
+                "errors_edit": errors,      
+                "open_edit_modal": True,   
+                "edit_data": {
+                    "id": id,
+                    "name": name,
+                    "description": description,
+                    "active": active,
+                },
+                "categories": categories,
+            })
+        category.name = name
+        category.description = description
+        category.is_active = active
         category.save()
 
-        return redirect("category_list")
+        return redirect("category_list")    
 
     return redirect("category_list")
+
+
 
 
 @never_cache
