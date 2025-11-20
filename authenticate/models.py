@@ -40,6 +40,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_loggedin = models.BooleanField(default=False)
+    joined_date = models.DateField(auto_now=True)
 
     objects = UserManager()
 

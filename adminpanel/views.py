@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from products.models import Category
+from authenticate.models import CustomUser
 
 from django.views.decorators.cache import never_cache
 from django.contrib.auth import authenticate, login, logout
@@ -203,4 +204,62 @@ def admin_logout(request):
     return redirect("admin_login")
 
 
+@never_cache
+def user_list(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("admin_login")
 
+    users = CustomUser.objects.filter(is_superuser=False).order_by("-joined_date")
+
+    search_query = request.GET.get("search", "")   
+
+    inactive_count = 0
+    active_count = 0
+    all_count = 0
+    for i in users:
+        if i.is_active == False:
+            inactive_count += 1
+        else:
+            active_count += 1
+        all_count += 1
+
+    if search_query:
+        users = users.filter(Q(fullname__icontains=search_query)|Q(email__icontains=search_query))
+
+    paginator = Paginator(users, 5)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "users": page_obj,
+        "page_obj": page_obj,
+        "search_query": search_query,
+        "blocked_users": inactive_count,
+        "active_users": active_count,
+        "total_users": all_count,
+    }
+    return render(request, "user_list.html", context)
+
+@never_cache
+def block_user(request, id):
+    
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("admin_login")
+    user = get_object_or_404(CustomUser, id=id)
+
+    user.is_active = False
+    user.save()
+    return redirect("user_list")
+
+
+@never_cache
+def unblock_user(request, id):
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("admin_login")
+
+    user = get_object_or_404(CustomUser, id=id)
+
+    user.is_active = True
+    user.save()
+    return redirect("user_list")

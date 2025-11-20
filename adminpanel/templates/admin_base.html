@@ -41,7 +41,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center p-3 rounded-lg {% if 'user' in request.resolver_match.url_name %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
+                        <a href="{% url 'user_list' %}" class="flex items-center p-3 rounded-lg {% if 'user' in request.resolver_match.url_name %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
                             <i class="fas fa-users mr-3"></i>
                             <span>Users</span>
                         </a>

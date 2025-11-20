@@ -11,6 +11,8 @@ urlpatterns = [
     path("category-add/", views.category_add, name="category_add"),
     path("category-delete/<int:id>/", views.category_delete, name="category_delete"),
     path("category-edit/<int:id>/", views.category_edit, name="category_edit"),
-
+    path("user-block/<int:id>/", views.block_user, name="block_user"),
+    path("user-unblock/<int:id>/", views.unblock_user, name="unblock_user"),
+    path("user-list/", views.user_list, name="user_list"),
 
 ]
