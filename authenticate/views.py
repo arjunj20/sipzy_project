@@ -353,5 +353,3 @@ def resend_forgot_otp(request):
 
 
 
-
-
