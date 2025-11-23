@@ -142,19 +142,22 @@ DATABASES = {
 
 
 
-# Cloudinary Credentials (from .env)
+# Cloudinary Credentials
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': config('CLOUDINARY_API_KEY'),
     'API_SECRET': config('CLOUDINARY_API_SECRET'),
 }
 
-# Default file storage
+# IMPORTANT — required for uploader.upload()
+cloudinary.config(
+    cloud_name = config('CLOUDINARY_CLOUD_NAME'),
+    api_key = config('CLOUDINARY_API_KEY'),
+    api_secret = config('CLOUDINARY_API_SECRET')
+)
+
+# Use Cloudinary for file storage
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-# Media URL
-MEDIA_URL = '/media/'
-
 
 
 # Password validation

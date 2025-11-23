@@ -6,6 +6,10 @@ from django.views.decorators.cache import never_cache
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q,Count
 from django.core.paginator import Paginator
+import cloudinary.uploader
+from django.db import transaction
+from decimal import Decimal, InvalidOperation
+
 
 
 
@@ -274,7 +278,6 @@ def brand_list(request):
 
     search_query = request.GET.get("search", "")
 
-    # Stats
     total_brands = brands.count()
 
     if search_query:
@@ -307,7 +310,6 @@ def brand_add(request):
         description = request.POST.get("description", "").strip()
         is_active = request.POST.get("is_active") == "on"
 
-        # Validations
         if not name:
             errors["name"] = "Brand name is required"
         elif Brand.objects.filter(name__iexact=name).exists():
@@ -392,7 +394,305 @@ def brand_delete(request, id):
     brand.save()
     return redirect("brand_list")
 
+import cloudinary.uploader
+
+def _upload_to_cloudinary(image_file, folder):
+    result = cloudinary.uploader.upload(
+        image_file,
+        folder=folder,
+        overwrite=True,
+        resource_type="auto"
+    )
+    return result["secure_url"]
+
+
+@never_cache
+def product_list(request):
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+    
+    products_qs = Products.objects.select_related('brand', 'category').all().order_by('-created_at')
+    brands = Brand.objects.filter(is_active=True)
+    categories = Category.objects.filter(is_active=True)
+
+
+    paginator = Paginator(products_qs, 5)  
+    page_number = request.GET.get("page")
+    products = paginator.get_page(page_number)
+
+
+    return render(request, "product_list.html", {
+        "products": products,
+        "brands": brands,
+        "categories": categories,
+    })
 
 
 
+@never_cache
+@transaction.atomic
+def product_create(request):
 
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+    
+    products_qs = Products.objects.select_related('brand', 'category').all().order_by('-created_at')
+    brands = Brand.objects.filter(is_active=True)
+    categories = Category.objects.filter(is_active=True)
+    errors = {}
+
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        brand_id = request.POST.get("brand") or None
+        category_id = request.POST.get("category") or None
+        description = request.POST.get("description", "")
+        is_active = request.POST.get("is_active") == "on"
+
+        if not name:
+            errors["name"] = "Product name is required."
+
+        if Products.objects.filter(name__iexact=name).exists():
+            errors["name"] = "A product with this name already exists."
+
+        if len(description.split()) < 3:
+            errors["description"] = "Description must contain at least 3 words."
+
+        images = request.FILES.getlist("images[]")
+        if len(images) < 3:
+            errors["images"] = "Please upload at least 3 images."
+        paginator = Paginator(products_qs, 5)  
+        page_number = request.GET.get("page")
+        products = paginator.get_page(page_number)
+
+        if errors:
+            return render(request, "product_list.html", {
+                "products": products,
+                "brands": brands,
+                "categories": categories,
+                "errors": errors,
+                "open_modal": True  
+            })
+        product = Products.objects.create(
+            name=name,
+            brand_id=brand_id,
+            category_id=category_id,
+            description=description,
+            is_active=is_active
+        )
+
+        for img in images:
+            url = _upload_to_cloudinary(img, folder=f"products/{product.id}")
+            ProductImage.objects.create(product=product, image=url)
+
+        return redirect("product_list")
+    return redirect("product_list") 
+
+@never_cache
+@transaction.atomic
+def product_edit(request, product_id):
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+    
+    product = get_object_or_404(Products, pk=product_id)
+    brands = Brand.objects.filter(is_active=True)
+    categories = Category.objects.filter(is_active=True)
+    variants = product.variants.all().order_by('-created_at')
+
+    errors = {}
+    success = None
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # =====================================================
+        # 1) EDIT PRODUCT DETAILS
+        # =====================================================
+        if action == "edit_product":
+            name = request.POST.get("name", "").strip()
+            brand_id = request.POST.get("brand")
+            category_id = request.POST.get("category")
+            description = request.POST.get("description", "").strip()
+            is_active = request.POST.get("is_active") == "on"
+
+            # Basic validation
+            if not name:
+                errors["name"] = "Product name is required."
+            if not brand_id:
+                errors["brand"] = "Brand is required."
+            if not category_id:
+                errors["category"] = "Category is required."
+            if len(description.split()) < 3:
+                errors["description"] = "Description must contain at least 3 words."
+
+            if errors:
+                return render(request, "product_edit.html", {
+                    "product": product,
+                    "brands": brands,
+                    "categories": categories,
+                    "variants": variants,
+                    "errors": errors
+                })
+
+            # Update product
+            product.name = name
+            product.brand_id = brand_id
+            product.category_id = category_id
+            product.description = description
+            product.is_active = is_active
+            product.save()
+
+            success = "Product updated successfully!"
+            return redirect("product_edit", product_id=product.id)
+
+        # =====================================================
+        # 2) ADD PRODUCT IMAGES (SEPARATE FORM)
+        # =====================================================
+        elif action == "add_images":
+            new_images = request.FILES.getlist("images[]")
+
+            if not new_images:
+                errors["images"] = "Please select at least one image."
+                return render(request, "product_edit.html", {
+                    "product": product,
+                    "brands": brands,
+                    "categories": categories,
+                    "variants": variants,
+                    "errors": errors
+                })
+
+            for img in new_images:
+                url = _upload_to_cloudinary(img, folder=f"products/{product.id}")
+                ProductImage.objects.create(product=product, image=url)
+
+            return redirect("product_edit", product_id=product.id)
+
+        # =====================================================
+        # 3) ADD VARIANT
+        # =====================================================
+        elif action == "add_variant":
+            variant_name = request.POST.get("variant", "").strip()
+            price = request.POST.get("price", "").strip()
+            stock = request.POST.get("stock", "").strip()
+            primary_image = request.FILES.get("primary_image")
+
+            # Validation
+            if not variant_name:
+                errors["variant"] = "Variant name is required."
+
+            if not price:
+                errors["price"] = "Price is required."
+            else:
+                try:
+                    price_val = Decimal(price)
+                    if price_val <= 0:
+                        errors["price"] = "Price must be greater than 0."
+                except:
+                    errors["price"] = "Price must be a valid number."
+
+            if not stock:
+                errors["stock"] = "Stock quantity is required."
+            else:
+                try:
+                    stock_val = int(stock)
+                    if stock_val < 0:
+                        errors["stock"] = "Stock cannot be negative."
+                except:
+                    errors["stock"] = "Stock must be a number."
+
+            if not primary_image:
+                errors["primary_image"] = "Primary image is required."
+
+            if errors:
+                return render(request, "product_edit.html", {
+                    "product": product,
+                    "brands": brands,
+                    "categories": categories,
+                    "variants": variants,
+                    "errors": errors
+                })
+
+            img_url = _upload_to_cloudinary(primary_image, folder=f"products/{product.id}/variants")
+
+            ProductVariants.objects.create(
+                product=product,
+                variant=variant_name,
+                price=price_val,
+                stock=stock_val,
+                primary_image=img_url
+            )
+
+            return redirect("product_edit", product_id=product.id)
+
+    # =====================================================
+    # DEFAULT GET REQUEST
+    # =====================================================
+    return render(request, "product_edit.html", {
+        "product": product,
+        "brands": brands,
+        "categories": categories,
+        "variants": variants
+    })
+
+@never_cache
+@transaction.atomic
+def variant_delete(request, variant_id):
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+    errors = {}
+    variant = get_object_or_404(ProductVariants, pk=variant_id)
+    product_id = variant.product.id
+
+    if request.method == "POST":
+        if not variant:
+            errors["variant"] = "Variant not found."
+            return render(request, "product_edit.html", {
+                "errors": errors
+            })
+
+        variant.delete()
+        return redirect("product_edit", product_id=product_id)
+
+    return redirect("product_edit", product_id=product_id)
+
+
+@never_cache
+@transaction.atomic
+def product_image_delete(request, image_id):
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+    
+    errors = {}
+    image = get_object_or_404(ProductImage, pk=image_id)
+    product_id = image.product.id
+
+    if request.method == "POST":
+        if not image:
+            errors["image"] = "Image not found."
+            return render(request, "product_edit.html", {
+                "errors": errors
+            })
+
+        image.delete()
+        return redirect("product_edit", product_id=product_id)
+
+    return redirect("product_edit", product_id=product_id)
+
+@never_cache
+@transaction.atomic
+def product_delete(request, product_id):
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+    
+    product = get_object_or_404(Products, id=product_id)
+
+    if request.method == "POST":
+        product.is_active = False
+        product.save()
+        return redirect("product_list")
+
+    return redirect("product_list")
