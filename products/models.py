@@ -2,6 +2,7 @@ from django.db import models
 from cloudinary.models import CloudinaryField
 from django.utils.text import slugify
 
+
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
@@ -12,10 +13,22 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+    
+class Brand(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    is_active = models.BooleanField(default=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
 
 
 class Products(models.Model):
-    
+
+    brand = models.ForeignKey(Brand, on_delete=models.Cas, related_name="products" ,default=1)
     name = models.CharField(max_length=100)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
     description = models.TextField()
@@ -42,7 +55,6 @@ class ProductImage(models.Model):
     variant = models.ForeignKey(ProductVariants, on_delete=models.CASCADE, related_name="images")
     image = CloudinaryField("image")
     created_at = models.DateTimeField(auto_now_add=True)
-
 
 
 # Create your models here.
