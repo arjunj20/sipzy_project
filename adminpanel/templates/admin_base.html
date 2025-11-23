@@ -53,9 +53,9 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center p-3 rounded-lg {% if 'order' in request.resolver_match.url_name %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
+                        <a href="{% url 'brand_list' %}" class="flex items-center p-3 rounded-lg {% if 'order' in request.resolver_match.url_name %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
                             <i class="fas fa-list-alt mr-3"></i>
-                            <span>Orders</span>
+                            <span>Brands</span>
                         </a>
                     </li>
                     <li>

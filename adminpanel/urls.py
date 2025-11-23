@@ -14,5 +14,11 @@ urlpatterns = [
     path("user-block/<int:id>/", views.block_user, name="block_user"),
     path("user-unblock/<int:id>/", views.unblock_user, name="unblock_user"),
     path("user-list/", views.user_list, name="user_list"),
+    path("brand-list/", views.brand_list, name="brand_list"),
+    path("brand-add/", views.brand_add, name="brand_add"),
+    path("brand-edit/<int:id>/", views.brand_edit, name="brand_edit"),
+    path("brand-delete/<int:id>/", views.brand_delete, name="brand_delete"),
+
+
 
 ]

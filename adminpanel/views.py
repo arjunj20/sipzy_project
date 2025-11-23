@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from products.models import Category
+from products.models import Category, Products, ProductVariants, ProductImage,Brand
 from authenticate.models import CustomUser
 
 from django.views.decorators.cache import never_cache
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q,Count
 from django.core.paginator import Paginator
+
 
 
 @never_cache
@@ -263,3 +264,135 @@ def unblock_user(request, id):
     user.is_active = True
     user.save()
     return redirect("user_list")
+
+@never_cache
+def brand_list(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("admin_login")
+
+    brands = Brand.objects.all().order_by("name")
+
+    search_query = request.GET.get("search", "")
+
+    # Stats
+    total_brands = brands.count()
+
+    if search_query:
+        brands = brands.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+
+    paginator = Paginator(brands, 5) 
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "brands": page_obj,
+        "page_obj": page_obj,
+        "search_query": search_query,
+        "total_brands": total_brands,
+    }
+    return render(request, "brand_list.html", context)
+@never_cache
+def brand_add(request):
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+    
+    errors = {}
+
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        description = request.POST.get("description", "").strip()
+        is_active = request.POST.get("is_active") == "on"
+
+        # Validations
+        if not name:
+            errors["name"] = "Brand name is required"
+        elif Brand.objects.filter(name__iexact=name).exists():
+            errors["name"] = "This brand already exists"
+
+        if not description:
+            errors["description"] = "Description is required"
+        elif len(description.split()) < 3:
+            errors["description"] = "Description must contain at least 3 words"
+
+        if errors:
+            brands = Brand.objects.all().order_by("-id")
+            return render(request, "brand_list.html", {
+                "errors": errors,
+                "name": name,
+                "description": description,
+                "is_active": is_active,
+                "open_create_modal": True,
+                "brands": brands,
+            })
+
+        Brand.objects.create(name=name, description=description, is_active=is_active)
+        return redirect("brand_list")
+
+    return redirect("brand_list")
+
+@never_cache
+def brand_edit(request, id):
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("admin_login")
+
+    brand = get_object_or_404(Brand, id=id)
+    errors = {}
+
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        description = request.POST.get("description", "").strip()
+        is_active = request.POST.get("is_active") == "on"
+
+        if not name:
+            errors["name"] = "Brand name is required"
+        elif Brand.objects.filter(name__iexact=name).exclude(id=id).exists():
+            errors["name"] = "Brand name already exists"
+
+        if not description:
+            errors["description"] = "Description is required"
+        elif len(description.split()) < 3:
+            errors["description"] = "Description must contain at least 3 words"
+
+        if errors:
+            brands = Brand.objects.all().order_by("-id")
+            return render(request, "brand_list.html", {
+                "errors_edit": errors,
+                "open_edit_modal": True,
+                "edit_data": {
+                    "id": id,
+                    "name": name,
+                    "description": description,
+                    "is_active": is_active,
+                },
+                "brands": brands,
+            })
+
+        brand.name = name
+        brand.description = description
+        brand.is_active = is_active
+        brand.save()
+        return redirect("brand_list")
+
+    return redirect("brand_list")
+
+
+
+@never_cache
+def brand_delete(request, id):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+    
+    brand = get_object_or_404(Brand, id=id)
+    brand.is_active = False
+    brand.save()
+    return redirect("brand_list")
+
+
+
+
+
