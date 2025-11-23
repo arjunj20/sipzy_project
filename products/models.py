@@ -28,7 +28,7 @@ class Brand(models.Model):
 
 class Products(models.Model):
 
-    brand = models.ForeignKey(Brand, on_delete=models.Cas, related_name="products" ,default=1)
+    brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name="products" ,default=1)
     name = models.CharField(max_length=100)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
     description = models.TextField()
@@ -52,7 +52,7 @@ class ProductVariants(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.variant}"
 class ProductImage(models.Model):
-    variant = models.ForeignKey(ProductVariants, on_delete=models.CASCADE, related_name="images")
+    product = models.ForeignKey(Products, on_delete=models.CASCADE, related_name="images")
     image = CloudinaryField("image")
     created_at = models.DateTimeField(auto_now_add=True)
 

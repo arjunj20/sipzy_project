@@ -47,7 +47,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center p-3 rounded-lg {% if 'product' in request.resolver_match.url_name %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
+                        <a href="{% url 'product_list' %}" class="flex items-center p-3 rounded-lg {% if 'product' in request.resolver_match.url_name %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
                             <i class="fas fa-shopping-cart mr-3"></i>
                             <span>Products</span>
                         </a>
