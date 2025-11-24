@@ -506,9 +506,6 @@ def product_edit(request, product_id):
     if request.method == "POST":
         action = request.POST.get("action")
 
-        # =====================================================
-        # 1) EDIT PRODUCT DETAILS
-        # =====================================================
         if action == "edit_product":
             name = request.POST.get("name", "").strip()
             brand_id = request.POST.get("brand")
@@ -516,7 +513,6 @@ def product_edit(request, product_id):
             description = request.POST.get("description", "").strip()
             is_active = request.POST.get("is_active") == "on"
 
-            # Basic validation
             if not name:
                 errors["name"] = "Product name is required."
             if not brand_id:
@@ -535,7 +531,6 @@ def product_edit(request, product_id):
                     "errors": errors
                 })
 
-            # Update product
             product.name = name
             product.brand_id = brand_id
             product.category_id = category_id
@@ -546,9 +541,6 @@ def product_edit(request, product_id):
             success = "Product updated successfully!"
             return redirect("product_edit", product_id=product.id)
 
-        # =====================================================
-        # 2) ADD PRODUCT IMAGES (SEPARATE FORM)
-        # =====================================================
         elif action == "add_images":
             new_images = request.FILES.getlist("images[]")
 
@@ -568,16 +560,13 @@ def product_edit(request, product_id):
 
             return redirect("product_edit", product_id=product.id)
 
-        # =====================================================
-        # 3) ADD VARIANT
-        # =====================================================
+    
         elif action == "add_variant":
             variant_name = request.POST.get("variant", "").strip()
             price = request.POST.get("price", "").strip()
             stock = request.POST.get("stock", "").strip()
             primary_image = request.FILES.get("primary_image")
 
-            # Validation
             if not variant_name:
                 errors["variant"] = "Variant name is required."
 
@@ -625,9 +614,6 @@ def product_edit(request, product_id):
 
             return redirect("product_edit", product_id=product.id)
 
-    # =====================================================
-    # DEFAULT GET REQUEST
-    # =====================================================
     return render(request, "product_edit.html", {
         "product": product,
         "brands": brands,
