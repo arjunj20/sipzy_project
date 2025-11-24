@@ -3,8 +3,14 @@ from django.db.models import Q, Min, Count, Avg
 from django.core.paginator import Paginator
 from .models import Products, Category, Brand
 
+from django.views.decorators.cache import never_cache
 
+
+@never_cache
 def userproduct_list(request):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("landing_page")
 
     products = (
         Products.objects
@@ -101,7 +107,11 @@ def userproduct_list(request):
     })
 
 
+@never_cache
 def product_detail(request, product_id):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("landing_page")
 
     product = get_object_or_404(Products, id=product_id, is_active=True)
     

@@ -135,7 +135,7 @@
             <table class="w-full">
                 <thead>
                     <tr class="bg-gray-50 text-gray-600 text-sm font-medium">
-                        <th class="py-4 px-6 text-left">ID</th>
+                        <th class="py-4 px-6 text-left">SI No.</th>
                         <th class="py-4 px-6 text-left">Category Name</th>
                         <th class="py-4 px-6 text-left">Description</th>
                         <th class="py-4 px-6 text-left">Status</th>
@@ -146,7 +146,7 @@
               <tbody class="divide-y divide-gray-200">
     {% for cat in categories %}
     <tr class="table-row hover:bg-gray-50 transition-all duration-200">
-        <td class="py-4 px-6 text-gray-700">{{ cat.id }}</td>
+        <td class="py-4 px-6 text-gray-700">{{ forloop.counter }}</td>
 
         <td class="py-4 px-6">
             <div class="flex items-center">
