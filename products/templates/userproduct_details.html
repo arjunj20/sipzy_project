@@ -14,13 +14,16 @@
             <!-- Main Image -->
             <div class="bg-white rounded-lg shadow-md p-4">
                 <div class="relative overflow-hidden rounded-lg">
-                    <img 
-                        id="main-product-image"
-                        src="{{ primary_variant.primary_image.url }}" 
-                        alt="{{ product.name }}" 
-                        class="w-full h-96 object-contain cursor-zoom-in"
-                        data-zoom="{{ primary_variant.primary_image.url }}"
-                    >
+                   <div class="zoom-container">
+    <img 
+        id="main-product-image"
+        src="{{ primary_variant.primary_image.url }}"
+        data-large="{{ primary_variant.primary_image.url }}"
+        class="zoom-image"
+        alt="{{ product.name }}"
+    >
+</div>
+
                     <!-- Zoom Overlay -->
                     <div id="zoom-overlay" class="hidden absolute inset-0 bg-white bg-opacity-50 cursor-zoom-out"></div>
                 </div>
@@ -114,7 +117,7 @@
             <!-- Stock Status -->
             <div>
                 {% if selected_variant.stock > 10 %}
-                <p class="text-green-600 font-medium">In Stock ({{ selected_variant.stock }} available)</p>
+                <p id="stock-status" class="font-medium text-green-600">In Stock ({{ selected_variant.stock }} available)</p>
                 {% elif selected_variant.stock > 0 %}
                 <p class="text-orange-600 font-medium">Low Stock (Only {{ selected_variant.stock }} left)</p>
                 {% else %}
@@ -297,7 +300,26 @@
     </div>
 </div>
 
-<!-- JavaScript -->
+<style>
+    .zoom-container {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 24rem; /* same as h-96 */
+    border-radius: 8px;
+    background: #f3f3f3;
+}
+
+.zoom-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    transform-origin: center center;
+}
+
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Image Zoom Functionality
@@ -398,33 +420,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update Variant Information
     function updateVariantInfo(variantId) {
-        // In a real implementation, you would fetch variant data from the server
-        // For now, we'll use the data attributes from the button
-        const variantBtn = document.querySelector(`.variant-btn[data-variant-id="${variantId}"]`);
-        const price = variantBtn.getAttribute('data-price');
-        const stock = parseInt(variantBtn.getAttribute('data-stock'));
-        
-        // Update price
-        document.querySelectorAll('#total-price').forEach(el => {
-            el.textContent = price;
-        });
-        
-        // Update stock status
-        const stockElement = document.querySelector('#add-to-cart-btn');
-        if (stock > 10) {
-            stockElement.innerHTML = 'Add to Cart - $<span id="total-price">' + price + '</span>';
-            stockElement.disabled = false;
-        } else if (stock > 0) {
-            stockElement.innerHTML = 'Add to Cart - $<span id="total-price">' + price + '</span>';
-            stockElement.disabled = false;
-        } else {
-            stockElement.innerHTML = 'Out of Stock';
-            stockElement.disabled = true;
-        }
-        
-        // Update quantity max
-        document.getElementById('quantity').max = stock;
+
+    const variantBtn = document.querySelector(`.variant-btn[data-variant-id="${variantId}"]`);
+    const price = variantBtn.getAttribute('data-price');
+    const stock = parseInt(variantBtn.getAttribute('data-stock'));
+
+    // Update price on UI
+    document.querySelectorAll('#total-price').forEach(el => {
+        el.textContent = price;
+    });
+
+    // Update stock button text
+    const addToCartBtn = document.getElementById("add-to-cart-btn");
+
+    if (stock > 0) {
+        addToCartBtn.innerHTML = `Add to Cart - $<span id="total-price">${price}</span>`;
+        addToCartBtn.disabled = false;
+    } else {
+        addToCartBtn.innerHTML = "Out of Stock";
+        addToCartBtn.disabled = true;
     }
+
+    // Update stock status TEXT
+    const stockStatus = document.getElementById("stock-status");
+
+    if (stock > 10) {
+        stockStatus.innerHTML = `<span class="text-green-600">In Stock (${stock} available)</span>`;
+    } else if (stock > 0) {
+        stockStatus.innerHTML = `<span class="text-orange-600">Low Stock (Only ${stock} left)</span>`;
+    } else {
+        stockStatus.innerHTML = `<span class="text-red-600">Out of Stock</span>`;
+    }
+
+    // Update quantity limit
+    document.getElementById('quantity').max = stock;
+}
 
     // Update Total Price
     function updateTotalPrice() {
@@ -458,5 +488,24 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Product added to cart successfully!');
     });
 });
+
+// Smooth zoom effect
+const zoomContainer = document.querySelector('.zoom-container');
+const zoomImage = document.querySelector('.zoom-image');
+
+zoomContainer.addEventListener("mousemove", function (e) {
+    const rect = zoomContainer.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    zoomImage.style.transform = "scale(2)";
+    zoomImage.style.transformOrigin = `${x}% ${y}%`;
+});
+
+zoomContainer.addEventListener("mouseleave", function () {
+    zoomImage.style.transform = "scale(1)";
+    zoomImage.style.transformOrigin = "center";
+});
+
 </script>
 {% endblock %}

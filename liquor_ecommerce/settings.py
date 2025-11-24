@@ -66,12 +66,12 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-LOGIN_REDIRECT_URL = '/authenticate/home-page/'
+LOGIN_REDIRECT_URL = 'user_homepage'
 
-LOGOUT_REDIRECT_URL = '/authenticate/landing-page/'
+LOGOUT_REDIRECT_URL = 'user_login'
 
 
-
+    
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
@@ -142,22 +142,19 @@ DATABASES = {
 
 
 
-# Cloudinary Credentials
+# Cloudinary Credentials (from .env)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': config('CLOUDINARY_API_KEY'),
     'API_SECRET': config('CLOUDINARY_API_SECRET'),
 }
 
-# IMPORTANT — required for uploader.upload()
-cloudinary.config(
-    cloud_name = config('CLOUDINARY_CLOUD_NAME'),
-    api_key = config('CLOUDINARY_API_KEY'),
-    api_secret = config('CLOUDINARY_API_SECRET')
-)
-
-# Use Cloudinary for file storage
+# Default file storage
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Media URL
+MEDIA_URL = '/media/'
+
 
 
 # Password validation
