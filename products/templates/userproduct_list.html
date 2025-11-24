@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shop Spirits - Sipzy{% endblock %}
+
+{% block content %}
+
+<div class="container mx-auto px-4 py-8">
+
+    <!-- PAGE HEADER -->
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Premium Spirits Collection</h1>
+        <p class="text-gray-600 max-w-2xl mx-auto">Discover our curated selection of spirits</p>
+    </div>
+
+    <!-- FORM START -->
+    <form id="filter-form" method="get">
+
+        <!-- Search + Sort + Filters Container -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+
+            <!-- SEARCH BAR -->
+            <div class="flex mb-6">
+                <div class="relative flex-grow">
+                    <input 
+                        type="text"
+                        id="search-input"
+                        name="search"
+                        value="{{ search }}"
+                        placeholder="Search for whiskey, vodka, gin..."
+                        class="w-full px-4 py-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-[#B7472A]"
+                    >
+                </div>
+
+                <button type="submit" id="search-btn"
+                    class="bg-[#B7472A] text-white px-6 py-3 rounded-r-lg hover:bg-[#8D3A28]">
+                    Search
+                </button>
+            </div>
+
+            <!-- SORT + MOBILE FILTER BUTTON -->
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                    <select name="sort" id="sort-select"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-[#B7472A]">
+
+                        <option value="default" {% if sort_option == 'default' %}selected{% endif %}>Featured</option>
+                        <option value="price_low_high" {% if sort_option == 'price_low_high' %}selected{% endif %}>Price: Low to High</option>
+                        <option value="price_high_low" {% if sort_option == 'price_high_low' %}selected{% endif %}>Price: High to Low</option>
+                        <option value="name_asc" {% if sort_option == 'name_asc' %}selected{% endif %}>Name: A to Z</option>
+                        <option value="name_desc" {% if sort_option == 'name_desc' %}selected{% endif %}>Name: Z to A</option>
+
+                    </select>
+                </div>
+
+                <!-- MOBILE FILTER BUTTON -->
+                <div class="md:hidden">
+                    <button type="button" id="filter-toggle"
+                        class="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
+                        Filters
+                    </button>
+                </div>
+            </div>
+
+            <!-- FILTER PANEL -->
+            <div id="filter-panel" class="mt-6 p-4 bg-gray-50 rounded-lg hidden md:block">
+
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">Filter Products</h3>
+                    <a href="{% url 'userproduct_list' %}" class="text-sm text-[#B7472A] hover:underline">Clear All</a>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                    <!-- CATEGORY FILTER -->
+                    <div>
+                        <h4 class="font-medium text-gray-700 mb-2">Category</h4>
+                        <div class="space-y-2">
+                            {% for category in categories %}
+                            <label class="flex items-center">
+                                <input type="checkbox"
+                                    name="category"
+                                    value="{{ category.id }}"
+                                    class="category-filter"
+                                    {% if category.id|stringformat:"s" in selected_categories %}checked{% endif %}>
+                                <span class="ml-2 text-gray-600">{{ category.name }}</span>
+                            </label>
+                            {% empty %}
+                            <p class="text-gray-500 text-sm">No categories available</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- PRICE FILTER -->
+                    <div>
+                        <h4 class="font-medium text-gray-700 mb-2">Price Range</h4>
+                        <div class="space-y-2">
+                            {% for value,label in price_ranges.items %}
+                            <label class="flex items-center">
+                                <input type="radio"
+                                    name="price"
+                                    value="{{ value }}"
+                                    class="price-filter"
+                                    {% if price_filter == value %}checked{% endif %}>
+                                <span class="ml-2 text-gray-600">{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- BRAND FILTER -->
+                    <div>
+                        <h4 class="font-medium text-gray-700 mb-2">Brand</h4>
+                        <div class="space-y-2">
+                            {% for brand in brands %}
+                            <label class="flex items-center">
+                                <input type="checkbox"
+                                    name="brand"
+                                    value="{{ brand.id }}"
+                                    class="brand-filter"
+                                    {% if brand.id|stringformat:"s" in selected_brands %}checked{% endif %}>
+                                <span class="ml-2 text-gray-600">{{ brand.name }}</span>
+                            </label>
+                            {% empty %}
+                            <p class="text-gray-500 text-sm">No brands available</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+        <!-- END FILTER CONTAINER -->
+
+        <!-- PRODUCT GRID -->
+        <div id="product-grid"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+
+            {% for product in products %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:-translate-y-1 duration-300">
+
+                <!-- PRODUCT IMAGE BLOCK -->
+                <div class="relative">
+
+                 {% if product.default_variant %}
+    <img src="{{ product.default_variant.primary_image.url }}"
+         alt="{{ product.name }}"
+         class="w-full h-48 object-contain bg-gray-100 p-4">
+{% else %}
+    <img src="{% static 'images/no-image.png' %}"
+         alt="No image"
+         class="w-full h-48 object-contain bg-gray-100 p-4">
+{% endif %}
+
+                    <div class="absolute top-2 right-2 bg-[#B7472A] text-white text-xs px-2 py-1 rounded">
+                        Featured
+                    </div>
+
+                </div>
+
+                <!-- PRODUCT INFO BLOCK -->
+                <div class="p-4 flex flex-col h-full">
+                    <h3 class="font-semibold text-gray-800">{{ product.name }}</h3>
+                    <p class="text-gray-600 text-sm mb-2">{{ product.brand.name }} • {{ product.category.name }}</p>
+                    {% if product.default_variant %}
+<p class="text-gray-500 text-xs mt-1">
+    Variant: {{ product.default_variant.variant }}
+</p>
+{% endif %}
+<div class="flex justify-between items-center">
+
+    {% if product.default_variant and product.default_variant.price %}
+        <span class="font-bold text-gray-800">
+            ₹{{ product.default_variant.price }}
+        </span>
+    {% else %}
+        <span class="text-gray-500 text-sm">Price unavailable</span>
+    {% endif %}
+
+   <a href="{% url 'product_details' product.id %}" 
+   class="bg-[#B7472A] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#8D3A28] block text-center">
+   View Details
+</a>
+
+
+</div>
+
+                </div>
+
+            </div>
+            {% empty %}
+            <p class="text-center col-span-full text-gray-500 py-10">No products found.</p>
+            {% endfor %}
+
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="flex justify-center mt-4">
+            <nav class="flex items-center space-x-2">
+
+                {% if products.has_previous %}
+                <a href="?page={{ products.previous_page_number }}&{{ querystring }}"
+                    class="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    ← Prev
+                </a>
+                {% endif %}
+
+                {% for num in products.paginator.page_range %}
+                {% if products.number == num %}
+                <span class="px-3 py-2 bg-[#B7472A] text-white rounded">{{ num }}</span>
+                {% else %}
+                <a href="?page={{ num }}&{{ querystring }}"
+                    class="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    {{ num }}
+                </a>
+                {% endif %}
+                {% endfor %}
+
+                {% if products.has_next %}
+                <a href="?page={{ products.next_page_number }}&{{ querystring }}"
+                    class="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    Next →
+                </a>
+                {% endif %}
+
+            </nav>
+        </div>
+
+    </form>
+    <!-- FORM END -->
+
+</div>
+
+
+<!-- JAVASCRIPT AUTO-SUBMIT -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.getElementById("filter-form");
+
+    document.querySelectorAll(".category-filter, .brand-filter, .price-filter, #sort-select")
+        .forEach(el => {
+            el.addEventListener("change", () => form.submit());
+        });
+
+    // Toggle filter panel on mobile
+    const toggleBtn = document.getElementById("filter-toggle");
+    const panel = document.getElementById("filter-panel");
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+            panel.classList.toggle("hidden");
+        });
+    }
+
+});
+</script>
+
+{% endblock %}

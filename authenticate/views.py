@@ -78,6 +78,7 @@ def user_signup(request):
 
 @never_cache
 def user_signupotp(request):
+
     if request.user.is_authenticated and not request.user.is_superuser:
         return redirect("user_homepage")
     error = {}
@@ -125,6 +126,9 @@ def user_signupotp(request):
 
 @never_cache
 def resend_otp(request):
+
+    if request.user.is_authenticated and not request.user.is_superuser:
+        return redirect("user_homepage")
 
     signup_data = request.session.get("signup_data")
 
@@ -219,6 +223,9 @@ def user_logout(request):
 @never_cache
 def forgot_password(request):
 
+    if request.user.is_authenticated and not request.user.is_superuser:
+        return redirect("user_homepage")
+
     errors = {}
 
     if request.method == "POST":
@@ -257,6 +264,9 @@ def forgot_password(request):
 
 @never_cache
 def forgot_password_otp(request):
+
+    if request.user.is_authenticated and not request.user.is_superuser:
+        return redirect("user_homepage")
     error = ""
 
     email = request.session.get("forgot_email")
@@ -292,6 +302,10 @@ def forgot_password_otp(request):
 
 @never_cache
 def reset_password(request):
+
+    if request.user.is_authenticated and not request.user.is_superuser:
+        return redirect("user_homepage")
+    
     email = request.session.get("forgot_email")
     verified = request.session.get("forgot_verified")
 
@@ -329,6 +343,10 @@ def reset_password(request):
 
 @never_cache
 def resend_forgot_otp(request):
+
+    if request.user.is_authenticated and not request.user.is_superuser:
+        return redirect("user_homepage")
+
     email = request.session.get("forgot_email")
 
     if not email:
