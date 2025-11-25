@@ -152,6 +152,12 @@ CLOUDINARY_STORAGE = {
 # Default file storage
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+)
+
 # Media URL
 MEDIA_URL = '/media/'
 

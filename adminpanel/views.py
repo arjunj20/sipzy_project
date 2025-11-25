@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from products.models import Category, Products, ProductVariants, ProductImage,Brand
 from authenticate.models import CustomUser
+from cloudinary.uploader import upload as cloudinary_upload
 
 from django.views.decorators.cache import never_cache
 from django.contrib.auth import authenticate, login, logout
@@ -593,6 +594,12 @@ def product_edit(request, product_id):
             if not primary_image:
                 errors["primary_image"] = "Primary image is required."
 
+            if primary_image:
+                upload=cloudinary_upload(primary_image)
+                img_url = upload.get("secure_url")
+            else:
+                errors["primary_image"] = "Primary image is required."
+
             if errors:
                 return render(request, "product_edit.html", {
                     "product": product,
@@ -601,15 +608,14 @@ def product_edit(request, product_id):
                     "variants": variants,
                     "errors": errors
                 })
-
-            img_url = _upload_to_cloudinary(primary_image, folder=f"products/{product.id}/variants")
+            
 
             ProductVariants.objects.create(
                 product=product,
                 variant=variant_name,
                 price=price_val,
                 stock=stock_val,
-                primary_image=img_url
+                primary_image=img_url,
             )
 
             return redirect("product_edit", product_id=product.id)
