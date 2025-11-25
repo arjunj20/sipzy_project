@@ -31,13 +31,23 @@
             0% { background-position: -1000px 0; }
             100% { background-position: 1000px 0; }
         }
+        
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
 
         .slide-left {
-            animation: slideLeft 25s linear infinite;
+            animation: slideLeft 40s linear infinite;
         }
         
         .slide-right {
-            animation: slideRight 25s linear infinite;
+            animation: slideRight 40s linear infinite;
         }
         
         .float-animation {
@@ -55,12 +65,13 @@
         }
 
         .product-card {
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
         }
 
         .product-card:hover {
             transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
         .hover-shine {
@@ -84,16 +95,30 @@
             left: 100%;
         }
 
+        /* Enhanced scroll container */
         .scroll-container {
             display: flex;
             overflow: hidden;
             position: relative;
+            cursor: grab;
+        }
+
+        .scroll-container:active {
+            cursor: grabbing;
         }
 
         .scroll-content {
             display: flex;
             gap: 4rem;
             padding: 2rem 0;
+            will-change: transform;
+        }
+
+        /* Duplicate content for seamless loop */
+        .scroll-content.duplicated::after {
+            content: '';
+            display: flex;
+            gap: 4rem;
         }
 
         /* Gamification Progress Bar */
@@ -111,6 +136,102 @@
             to {
                 stroke-dashoffset: 70.75;
             }
+        }
+        
+        /* New animations */
+        .fade-in-up {
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        .stagger-animation > * {
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
+        .stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
+        .stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
+        .stagger-animation > *:nth-child(4) { animation-delay: 0.4s; }
+        .stagger-animation > *:nth-child(5) { animation-delay: 0.5s; }
+        
+        /* Enhanced visual elements */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-overlay {
+            position: relative;
+        }
+        
+        .gradient-overlay::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .gradient-overlay:hover::after {
+            opacity: 1;
+        }
+        
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(162, 78, 52, 0.3), transparent);
+            margin: 4rem auto;
+            max-width: 80%;
+        }
+        
+        .floating-label {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #A24E34;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .product-card:hover .floating-label {
+            transform: translateY(-5px);
+        }
+        
+        /* Scrollbar styling */
+        .scroll-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(162, 78, 52, 0.3);
+            border-radius: 10px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(162, 78, 52, 0.5);
+        }
+        
+        /* Pause animation on hover */
+        .scroll-container:hover .scroll-content {
+            animation-play-state: paused;
         }
     </style>
 </head>
@@ -166,23 +287,23 @@
     <div class="absolute top-0 left-0 w-72 h-72 bg-white/5 rounded-full blur-3xl"></div>
     <div class="absolute bottom-0 right-0 w-96 h-96 bg-black/10 rounded-full blur-3xl"></div>
 
-    <div class="flex flex-col gap-6 pr-4 relative z-10">
-        <div class="inline-block">
-            <span class="px-4 py-2 bg-yellow-400/20 backdrop-blur-sm rounded-full text-yellow-300 text-xs font-semibold border border-yellow-400/30">
+    <div class="flex flex-col gap-6 pr-4 relative z-10 stagger-animation">
+        <div class="inline-block fade-in-up">
+            <span class="px-4 py-2 bg-yellow-400/20 backdrop-blur-sm rounded-full text-yellow-300 text-xs font-semibold border border-yellow-400/30 pulse-animation">
                 ✨ Premium Collection 2024
             </span>
         </div>
         
-        <h1 class="text-5xl md:text-6xl font-bold leading-tight">
+        <h1 class="text-5xl md:text-6xl font-bold leading-tight fade-in-up">
             Adventure Awaits with <span class="text-yellow-300">Signature Spirits.</span>
         </h1>
 
-        <p class="text-base md:text-lg opacity-90 max-w-xl leading-relaxed">
+        <p class="text-base md:text-lg opacity-90 max-w-xl leading-relaxed fade-in-up">
             Discover our collection of rich, smooth, and premium spirits crafted for every occasion. From cozy nights to grand celebrations.
         </p>
 
         <!-- Gamification Element -->
-        <div class="flex items-center gap-4 mt-4">
+        <div class="flex items-center gap-4 mt-4 fade-in-up">
             <div class="flex items-center gap-2">
                 <svg class="w-12 h-12">
                     <circle class="progress-ring" cx="24" cy="24" r="20" stroke="#FDE68A" stroke-width="4" fill="none" />
@@ -195,7 +316,7 @@
             </div>
         </div>
 
-        <div class="flex gap-4 mt-2">
+        <div class="flex gap-4 mt-2 fade-in-up">
             <a href="#" class="px-8 py-3 bg-black text-white rounded-full hover:bg-gray-900 transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl hover:scale-105 glow-effect">
                 Know More
             </a>
@@ -206,7 +327,7 @@
     </div>
 
     <!-- Hero Image -->
-    <div class="flex justify-center items-center relative mt-8 md:mt-0">
+    <div class="flex justify-center items-center relative mt-8 md:mt-0 fade-in-up">
         <div class="relative">
             <div class="absolute inset-0 bg-yellow-400/20 rounded-full blur-3xl glow-effect"></div>
             <img src="/static/images/images 1.png" alt="Jack Daniel's" class="h-80 md:h-96 relative z-10 float-animation drop-shadow-2xl" />
@@ -217,340 +338,215 @@
 <!-- ================= FEATURED PRODUCTS (Slide Left) ================= -->
 <section class="w-full py-16 text-center bg-white">
     
-    <div class="mb-12">
+    <div class="mb-12 fade-in-up">
         <h2 class="text-3xl md:text-4xl font-bold mb-3 text-[#A24E34]">Featured Products</h2>
         <p class="text-gray-600">Handpicked premium spirits for the connoisseur</p>
     </div>
 
-    <!-- Slider Container -->
-    <div class="scroll-container">
-        <div class="scroll-content slide-left">
+    <div class="scroll-container overflow-x-auto" id="featured-scroll">
+        <div class="scroll-content slide-left" id="featured-content">
+            {% for p in featured_products %}
+            <div class="product-card flex-shrink-0 relative">
+                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+                    <div class="floating-label">Featured</div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                        <img src="{{p.default_variant.primary_image.url }}" alt="{{ p.name }}" class="h-56 mx-auto object-contain transition-transform duration-500 hover:scale-105" />
+                    </div>
+
+                    <h3 class="font-bold text-lg mb-1 text-gray-800">{{ p.name}}</h3>
+                    <p class="text-[#A24E34] font-bold text-xl">₹{{ p.default_variant.price }}</p>
+
+                    <a href="{% url 'product_details' p.id %}"
+                       class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all inline-block transform hover:scale-105">
+                        Add to Cart
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
             
-            <!-- Product 1 -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
+            <!-- Duplicate content for seamless loop -->
+            {% for p in featured_products %}
+            <div class="product-card flex-shrink-0 relative">
+                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+                    <div class="floating-label">Featured</div>
+                    
                     <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/bacardi.png" alt="Bacardi" class="h-56 mx-auto object-contain" />
+                        <img src="{{p.default_variant.primary_image.url }}" alt="{{ p.name }}" class="h-56 mx-auto object-contain transition-transform duration-500 hover:scale-105" />
                     </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Bacardi Carta Blanca</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹890</p>
-                    <button  class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
+
+                    <h3 class="font-bold text-lg mb-1 text-gray-800">{{ p.name}}</h3>
+                    <p class="text-[#A24E34] font-bold text-xl">₹{{ p.default_variant.price }}</p>
+
+                    <a href="{% url 'product_details' p.id %}"
+                       class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all inline-block transform hover:scale-105">
                         Add to Cart
-                    </button>
+                    </a>
                 </div>
             </div>
-
-            <!-- Product 2 -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/johnnie-walker-black.png" alt="Johnnie Walker Black" class="h-56 mx-auto object-contain" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Johnnie Walker Black Label</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹4,990</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <!-- Product 3 -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/johnnie-walker-red.png" alt="Johnnie Walker Red" class="h-56 mx-auto object-contain" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Johnnie Walker Red Label</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹2,790</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <!-- Duplicate products for seamless loop -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/bacardi.png" alt="Bacardi" class="h-56 mx-auto object-contain" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Bacardi Carta Blanca</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹890</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/johnnie-walker-black.png" alt="Johnnie Walker Black" class="h-56 mx-auto object-contain" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Johnnie Walker Black Label</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹4,990</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/johnnie-walker-red.png" alt="Johnnie Walker Red" class="h-56 mx-auto object-contain" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Johnnie Walker Red Label</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹2,790</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
+            {% endfor %}
         </div>
     </div>
 
-    <a href="#" class="mt-8 inline-flex items-center gap-2 px-8 py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl hover:scale-105">
-        See More <span class="text-xl">→</span>
+    <a href="{% url 'userproduct_list' %}" 
+       class="mt-8 inline-flex items-center gap-2 px-8 py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl hover:scale-105 fade-in-up">
+        See More →
     </a>
 </section>
+
+<div class="section-divider"></div>
 
 <!-- ================= SHOP YOUR FAVOURITES ================= -->
 <section class="w-full py-16 bg-gradient-to-br from-gray-50 to-white">
     
-    <div class="text-center mb-12">
+    <div class="text-center mb-12 fade-in-up">
         <h2 class="text-3xl md:text-4xl font-bold mb-3 text-[#A24E34]">Shop Your Favourites</h2>
         <p class="text-gray-600">Curated collections for every taste</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 px-6 md:px-16">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 px-6 md:px-16 stagger-animation">
         
-        <div class="relative group overflow-hidden rounded-2xl shadow-xl hover-shine cursor-pointer" >
-            <img src="/static/images/vapo1.png" alt="Vappura Collection" class="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-500" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
-                <div class="text-white">
+        <div class="relative group overflow-hidden rounded-2xl shadow-xl hover-shine cursor-pointer gradient-overlay" >
+            <img src="/static/images/vapo1.png" alt="Vappura Collection" class="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-700" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6 z-10">
+                <div class="text-white transform translate-y-0 group-hover:-translate-y-2 transition-transform duration-500">
                     <h3 class="text-xl font-bold mb-2">Premium Vappura</h3>
-                    <p class="text-sm">Crafted Excellence</p>
+                    <p class="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">Crafted Excellence</p>
                 </div>
             </div>
         </div>
 
-        <div class="relative group overflow-hidden rounded-2xl shadow-xl hover-shine cursor-pointer" >
-            <img src="/static/images/vapo2.png" alt="Limited Edition" class="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-500" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
-                <div class="text-white">
+        <div class="relative group overflow-hidden rounded-2xl shadow-xl hover-shine cursor-pointer gradient-overlay" >
+            <img src="/static/images/vapo2.png" alt="Limited Edition" class="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-700" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6 z-10">
+                <div class="text-white transform translate-y-0 group-hover:-translate-y-2 transition-transform duration-500">
                     <h3 class="text-xl font-bold mb-2">Limited Edition</h3>
-                    <p class="text-sm">Exclusive Selection</p>
+                    <p class="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">Exclusive Selection</p>
                 </div>
             </div>
         </div>
 
-        <div class="relative group overflow-hidden rounded-2xl shadow-xl hover-shine cursor-pointer" >
-            <img src="/static/images/vapo3.png" alt="Gift Collection" class="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-500" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
-                <div class="text-white">
+        <div class="relative group overflow-hidden rounded-2xl shadow-xl hover-shine cursor-pointer gradient-overlay" >
+            <img src="/static/images/vapo3.png" alt="Gift Collection" class="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-700" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6 z-10">
+                <div class="text-white transform translate-y-0 group-hover:-translate-y-2 transition-transform duration-500">
                     <h3 class="text-xl font-bold mb-2">Gift Collections</h3>
-                    <p class="text-sm">Perfect for Celebrations</p>
+                    <p class="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">Perfect for Celebrations</p>
                 </div>
             </div>
         </div>
 
     </div>
 </section>
+
+<div class="section-divider"></div>
 
 <!-- ================= HAND PICKED (Slide Right) ================= -->
 <section class="w-full py-16 text-center bg-white">
     
-    <div class="mb-12">
+    <div class="mb-12 fade-in-up">
         <h2 class="text-3xl md:text-4xl font-bold mb-3 text-[#A24E34]">Hand Picked</h2>
         <p class="text-gray-600">Discover our handpicked curated bottles just for you</p>
     </div>
 
-    <!-- Slider Container -->
-    <div class="scroll-container">
-        <div class="scroll-content slide-right">
+    <div class="scroll-container overflow-x-auto" id="handpicked-scroll">
+        <div class="scroll-content slide-right" id="handpicked-content">
+            {% for p in handpicked_products %}
+            <div class="product-card flex-shrink-0 relative">
+                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+                    <div class="floating-label" style="background-color: #8D3A28;">Curated</div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                        <img src="{{ p.default_variant.primary_image.url }}" alt="{{ p.name }}" class="h-56 mx-auto object-cover rounded-lg transition-transform duration-500 hover:scale-105" />
+                    </div>
+
+                    <h3 class="font-bold text-lg mb-1 text-gray-800">{{ p.name }}</h3>
+                    <p class="text-[#A24E34] font-bold text-xl">₹{{ p.default_variant.price }}</p>
+
+                    <a href="{% url 'product_details' p.id %}"
+                       class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all inline-block transform hover:scale-105">
+                        Add to Cart
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
             
-            <!-- Product 1 -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
+            <!-- Duplicate content for seamless loop -->
+            {% for p in handpicked_products %}
+            <div class="product-card flex-shrink-0 relative">
+                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+                    <div class="floating-label" style="background-color: #8D3A28;">Curated</div>
+                    
                     <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/vapo3.png" alt="Vappura Special" class="h-56 mx-auto object-cover rounded-lg" />
+                        <img src="{{ p.default_variant.primary_image.url }}" alt="{{ p.name }}" class="h-56 mx-auto object-cover rounded-lg transition-transform duration-500 hover:scale-105" />
                     </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Vappura Special Edition</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹5,990</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
+
+                    <h3 class="font-bold text-lg mb-1 text-gray-800">{{ p.name }}</h3>
+                    <p class="text-[#A24E34] font-bold text-xl">₹{{ p.default_variant.price }}</p>
+
+                    <a href="{% url 'product_details' p.id %}"
+                       class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all inline-block transform hover:scale-105">
                         Add to Cart
-                    </button>
+                    </a>
                 </div>
             </div>
-
-            <!-- Product 2 -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/vapo1.png" alt="Vappura Collection" class="h-56 mx-auto object-cover rounded-lg" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Vappura Premium</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹4,790</p>
-                    <button  class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <!-- Product 3 -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/vapo2.png" alt="Vappura Exclusive" class="h-56 mx-auto object-cover rounded-lg" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Vappura Exclusive</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹6,490</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <!-- Duplicate for seamless loop -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/vapo3.png" alt="Vappura Special" class="h-56 mx-auto object-cover rounded-lg" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Vappura Special Edition</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹5,990</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/vapo1.png" alt="Vappura Collection" class="h-56 mx-auto object-cover rounded-lg" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Vappura Premium</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹4,790</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/vapo2.png" alt="Vappura Exclusive" class="h-56 mx-auto object-cover rounded-lg" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Vappura Exclusive</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹6,490</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
+            {% endfor %}
         </div>
     </div>
 </section>
 
+<div class="section-divider"></div>
+
 <!-- ================= TRENDING NOW (Slide Left) ================= -->
 <section class="w-full py-16 text-center bg-gradient-to-br from-gray-50 to-white">
     
-    <div class="mb-12">
+    <div class="mb-12 fade-in-up">
         <h2 class="text-3xl md:text-4xl font-bold mb-3 text-[#A24E34]">Trending Now</h2>
         <p class="text-gray-600">Most popular picks this season</p>
     </div>
 
-    <!-- Slider Container -->
-    <div class="scroll-container">
-        <div class="scroll-content slide-left">
+    <div class="scroll-container overflow-x-auto" id="trending-scroll">
+        <div class="scroll-content slide-left" id="trending-content">
+            {% for p in trending_products %}
+            <div class="product-card flex-shrink-0 relative">
+                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+                    <div class="floating-label" style="background-color: #B7472A;">Trending</div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                        <img src="{{ p.default_variant.primary_image.url }}" alt="{{ p.name }}" class="h-56 mx-auto object-contain transition-transform duration-500 hover:scale-105" />
+                    </div>
+
+                    <h3 class="font-bold text-lg mb-1 text-gray-800">{{ p.name }}</h3>
+                    <p class="text-[#A24E34] font-bold text-xl">₹{{ p.default_variant.price }}</p>
+
+                    <a href="{% url 'product_details' p.id %}"
+                       class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all inline-block transform hover:scale-105">
+                        Add to Cart
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
             
-            <!-- Product 1 -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
+            <!-- Duplicate content for seamless loop -->
+            {% for p in trending_products %}
+            <div class="product-card flex-shrink-0 relative">
+                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+                    <div class="floating-label" style="background-color: #B7472A;">Trending</div>
+                    
                     <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/johnnie-walker-red.png" alt="Johnnie Walker Red" class="h-56 mx-auto object-contain" />
+                        <img src="{{ p.default_variant.primary_image.url }}" alt="{{ p.name }}" class="h-56 mx-auto object-contain transition-transform duration-500 hover:scale-105" />
                     </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Johnnie Walker Red Label</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹2,790</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
+
+                    <h3 class="font-bold text-lg mb-1 text-gray-800">{{ p.name }}</h3>
+                    <p class="text-[#A24E34] font-bold text-xl">₹{{ p.default_variant.price }}</p>
+
+                    <a href="{% url 'product_details' p.id %}"
+                       class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all inline-block transform hover:scale-105">
                         Add to Cart
-                    </button>
+                    </a>
                 </div>
             </div>
-
-            <!-- Product 2 -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/bacardi.png" alt="Bacardi" class="h-56 mx-auto object-contain" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Bacardi Carta Blanca</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹890</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <!-- Product 3 -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/johnnie-walker-black.png" alt="Johnnie Walker Black" class="h-56 mx-auto object-contain" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Johnnie Walker Black Label</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹4,990</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <!-- Duplicate for seamless loop -->
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/johnnie-walker-red.png" alt="Johnnie Walker Red" class="h-56 mx-auto object-contain" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Johnnie Walker Red Label</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹2,790</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/bacardi.png" alt="Bacardi" class="h-56 mx-auto object-contain" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Bacardi Carta Blanca</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹890</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <div class="product-card flex-shrink-0">
-                <div class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100">
-                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                        <img src="/static/images/johnnie-walker-black.png" alt="Johnnie Walker Black" class="h-56 mx-auto object-contain" />
-                    </div>
-                    <h3 class="font-bold text-lg mb-1 text-gray-800">Johnnie Walker Black Label</h3>
-                    <p class="text-[#A24E34] font-bold text-xl">₹4,990</p>
-                    <button class="mt-4 px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all">
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
+            {% endfor %}
         </div>
     </div>
 </section>
@@ -619,5 +615,65 @@
     </div>
 </footer>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Enhanced scroll functionality
+        const scrollContainers = document.querySelectorAll('.scroll-container');
+        
+        scrollContainers.forEach(container => {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+            
+            // Mouse drag functionality
+            container.addEventListener('mousedown', (e) => {
+                isDown = true;
+                container.classList.add('grabbing');
+                startX = e.pageX - container.offsetLeft;
+                scrollLeft = container.scrollLeft;
+            });
+            
+            container.addEventListener('mouseleave', () => {
+                isDown = false;
+                container.classList.remove('grabbing');
+            });
+            
+            container.addEventListener('mouseup', () => {
+                isDown = false;
+                container.classList.remove('grabbing');
+            });
+            
+            container.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - container.offsetLeft;
+                const walk = (x - startX) * 2; // Scroll speed multiplier
+                container.scrollLeft = scrollLeft - walk;
+            });
+            
+            // Mouse wheel horizontal scrolling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                container.scrollLeft += e.deltaY;
+            });
+        });
+        
+        // Pause animation when user interacts with scroll
+        const scrollContents = document.querySelectorAll('.scroll-content');
+        
+        scrollContents.forEach(content => {
+            const container = content.parentElement;
+            
+            container.addEventListener('mouseenter', () => {
+                content.style.animationPlayState = 'paused';
+            });
+            
+            container.addEventListener('mouseleave', () => {
+                content.style.animationPlayState = 'running';
+            });
+        });
+    });
+</script>
+
 </body>   
-</html>
+</html> 

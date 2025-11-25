@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
 from .models import CustomUser
+from products.models import Products,ProductVariants
 
 from django.views.decorators.cache import never_cache
 import random
+from django.db.models import Count
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -152,21 +154,55 @@ def resend_otp(request):
 
     )
     return redirect("user_signupotp")
+from django.shortcuts import render, redirect
+from django.db.models import Count
+from allauth.socialaccount.models import SocialAccount
+from django.views.decorators.cache import never_cache
 
 @never_cache
 def user_homepage(request):
 
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
+
     user = request.user
     fullname = user.fullname
 
+    # FETCH ALL VALID PRODUCTS
+    products = (
+        Products.objects
+        .annotate(variant_count=Count("variants"))
+        .filter(
+            is_active=True,
+            category__is_active=True,
+            brand__is_active=True,
+            variant_count__gte=1
+        )
+        .select_related("brand", "category")
+    )
+
+    # Add default variant (highest price)
+    for product in products:
+        product.default_variant = product.variants.order_by("-price").first()
+
+    # Handle Google Name
     if not fullname:
         google_account = SocialAccount.objects.filter(user=user, provider="google").first()
         if google_account:
-            fullname = google_account.extra_data.get("name") 
+            fullname = google_account.extra_data.get("name")
 
-    return render(request, "user_home.html", {"fullname": fullname})
+    # Send SAME DATA to all sections
+    return render(
+        request,
+        "user_home.html",
+        {
+            "fullname": fullname,
+            "featured_products": products,
+            "trending_products": products,
+            "handpicked_products": products,
+        }
+    )
+
 
 @never_cache
 def landing_page(request):
