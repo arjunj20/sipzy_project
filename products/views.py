@@ -108,12 +108,15 @@ def userproduct_list(request):
 
 
 @never_cache
-def product_detail(request, product_id):
+def product_details(request, product_id):
 
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
 
-    product = get_object_or_404(Products, id=product_id, is_active=True)
+    product = get_object_or_404(Products, id=product_id)
+
+    if not product.is_active:
+        return render(request, "product_unavailable.html", {"message": "this product is currently unavailable"})
     
     if not product.is_active:
         return redirect('product_list')

@@ -10,7 +10,78 @@
     body {
       background-color: #F8F9FA;
     }
+    /* Hover shine effect used on logo */
+.hover-shine {
+    position: relative;
+    overflow: hidden;
+}
+.hover-shine::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    transition: all 0.6s;
+}
+.hover-shine:hover::before {
+    left: 100%;
+}
+
+/* Floating animation for logo */
+.float-animation {
+    animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+/* Glow effect if used */
+.glow-effect {
+    animation: glow 2s ease-in-out infinite;
+}
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(162, 78, 52, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(162, 78, 52, 0.6); }
+}
+
+/* Navigation hover underline animation */
+nav a {
+    position: relative;
+}
+nav a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 0.5px;
+    width: 0;
+    background-color: yellow;
+    transition: width 0.3s;
+}
+nav a:hover::after {
+    width: 100%;
+}
+
+/* Icon hover scale */
+.icon-hover:hover {
+    transform: scale(1.1);
+    transition: transform 0.3s;
+}
+
+/* Logout button animation */
+.logout-btn {
+    transition: all 0.3s ease;
+}
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
   </style>
+  
 </head>
 
 <body class="flex flex-col min-h-screen">
