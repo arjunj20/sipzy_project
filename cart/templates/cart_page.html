@@ -49,15 +49,18 @@
                     <p class="text-sm text-gray-500">{{ item.product.brand }}</p>
                 </div>
 
-                <button class="text-gray-400 hover:text-red-500 transition-colors remove-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor">
-                        <path fill-rule="evenodd" 
-                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 
-                                 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 
-                                 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 
-                                 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </button>
+                  
+
+                <button class="remove-item" data-id="{{ item.id }}">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor">
+        <path fill-rule="evenodd" 
+              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 
+                 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 
+                 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 
+                 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+    </svg>
+</button>
+
             </div>
 
             <div class="mt-2 flex flex-wrap gap-2 text-sm">
@@ -271,114 +274,6 @@
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Quantity adjustment functionality
-        document.querySelectorAll('.cart-item').forEach(item => {
-            const minusBtn = item.querySelector('.quantity-minus');
-            const plusBtn = item.querySelector('.quantity-plus');
-            const quantityInput = item.querySelector('.quantity-input');
-            const maxStock = parseInt(quantityInput.getAttribute('max'));
-            
-            minusBtn.addEventListener('click', function() {
-                let currentValue = parseInt(quantityInput.value);
-                if (currentValue > 1) {
-                    quantityInput.value = currentValue - 1;
-                    updateCartItem(item, quantityInput.value);
-                }
-            });
-            
-            plusBtn.addEventListener('click', function() {
-                let currentValue = parseInt(quantityInput.value);
-                if (currentValue < maxStock) {
-                    quantityInput.value = currentValue + 1;
-                    updateCartItem(item, quantityInput.value);
-                }
-            });
-            
-            quantityInput.addEventListener('change', function() {
-                let value = parseInt(this.value);
-                if (value < 1) this.value = 1;
-                if (value > maxStock) this.value = maxStock;
-                updateCartItem(item, this.value);
-            });
-        });
-        
-        // Variant selection functionality
-        document.querySelectorAll('.variant-select').forEach(select => {
-            select.addEventListener('change', function() {
-                const item = this.closest('.cart-item');
-                updateCartItem(item, item.querySelector('.quantity-input').value, this.value);
-            });
-        });
-        
-        // Remove item functionality
-        document.querySelectorAll('.remove-item').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const item = this.closest('.cart-item');
-                removeCartItem(item);
-            });
-        });
-        
-        // Function to update cart item (would typically make an AJAX call)
-        function updateCartItem(item, quantity, variantId = null) {
-            // In a real implementation, this would make an AJAX call to update the cart
-            console.log('Updating cart item:', {
-                item: item.dataset.itemId,
-                quantity: quantity,
-                variant: variantId || item.querySelector('.variant-select').value
-            });
-            
-            // For demo purposes, we'll just update the UI
-            const price = parseFloat(item.querySelector('.unit-price').textContent.replace('₹', ''));
-            const totalElement = item.querySelector('.item-total');
-            totalElement.textContent = '₹' + (price * quantity).toFixed(2);
-            
-            // Recalculate cart totals (in a real app, this would come from the server)
-            updateCartTotals();
-        }
-        
-        // Function to remove cart item (would typically make an AJAX call)
-        function removeCartItem(item) {
-            // In a real implementation, this would make an AJAX call to remove the item
-            console.log('Removing cart item:', item.dataset.itemId);
-            
-            // For demo purposes, we'll just remove it from the UI
-            item.style.opacity = '0';
-            setTimeout(() => {
-                item.remove();
-                updateCartTotals();
-                
-                // If no items left, show empty cart state
-                if (document.querySelectorAll('.cart-item').length === 0) {
-                    showEmptyCartState();
-                }
-            }, 300);
-        }
-        
-        // Function to update cart totals (in a real app, this would come from the server)
-        function updateCartTotals() {
-            // This is a simplified version - in reality, you'd get these values from the server
-            let subtotal = 0;
-            document.querySelectorAll('.item-total').forEach(total => {
-                subtotal += parseFloat(total.textContent.replace('₹', ''));
-            });
-            
-            // Update UI elements
-            document.querySelector('.subtotal-value').textContent = '₹' + subtotal.toFixed(2);
-            document.querySelector('.total-value').textContent = '₹' + (subtotal + 50).toFixed(2); // Adding shipping
-        }
-        
-        // Function to show empty cart state
-        function showEmptyCartState() {
-            // In a real implementation, you might redirect or show a different view
-            console.log('Cart is empty');
-        }
-    });
-</script>
-
-
 <script>
 document.querySelectorAll(".cart-item").forEach(item => {
     const itemId = item.dataset.itemId;
@@ -404,7 +299,16 @@ document.querySelectorAll(".cart-item").forEach(item => {
             })
         })
         .then(response => response.json())
-        .then(data => {
+        .then(data => { 
+
+            if (data.corrected_quantity !== undefined) {
+                qtyInput.value = data.corrected_quantity;
+            }
+
+            if (data.errors && data.errors.quantity) {
+                showToast(data.errors.quantity);  
+            }
+
             if (data.success) {
                 // Update Item Price
                 item.querySelector(".item-total").textContent = "₹" + data.item_total;
@@ -415,6 +319,7 @@ document.querySelectorAll(".cart-item").forEach(item => {
             }
         });
     }
+    
 
     minusBtn.addEventListener("click", () => {
         let value = parseInt(qtyInput.value);
@@ -435,7 +340,49 @@ document.querySelectorAll(".cart-item").forEach(item => {
     if (variantSelect) {
         variantSelect.addEventListener("change", sendUpdate);
     }
+
+
+
 });
+
+
+
+
+document.querySelectorAll(".remove-item").forEach(btn => {
+    btn.addEventListener("click", function() {
+        const itemId = this.dataset.id;
+        const itemDiv = this.closest(".cart-item");
+
+        fetch("{% url 'ajax_    delete_item' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: new URLSearchParams({ id: itemId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Remove item visually
+                itemDiv.style.opacity = "0";
+
+                setTimeout(() => {
+                    itemDiv.remove();
+
+                    // Update totals
+                    document.querySelector(".subtotal-value").textContent = "₹" + data.subtotal;
+                    document.querySelector(".total-value").textContent = "₹" + data.total;
+
+                    if (data.remaining_items === 0) {
+                        window.location.reload();
+                    }
+                }, 300);
+            }
+        });
+    });
+});
+
 </script>
 
 
