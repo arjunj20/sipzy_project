@@ -98,8 +98,8 @@
 
                 <!-- Unit Price -->
                 <div class="flex items-center gap-2 mb-2 sm:mb-0">
-                    <span class="text-lg font-bold text-[#A24E34]">
-                        ₹{{ item.variant.price }}a
+                    <span class="item-total font-bold text-[#A24E34]">
+                        ₹{% widthratio item.variant.price 1 item.quantity %}
                     </span>
                 </div>
 
@@ -353,7 +353,7 @@ document.querySelectorAll(".remove-item").forEach(btn => {
         const itemId = this.dataset.id;
         const itemDiv = this.closest(".cart-item");
 
-        fetch("{% url 'ajax_    delete_item' %}", {
+        fetch("{% url 'ajax_delete_item' %}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
