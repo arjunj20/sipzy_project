@@ -1,7 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, Min, Count, Avg
 from django.core.paginator import Paginator
-from .models import Products, Category, Brand
+from .models import Products, Category, Brand, ProductVariants
+from cart.views  import cart_page
+from cart.utils import get_user_cart,recalculate_cart_totals
+from cart.models import CartItems
 
 from django.views.decorators.cache import never_cache
 
@@ -10,7 +13,7 @@ from django.views.decorators.cache import never_cache
 def userproduct_list(request):
 
     if not request.user.is_authenticated or request.user.is_superuser:
-        return redirect("landing_page")
+        return redirect("user_login")
 
     products = (
         Products.objects
@@ -75,7 +78,7 @@ def userproduct_list(request):
     page_obj = paginator.get_page(page_number)
 
     for product in page_obj:
-        variant = product.variants.order_by("-price").first()
+        variant = product.variants.order_by("price").first()
         product.default_variant = variant
 
         
@@ -106,53 +109,122 @@ def userproduct_list(request):
         "price_ranges": price_ranges,
     })
 
-
 @never_cache
 def product_details(request, product_id):
-
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
 
     product = get_object_or_404(Products, id=product_id)
 
     if not product.is_active:
-        return render(request, "product_unavailable.html", {"message": "this product is currently unavailable"})
+        return render(request, "product_unavailable.html", 
+                     {"message": "this product is currently unavailable"})
     
-    if not product.is_active:
-        return redirect('product_list')
+    # Get primary variant (lowest price)
+    primary_variant = product.variants.order_by("price").first()
     
-    primary_variant = product.variants.first()
-    
+    # Handle variant selection from URL parameter
     variant_id = request.GET.get('variant')
     selected_variant = primary_variant
     
     if variant_id:
         try:
-            selected_variant = product.variants.get(id=variant_id)
+            selected_variant = product.variants.get(id=variant_id, is_active=True)
         except ProductVariants.DoesNotExist:
             selected_variant = primary_variant
     
+    # Handle quantity from URL parameter
+    quantity = request.GET.get('quantity', 1)
+    try:
+        quantity = int(quantity)
+        if quantity < 1:
+            quantity = 1
+        elif quantity > selected_variant.stock:
+            quantity = selected_variant.stock
+    except (ValueError, TypeError):
+        quantity = 1
+    
+    # Calculate ratings (hardcoded for now - replace with actual review logic)
     average_rating = 4.5  
     review_count = 128    
     
+    # Get related products
     related_products = Products.objects.filter(
         category=product.category,
         is_active=True
     ).exclude(id=product.id)[:4]
     
+    # Calculate discount percentage
     discount_percentage = 0
     if selected_variant.price < primary_variant.price:
-        discount_percentage = int(((primary_variant.price - selected_variant.price) / primary_variant.price) * 100)
+        discount_percentage = int(
+            ((primary_variant.price - selected_variant.price) / primary_variant.price) * 100
+        )
+    
+    # Calculate total price
+    total_price = selected_variant.price * quantity
+    
+    # Get all product images (variants + additional images)
+    all_images = []
+    for variant in product.variants.all():
+        all_images.append({
+            'url': variant.primary_image.url,
+            'alt': variant.variant,
+            'variant_id': variant.id,
+            'is_variant': True
+        })
+    
+    for image in product.images.all():
+        all_images.append({
+            'url': image.image.url,
+            'alt': product.name,
+            'variant_id': None,
+            'is_variant': False
+        })
+    
+    # Determine current main image
+    current_image = request.GET.get('image')
+    if current_image:
+        main_image = current_image
+    else:
+        main_image = selected_variant.primary_image.url
     
     context = {
         'product': product,
         'primary_variant': primary_variant,
         'selected_variant': selected_variant,
+        'quantity': quantity,
+        'total_price': total_price,
         'average_rating': average_rating,
         'review_count': review_count,
         'related_products': related_products,
         'discount_percentage': discount_percentage,
-        'reviews': [],  
+        'reviews': [],  # Add actual reviews query here
+        'all_images': all_images,
+        'main_image': main_image,
     }
     
     return render(request, 'userproduct_details.html', context)
+
+@never_cache
+def add_to_cart(request):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
+    
+    if request.method == 'POST':
+        variant_id = request.POST.get("variant_id")
+        quantity = int(request.POST.get("quantity"))
+
+        variant = get_object_or_404(ProductVariants, id=variant_id) 
+
+        cart = get_user_cart(request.user)
+        
+        cart_item = CartItems.objects.create(cart=cart, variant=variant, quantity=quantity, total_price=variant.price*quantity)
+
+        recalculate_cart_totals(cart)
+        
+        return redirect("cart_page")
+
+    return redirect("userproduct_list")
+
