@@ -1,0 +1,443 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-[#F4E9E2] via-[#FEFAF7] to-[#F4E9E2] py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Page Header -->
+        <div class="mb-8 fade-in-up">
+            <h1 class="text-3xl md:text-4xl font-bold text-[#A24E34] mb-2">Your Shopping Cart</h1>
+            <p class="text-gray-600">Review your items and proceed to checkout</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Cart Items Section -->
+            <div class="lg:col-span-2">
+                {% if cart_items %}
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    
+                    <!-- Cart Items List -->
+<div class="divide-y divide-gray-100">
+    {% for item in cart_items %}
+
+<div class="cart-item p-6 relative {% if not item.variant.product.is_active or item.quantity > item.variant.stock %}opacity-60{% endif %}"
+     data-item-id="{{ item.id }}">
+
+    {% if not item.variant.product.is_active or item.quantity > item.variant.stock %}
+        <div class="absolute inset-0 bg-gray-200 bg-opacity-50 z-10 rounded-lg"></div>
+    {% endif %}
+
+    <div class="flex flex-col sm:flex-row gap-4">
+
+        <!-- Product Image -->
+        <div class="flex-shrink-0">
+            <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
+                <img src="{{ item.variant.primary_image.url }}" 
+                     alt="{{ item.variant.product.name }}" 
+                     class="w-full h-full object-cover">
+            </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="flex-grow">
+
+            <div class="flex justify-between">
+                <div>
+                    <h3 class="font-bold text-lg text-gray-800">
+                        {{ item.variant.product.name }}
+                    </h3>
+                    <p class="text-sm text-gray-500">{{ item.product.brand }}</p>
+                </div>
+
+                <button class="text-gray-400 hover:text-red-500 transition-colors remove-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor">
+                        <path fill-rule="evenodd" 
+                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 
+                                 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 
+                                 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 
+                                 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="mt-2 flex flex-wrap gap-2 text-sm">
+                <span class="px-2 py-1 bg-gray-100 rounded-full">
+                    {{ item.variant.product.category }}
+                </span>
+            </div>
+
+            <!-- Variant Selection -->
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Variant</label>
+
+                <select class="variant-select w-full max-w-xs border border-gray-300 
+                               rounded-lg px-3 py-2 text-sm focus:outline-none 
+                               focus:ring-2 focus:ring-[#A24E34] focus:border-transparent">
+
+                    {% for variant in item.variant.product.variants.all %}
+                        <option value="{{ variant.id }}"
+                                {% if variant.id == item.variant.id %}selected{% endif %}
+                                {% if variant.stock == 0 %}disabled{% endif %}>
+                            {{ variant.variant }} - ₹{{ variant.price }}
+                            {% if variant.stock == 0 %}
+                                (Out of Stock)
+                            {% else %}
+                                ({{ variant.stock }} available)
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+
+                </select>
+            </div>
+
+            <!-- Price + Quantity -->
+            <div class="mt-4 flex flex-wrap items-center justify-between">
+
+                <!-- Unit Price -->
+                <div class="flex items-center gap-2 mb-2 sm:mb-0">
+                    <span class="text-lg font-bold text-[#A24E34]">
+                        ₹{{ item.variant.price }}a
+                    </span>
+                </div>
+
+                <!-- Quantity Controls -->
+                <div class="flex items-center">
+                    <button class="quantity-minus w-8 h-8 flex items-center justify-center 
+                                   bg-gray-100 rounded-l-lg hover:bg-gray-200">-</button>
+
+                    <input type="number"
+                           value="{{ item.quantity }}"
+                           min="1"
+                           max="{{ item.variant.stock }}"
+                           class="quantity-input w-12 h-8 text-center border-y border-gray-300">
+
+                    <button class="quantity-plus w-8 h-8 flex items-center justify-center 
+                                   bg-gray-100 rounded-r-lg hover:bg-gray-200">+</button>
+                </div>
+
+                <!-- Total Price -->
+                <div class="mt-2 sm:mt-0">
+
+                    <!-- Hidden Unit Price (needed for AJAX) -->
+                    <span class="unit-price hidden">{{ item.variant.price }}</span>
+
+                    <!-- Item Total Display -->
+                    <span class="item-total text-lg font-bold">
+                        ₹{% widthratio item.variant.price 1 item.quantity %}
+                    </span>
+                </div>
+
+            </div>
+
+            <!-- Stock Status -->
+            <div class="mt-2">
+                {% if item.variant.stock == 0 %}
+                    <span class="text-sm text-red-500 font-medium">Out of Stock</span>
+                {% elif item.quantity > item.variant.stock %}
+                    <span class="text-sm text-red-500 font-medium">
+                        Only {{ item.variant.stock }} available
+                    </span>
+                {% else %}
+                    <span class="text-sm text-green-500 font-medium">In Stock</span>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+    {% endfor %}
+</div>
+
+                    
+                    <!-- Empty Cart State -->
+                    {% else %}
+                    <div class="p-12 text-center">
+                        <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-medium text-gray-900 mb-2">Your cart is empty</h3>
+                        <p class="text-gray-500 mb-6">Add some products to your cart to continue shopping</p>
+                        <a href="{% url 'userproduct_list' %}" class="px-6 py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] transition-all duration-300 font-semibold inline-flex items-center">
+                            Continue Shopping
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                    
+            </div>
+            
+            <!-- Price Summary Section -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">Order Summary</h2>
+                    
+                    <div class="space-y-4">
+                        <!-- Subtotal -->
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span class="font-medium subtotal-value">₹{{ sub_total }}</span>
+
+                        </div>
+                        
+                        <!-- Shipping Fee -->
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Shipping Fee</span>
+                            <span class="font-medium">
+                                {% if shipping_fee == 0 %}
+                                <span class="text-green-500">Free</span>
+                                {% else %}
+                                ₹{{ shipping_fee }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <!-- Tax -->
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Tax</span>
+                            <span class="font-medium">₹{{ tax }}</span>
+                        </div>
+                        
+                        <!-- Discount -->
+                        {% if discount > 0 %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Discount</span>
+                            <span class="font-medium text-green-500">-₹{{ discount }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Divider -->
+                        <div class="border-t border-gray-200 pt-4">
+                            <div class="flex justify-between text-lg font-bold">
+                                <span>Total</span>
+                                <span class="total-value">₹{{ total }}</span>
+
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Checkout Button -->
+                    <div class="mt-8">
+                        {% if cart_items %}
+                            {% if can_checkout %}
+                            <a href="{% url 'checkout' %}" class="w-full py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] transition-all duration-300 font-semibold text-center block shadow-lg hover:shadow-xl">
+                                Proceed to Checkout
+                            </a>
+                            {% else %}
+                            <button class="w-full py-3 bg-gray-400 text-white rounded-full font-semibold text-center block cursor-not-allowed" disabled>
+                                Cannot Checkout
+                            </button>
+                            <p class="text-sm text-red-500 mt-2 text-center">
+                                {% if has_blocked_items %}Some items are unavailable{% endif %}
+                                {% if has_out_of_stock %}Some items are out of stock{% endif %}
+                                {% if has_excess_quantity %}Quantity exceeds available stock{% endif %}
+                            </p>
+                            {% endif %}
+                        {% else %}
+                        <button class="w-full py-3 bg-gray-400 text-white rounded-full font-semibold text-center block cursor-not-allowed" disabled>
+                            Proceed to Checkout
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Continue Shopping Link -->
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'userproduct_list' %}" class="text-[#A24E34] hover:text-[#8D3A28] transition-colors inline-flex items-center text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Continue Shopping
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Promo Code Section -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 mt-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Apply Promo Code</h3>
+                    <div class="flex">
+                        <input type="text" placeholder="Enter promo code" class="flex-grow border border-gray-300 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#A24E34] focus:border-transparent">
+                        <button class="bg-[#A24E34] text-white px-4 py-2 rounded-r-lg hover:bg-[#8D3A28] transition-colors font-medium">
+                            Apply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Quantity adjustment functionality
+        document.querySelectorAll('.cart-item').forEach(item => {
+            const minusBtn = item.querySelector('.quantity-minus');
+            const plusBtn = item.querySelector('.quantity-plus');
+            const quantityInput = item.querySelector('.quantity-input');
+            const maxStock = parseInt(quantityInput.getAttribute('max'));
+            
+            minusBtn.addEventListener('click', function() {
+                let currentValue = parseInt(quantityInput.value);
+                if (currentValue > 1) {
+                    quantityInput.value = currentValue - 1;
+                    updateCartItem(item, quantityInput.value);
+                }
+            });
+            
+            plusBtn.addEventListener('click', function() {
+                let currentValue = parseInt(quantityInput.value);
+                if (currentValue < maxStock) {
+                    quantityInput.value = currentValue + 1;
+                    updateCartItem(item, quantityInput.value);
+                }
+            });
+            
+            quantityInput.addEventListener('change', function() {
+                let value = parseInt(this.value);
+                if (value < 1) this.value = 1;
+                if (value > maxStock) this.value = maxStock;
+                updateCartItem(item, this.value);
+            });
+        });
+        
+        // Variant selection functionality
+        document.querySelectorAll('.variant-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const item = this.closest('.cart-item');
+                updateCartItem(item, item.querySelector('.quantity-input').value, this.value);
+            });
+        });
+        
+        // Remove item functionality
+        document.querySelectorAll('.remove-item').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const item = this.closest('.cart-item');
+                removeCartItem(item);
+            });
+        });
+        
+        // Function to update cart item (would typically make an AJAX call)
+        function updateCartItem(item, quantity, variantId = null) {
+            // In a real implementation, this would make an AJAX call to update the cart
+            console.log('Updating cart item:', {
+                item: item.dataset.itemId,
+                quantity: quantity,
+                variant: variantId || item.querySelector('.variant-select').value
+            });
+            
+            // For demo purposes, we'll just update the UI
+            const price = parseFloat(item.querySelector('.unit-price').textContent.replace('₹', ''));
+            const totalElement = item.querySelector('.item-total');
+            totalElement.textContent = '₹' + (price * quantity).toFixed(2);
+            
+            // Recalculate cart totals (in a real app, this would come from the server)
+            updateCartTotals();
+        }
+        
+        // Function to remove cart item (would typically make an AJAX call)
+        function removeCartItem(item) {
+            // In a real implementation, this would make an AJAX call to remove the item
+            console.log('Removing cart item:', item.dataset.itemId);
+            
+            // For demo purposes, we'll just remove it from the UI
+            item.style.opacity = '0';
+            setTimeout(() => {
+                item.remove();
+                updateCartTotals();
+                
+                // If no items left, show empty cart state
+                if (document.querySelectorAll('.cart-item').length === 0) {
+                    showEmptyCartState();
+                }
+            }, 300);
+        }
+        
+        // Function to update cart totals (in a real app, this would come from the server)
+        function updateCartTotals() {
+            // This is a simplified version - in reality, you'd get these values from the server
+            let subtotal = 0;
+            document.querySelectorAll('.item-total').forEach(total => {
+                subtotal += parseFloat(total.textContent.replace('₹', ''));
+            });
+            
+            // Update UI elements
+            document.querySelector('.subtotal-value').textContent = '₹' + subtotal.toFixed(2);
+            document.querySelector('.total-value').textContent = '₹' + (subtotal + 50).toFixed(2); // Adding shipping
+        }
+        
+        // Function to show empty cart state
+        function showEmptyCartState() {
+            // In a real implementation, you might redirect or show a different view
+            console.log('Cart is empty');
+        }
+    });
+</script>
+
+
+<script>
+document.querySelectorAll(".cart-item").forEach(item => {
+    const itemId = item.dataset.itemId;
+    const minusBtn = item.querySelector(".quantity-minus");
+    const plusBtn = item.querySelector(".quantity-plus");
+    const qtyInput = item.querySelector(".quantity-input");
+    const variantSelect = item.querySelector(".variant-select");
+
+    function sendUpdate() {
+        const quantity = qtyInput.value;
+        const variantId = variantSelect ? variantSelect.value : null;
+
+        fetch("{% url 'update_cart_item' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: new URLSearchParams({
+                item_id: itemId,
+                quantity: quantity,
+                variant_id: variantId,
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update Item Price
+                item.querySelector(".item-total").textContent = "₹" + data.item_total;
+
+                // Update Cart Totals
+                document.querySelector(".subtotal-value").textContent = "₹" + data.subtotal;
+                document.querySelector(".total-value").textContent = "₹" + data.total;
+            }
+        });
+    }
+
+    minusBtn.addEventListener("click", () => {
+        let value = parseInt(qtyInput.value);
+        if (value > 1) {
+            qtyInput.value = value - 1;
+            sendUpdate();
+        }
+    });
+
+    plusBtn.addEventListener("click", () => {
+        let value = parseInt(qtyInput.value);
+        qtyInput.value = value + 1;
+        sendUpdate();
+    });
+
+    qtyInput.addEventListener("change", sendUpdate);
+
+    if (variantSelect) {
+        variantSelect.addEventListener("change", sendUpdate);
+    }
+});
+</script>
+
+
+
+{% endblock %}
