@@ -47,6 +47,7 @@ class ProductVariants(models.Model):
     primary_image = CloudinaryField('image')
     stock = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    gst_rate = models.FloatField(default=18.0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

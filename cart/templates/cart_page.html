@@ -97,11 +97,12 @@
             <div class="mt-4 flex flex-wrap items-center justify-between">
 
                 <!-- Unit Price -->
-                <div class="flex items-center gap-2 mb-2 sm:mb-0">
-                    <span class="item-total font-bold text-[#A24E34]">
-                        ₹{% widthratio item.variant.price 1 item.quantity %}
-                    </span>
-                </div>
+<div class="flex items-center gap-2 mb-2 sm:mb-0">
+    <span class="unit-price-display font-bold text-[#A24E34]">
+        ₹{{ item.variant.price }}
+    </span>
+</div>
+
 
                 <!-- Quantity Controls -->
                 <div class="flex items-center">
@@ -204,7 +205,8 @@
                         <!-- Tax -->
                         <div class="flex justify-between">
                             <span class="text-gray-600">Tax</span>
-                            <span class="font-medium">₹{{ tax }}</span>
+                            <span class="tax-value font-medium">₹{{ tax }}</span>
+
                         </div>
                         
                         <!-- Discount -->
@@ -316,6 +318,14 @@ document.querySelectorAll(".cart-item").forEach(item => {
                 // Update Cart Totals
                 document.querySelector(".subtotal-value").textContent = "₹" + data.subtotal;
                 document.querySelector(".total-value").textContent = "₹" + data.total;
+
+                document.querySelectorAll(".tax-value").forEach(el => {
+                el.textContent = "₹" + data.tax;
+                });
+
+                document.querySelectorAll(".shipping-value").forEach(el => {
+                el.textContent = data.shipping === 0 ? "Free" : "₹" + data.shipping;
+                });
             }
         });
     }
@@ -364,21 +374,19 @@ document.querySelectorAll(".remove-item").forEach(btn => {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // Remove item visually
-                itemDiv.style.opacity = "0";
+    // Update Item Price
+    item.querySelector(".item-total").textContent = "₹" + data.item_total;
 
-                setTimeout(() => {
-                    itemDiv.remove();
+    // Update ALL Subtotal and Total elements
+    document.querySelectorAll(".subtotal-value").forEach(el => {
+        el.textContent = "₹" + data.subtotal;
+    });
 
-                    // Update totals
-                    document.querySelector(".subtotal-value").textContent = "₹" + data.subtotal;
-                    document.querySelector(".total-value").textContent = "₹" + data.total;
+    document.querySelectorAll(".total-value").forEach(el => {
+        el.textContent = "₹" + data.total;
+    });
+}
 
-                    if (data.remaining_items === 0) {
-                        window.location.reload();
-                    }
-                }, 300);
-            }
         });
     });
 });
