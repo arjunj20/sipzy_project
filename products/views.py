@@ -220,11 +220,24 @@ def add_to_cart(request):
 
         cart = get_user_cart(request.user)
         
-        cart_item = CartItems.objects.create(cart=cart, variant=variant, quantity=quantity, total_price=variant.price*quantity)
+        cart_item, created = CartItems.objects.get_or_create(cart=cart, variant=variant, defaults={"quantity": quantity, "total_price": variant.price * quantity})
+
+        limit = 5
+        
+        if not created:
+
+            if cart_item.quantity + quantity <=limit:
+                cart_item.quantity += quantity
+                cart_item.total_price = cart_item.quantity * variant.price
+                cart_item.save()
+            else:
+                request.session["limit_reached"] = variant_id
+                return redirect("cart_page")
 
         recalculate_cart_totals(cart)
         
         return redirect("cart_page")
+    
 
     return redirect("userproduct_list")
 

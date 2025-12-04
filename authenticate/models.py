@@ -50,3 +50,24 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.fullname or self.email or ""
+    
+class Address(models.Model):
+    user =  models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="addresses")
+    full_name = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15)
+
+    address_line1 = models.CharField(max_length=200)
+    address_line2 = models.CharField(max_length=200, blank=True, null=True)
+
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    country = models.CharField(max_length=100, default="India")
+    pincode = models.CharField(max_length=10)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.full_name}"
+
+
+
