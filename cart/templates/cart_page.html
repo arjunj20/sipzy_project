@@ -374,22 +374,38 @@ document.querySelectorAll(".remove-item").forEach(btn => {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-    // Update Item Price
-    item.querySelector(".item-total").textContent = "₹" + data.item_total;
 
-    // Update ALL Subtotal and Total elements
-    document.querySelectorAll(".subtotal-value").forEach(el => {
-        el.textContent = "₹" + data.subtotal;
-    });
+                // Smooth fade-out animation
+                itemDiv.style.transition = "opacity 0.3s ease";
+                itemDiv.style.opacity = "0";
 
-    document.querySelectorAll(".total-value").forEach(el => {
-        el.textContent = "₹" + data.total;
-    });
-}
+                // THEN remove element
+                setTimeout(() => {
+                    itemDiv.remove();
 
+                    // Update subtotal + total
+                    document.querySelectorAll(".subtotal-value").forEach(el => {
+                        el.textContent = "₹" + data.subtotal;
+                    });
+            document.querySelectorAll(".tax-value").forEach(el => {
+                el.textContent = "₹" + data.tax;
+            });
+
+            document.querySelectorAll(".shipping-value").forEach(el => {
+                el.textContent = data.shipping === 0 ? "Free" : "₹" + data.shipping;
+            });
+
+
+                    // If cart becomes empty, refresh
+                    if (data.remaining_items === 0) {
+                        window.location.reload();
+                    }
+                }, 300);
+            }
         });
     });
 });
+
 
 </script>
 
