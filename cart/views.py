@@ -22,6 +22,7 @@ def cart_page(request):
         "sub_total": cart.item_subtotal,
         "shipping_fee": cart.shipping_fee,
         "total": cart.total_price,
+        "tax": cart.tax,
 
 
 
@@ -92,17 +93,17 @@ def ajax_delete_item(request):
     cart = get_user_cart(request.user)
     item = get_object_or_404(CartItems, id=item_id, cart=cart)
     item.delete()
-
-    # Recalculate totals
     cart_items = cart.cart_items.all()
     cart.item_subtotal = sum(i.total_price for i in cart_items)
     cart.total_price = cart.item_subtotal + cart.shipping_fee
     cart.save()
-    
+    recalculate_cart_totals(cart)
     return JsonResponse({
         "success": True,
         "subtotal": float(cart.item_subtotal),
-        "total": float(cart.total_price),
+        "total": float(cart.total_price),    
+        "shipping": float(cart.shipping_fee),
+        "tax": float(cart.tax),   
         "remaining_items": cart_items.count(),
     })
 

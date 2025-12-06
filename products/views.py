@@ -5,7 +5,8 @@ from .models import Products, Category, Brand, ProductVariants
 from cart.views  import cart_page
 from cart.utils import get_user_cart,recalculate_cart_totals
 from cart.models import CartItems
-
+from decimal import Decimal, ROUND_HALF_UP
+from django.db import transaction
 from django.views.decorators.cache import never_cache
 
 
@@ -206,38 +207,96 @@ def product_details(request, product_id):
     
     return render(request, 'userproduct_details.html', context)
 
+from decimal import Decimal, ROUND_HALF_UP
+from django.db import transaction
+from django.shortcuts import redirect, get_object_or_404
+from django.views.decorators.cache import never_cache
+
 @never_cache
 def add_to_cart(request):
 
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
-    
-    if request.method == 'POST':
-        variant_id = request.POST.get("variant_id")
-        quantity = int(request.POST.get("quantity"))
 
-        variant = get_object_or_404(ProductVariants, id=variant_id) 
+    if request.method != "POST":
+        return redirect("userproduct_list")
+
+ 
+    variant_id = request.POST.get("variant_id")
+
+    try:
+        qty = int(request.POST.get("quantity", 1))
+    except (ValueError, TypeError):
+        qty = 1
+
+    if qty < 1:
+        qty = 1
+    variant = get_object_or_404(ProductVariants, id=variant_id, is_active=True)
+
+
+    ITEM_LIMIT = 5
+
+    if variant.stock == 0:
+        request.session["error"] = "This variant is out of stock."
+        return redirect("product_details", product_id=variant.product.id)
+
+    if qty > variant.stock:
+        qty = variant.stock
+
+    if qty > ITEM_LIMIT:
+        qty = ITEM_LIMIT
+        request.session["error"] = "Users can only select a maximum of 5 units."
+
+    def compute_money(unit_price, gst_rate, quantity):
+        u = Decimal(str(unit_price))
+        g = Decimal(str(gst_rate or 0))
+
+        unit_tax = (u * g / Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        tax_amount = (unit_tax * quantity).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        price_without_tax = (u * quantity).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        total_with_tax = (price_without_tax + tax_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        return unit_tax, tax_amount, total_with_tax
+
+    gst_rate = getattr(variant, "gst_rate", 18.0)
+    unit_tax, tax_for_qty, total_with_tax = compute_money(variant.price, gst_rate, qty)
+
+    with transaction.atomic():
 
         cart = get_user_cart(request.user)
-        
-        cart_item, created = CartItems.objects.get_or_create(cart=cart, variant=variant, defaults={"quantity": quantity, "total_price": variant.price * quantity})
 
-        limit = 5
-        
-        if not created:
+        # Lock row to avoid race conditions
+        cart_item = CartItems.objects.select_for_update().filter(cart=cart, variant=variant).first()
 
-            if cart_item.quantity + quantity <=limit:
-                cart_item.quantity += quantity
-                cart_item.total_price = cart_item.quantity * variant.price
-                cart_item.save()
-            else:
-                request.session["limit_reached"] = variant_id
-                return redirect("cart_page")
+        if cart_item:
+            # Increase quantity safely
+            new_qty = cart_item.quantity + qty
 
+            # max allowed by stock + limit
+            max_allowed = min(variant.stock, ITEM_LIMIT)
+
+            if new_qty > max_allowed:
+                new_qty = max_allowed
+
+            # Recompute tax and total for NEW quantity
+            _, new_tax, new_total = compute_money(variant.price, gst_rate, new_qty)
+
+            cart_item.quantity = new_qty
+            cart_item.tax_amount = new_tax
+            cart_item.total_price = new_total
+            cart_item.save()
+
+        else:
+            # Create a new cart item
+            CartItems.objects.create(
+                cart=cart,
+                variant=variant,
+                quantity=qty,
+                tax_amount=tax_for_qty,
+                total_price=total_with_tax,
+            )
+
+        # Update cart total values
         recalculate_cart_totals(cart)
-        
-        return redirect("cart_page")
-    
 
-    return redirect("userproduct_list")
-
+    return redirect("cart_page")                  

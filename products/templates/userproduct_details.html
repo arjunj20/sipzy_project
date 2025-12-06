@@ -276,20 +276,48 @@
     overflow: hidden;
     width: 100%;
     height: 24rem;
-    border-radius: 8px;
+    border-radius: 10px;
     background: #f3f3f3;
+    cursor: zoom-in;
 }
 
 .zoom-image {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    transition: transform 0.3s ease;
-    transform-origin: center center;
+    transform: scale(1);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 0.3s ease-out;
+    will-change: transform;
 }
 
-.zoom-container:hover .zoom-image {
-    transform: scale(1.5);
-}
+
 </style>
+<script>
+const container = document.querySelector(".zoom-container");
+const image = document.querySelector(".zoom-image");
+
+let zoomLevel = 2.2; // upgraded zoom strength
+
+container.addEventListener("mouseenter", () => {
+    container.style.cursor = "zoom-out";
+    image.style.transition = "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)";
+});
+
+container.addEventListener("mousemove", (e) => {
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    image.style.transformOrigin = `${x}px ${y}px`;
+    image.style.transform = `scale(${zoomLevel})`;
+});
+
+container.addEventListener("mouseleave", () => {
+    image.style.transition = "transform 0.6s ease-out";  
+    image.style.transform = "scale(1)";
+});
+</script>
+
+
 {% endblock %}
