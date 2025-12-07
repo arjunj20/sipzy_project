@@ -6,16 +6,26 @@ from .models import CartItems
 from .utils import get_user_cart
 from django.views.decorators.http import require_POST
 from decimal import Decimal
+from authenticate.models import Address
 
 def cart_page(request):
 
-    if not request.user.is_authenticated and request.user.is_superuser:
+    if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
-    
+
     cart = get_user_cart(request.user)
     items = cart.cart_items.select_related("variant", "variant__product")
 
+    # Remove inactive or unavailable items
+    for i in items:
+        if not i.variant.product.is_active or i.variant.stock == 0:
+            i.delete()
+
+    # Refresh items after deletion
+    items = cart.cart_items.select_related("variant", "variant__product")
+
     recalculate_cart_totals(cart)
+
     context = {
         "cart": cart,
         "cart_items": items,
@@ -23,11 +33,11 @@ def cart_page(request):
         "shipping_fee": cart.shipping_fee,
         "total": cart.total_price,
         "tax": cart.tax,
-
-
-
     }
+
     return render(request, "cart_page.html", context)
+
+
 @require_POST
 def update_cart_item(request):
     errors = {}
@@ -107,3 +117,10 @@ def ajax_delete_item(request):
         "remaining_items": cart_items.count(),
     })
 
+
+
+def checkout_page(request):
+
+    address=Address.objects.all()
+    cart_items = CartItems.objects.filter(cart__user=request.user)
+    return render(request, "checkout.html" , {"addresses": address, "cart_items": cart_items})
