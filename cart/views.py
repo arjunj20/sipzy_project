@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from .utils import get_user_cart,recalculate_cart_totals
 from django.http import JsonResponse
-from .models import CartItems
+from .models import CartItems,Cart
 from .utils import get_user_cart
 from django.views.decorators.http import require_POST
 from decimal import Decimal
@@ -121,6 +121,20 @@ def ajax_delete_item(request):
 
 def checkout_page(request):
 
-    address=Address.objects.all()
-    cart_items = CartItems.objects.filter(cart__user=request.user)
-    return render(request, "checkout.html" , {"addresses": address, "cart_items": cart_items})
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
+    address=Address.objects.filter(user=request.user)
+
+    cart = Cart.objects.get(user=request.user)
+    cart_items = CartItems.objects.filter(cart=cart)
+    subtotal = sum(i.total_price for i in cart_items)
+    shipping_fee = 50 if subtotal<1000 else 0
+    total_price = subtotal + shipping_fee 
+    context = {
+        "addresses": address,
+        "cart_items": cart_items,
+        "subtotal": subtotal,
+        "shipping_fee": shipping_fee,
+        "total_price": total_price,
+    }
+    return render(request, "checkout.html" , context)
