@@ -230,20 +230,10 @@
                     <!-- Checkout Button -->
                     <div class="mt-8">
                         {% if cart_items %}
-                            {% if can_checkout %}
-                            <a href="{% url 'checkout' %}" class="w-full py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] transition-all duration-300 font-semibold text-center block shadow-lg hover:shadow-xl">
+                            <a href="#" class="w-full py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] transition-all duration-300 font-semibold text-center block shadow-lg hover:shadow-xl">
                                 Proceed to Checkout
                             </a>
-                            {% else %}
-                            <button class="w-full py-3 bg-gray-400 text-white rounded-full font-semibold text-center block cursor-not-allowed" disabled>
-                                Cannot Checkout
-                            </button>
-                            <p class="text-sm text-red-500 mt-2 text-center">
-                                {% if has_blocked_items %}Some items are unavailable{% endif %}
-                                {% if has_out_of_stock %}Some items are out of stock{% endif %}
-                                {% if has_excess_quantity %}Quantity exceeds available stock{% endif %}
-                            </p>
-                            {% endif %}
+                           
                         {% else %}
                         <button class="w-full py-3 bg-gray-400 text-white rounded-full font-semibold text-center block cursor-not-allowed" disabled>
                             Proceed to Checkout
