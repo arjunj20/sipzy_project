@@ -230,7 +230,7 @@
                     <!-- Checkout Button -->
                     <div class="mt-8">
                         {% if cart_items %}
-                            <a href="#" class="w-full py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] transition-all duration-300 font-semibold text-center block shadow-lg hover:shadow-xl">
+                            <a href="{% url 'checkout_page' %}" class="w-full py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] transition-all duration-300 font-semibold text-center block shadow-lg hover:shadow-xl">
                                 Proceed to Checkout
                             </a>
                            

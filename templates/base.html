@@ -129,6 +129,10 @@ nav a:hover::after {
   <!-- 🔸 CONTENT BLOCK -->
   <main class="flex-grow">
     {% block content %}
+    {% if breadcrumbs %}
+    {% include "components/breadcrumbs.html" %}
+{% endif %}
+
     {% endblock %}
   </main>
 

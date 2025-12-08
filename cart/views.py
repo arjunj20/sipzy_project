@@ -7,6 +7,8 @@ from .utils import get_user_cart
 from django.views.decorators.http import require_POST
 from decimal import Decimal
 from authenticate.models import Address
+from orders.models import Order,OrderItem
+
 
 def cart_page(request):
 
@@ -138,3 +140,79 @@ def checkout_page(request):
         "total_price": total_price,
     }
     return render(request, "checkout.html" , context)
+
+def place_order(request):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
+
+    if request.method == 'POST':
+        user = request.user
+        selected_address_id = request.POST.get("selected_address")
+        payment_method = request.POST.get("payment_method")
+
+        if not selected_address_id:
+            messages.error(request, "Please select a delivery address")
+            return redirect("checkout_page")
+
+        try:
+            address = Address.objects.get(id=selected_address_id, user=user)
+        except Address.DoesNotExist:
+            messages.error(request, "Invalid address selected")
+            return redirect("checkout_page")
+
+        cart_items = CartItems.objects.filter(cart__user=user)
+
+        subtotal = sum(item.total_price for item in cart_items)
+        shipping_fee = 50 if subtotal < 1000 else 0
+
+        tax = Decimal("0")
+        for item in cart_items:
+            gst_rate = Decimal(item.variant.gst_rate)
+            item_tax_amount = item.total_price * (gst_rate / Decimal("100"))
+            tax += item_tax_amount
+
+        tax = round(tax, 2)
+        discount = Decimal("0")
+        total_price = subtotal + shipping_fee + tax - discount
+
+        order = Order.objects.create(
+            user=user,
+            address=address,
+            payment_method=payment_method,
+            subtotal=subtotal,
+            tax=tax,
+            shipping_fee=shipping_fee,
+            discount=discount,
+            total=total_price,
+            payment_status="not paid" if payment_method == "COD" else "pending",
+        )
+
+        count = 1
+        for i in cart_items:
+            order_item = OrderItem.objects.create(
+                order=order,
+                product=i.variant.product,
+                variant=i.variant,
+                quantity=i.quantity,
+                price=i.total_price,
+            )
+
+            order_item.sub_order_id = f"{order.order_number}-{count}"
+            order_item.save(update_fields=["sub_order_id"])
+            variant = i.variant
+            variant.stock -= i.quantity
+            variant.save(update_fields=["stock"])
+
+            count += 1
+
+        cart_items.delete()
+
+        return redirect("order_placed", order_id=order.id)
+
+
+    return redirect("checkout_page")
+
+def order_placed(request, order_id):
+    order = Order.objects.get(id=order_id, user=request.user)
+    return render(request, "order_placed.html", {"order": order})

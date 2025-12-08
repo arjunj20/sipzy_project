@@ -818,7 +818,7 @@
                         </div>
 
                         <!-- Place Order Button -->
-                        <form action="#" method="POST" id="checkoutForm">
+                        <form action="{% url 'place_order' %}" method="POST" id="checkoutForm">
                             {% csrf_token %}
                             <input type="hidden" name="selected_address" id="selectedAddressInput">
                             <input type="hidden" name="payment_method" id="paymentMethodInput" value="COD">
