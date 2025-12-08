@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'adminpanel',
     'products',
     'cart',
+    'orders',
     'cloudinary',
     'cloudinary_storage',
 

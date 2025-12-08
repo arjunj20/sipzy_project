@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-5xl">
+
+    <!-- Header -->
+    <div class="mb-6">
+        <h2 class="text-3xl font-bold text-gray-900">Order Details</h2>
+        <p class="text-gray-500 text-sm">Order ID: #{{ order.order_number }}</p>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="bg-white shadow-sm rounded-xl border p-5 mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Order Summary</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <p><strong>Order Date:</strong> {{ order.created_at|date:"d M Y, h:i A" }}</p>
+            <p><strong>Payment:</strong> {{ order.payment_method }} ({{ order.payment_status }})</p>
+            <p><strong>Subtotal:</strong> ₹{{ order.subtotal }}</p>
+            <p><strong>Shipping Fee:</strong> ₹{{ order.shipping_fee }}</p>
+            <p><strong>Tax:</strong> ₹{{ order.tax }}</p>
+            <p><strong>Total Amount:</strong> <span class="font-bold">₹{{ order.total }}</span></p>
+        </div>
+    </div>
+
+    <!-- Items -->
+  <!-- Items Section -->
+<div class="bg-white shadow-sm rounded-xl border overflow-hidden mt-6">
+    <table class="w-full">
+        <thead class="bg-gray-50 border-b">
+            <tr>
+                <th class="px-6 py-4 text-left text-sm font-semibold">Product</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold">Qty</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold">Price</th>
+                <th class="px-6 py-4 text-left text-sm font-semibold">Status</th>
+                <th class="px-6 py-4 text-right text-sm font-semibold">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y">
+            {% for item in items %}
+            <tr class="hover:bg-gray-50">
+                <!-- Product Name + Variant -->
+<td class="px-6 py-4">
+    <div class="font-medium text-gray-900">{{ item.product.name }}</div>
+
+    {% if item.variant %}
+    <div class="text-xs text-gray-500">Variant: {{ item.variant.variant }}</div>
+    {% endif %}
+
+    {% if item.sub_order_id %}
+    <div class="text-xs text-blue-600 font-semibold mt-1">
+        Item Order ID: {{ item.sub_order_id }}
+    </div>
+    {% endif %}
+</td>
+
+                <td class="px-6 py-4">{{ item.quantity }}</td>
+                <td class="px-6 py-4">₹{{ item.price }}</td>
+
+                <!-- Status Badge -->
+                <td class="px-6 py-4">
+                    <span class="px-3 py-1 text-xs rounded-full text-white
+                        {% if item.status == 'pending' %} bg-yellow-500
+                        {% elif item.status == 'processing' %} bg-blue-500
+                        {% elif item.status == 'shipped' %} bg-indigo-500
+                        {% elif item.status == 'delivered' %} bg-green-600
+                        {% elif item.status == 'cancelled' %} bg-red-600
+                        {% elif item.status == 'returned' %} bg-gray-700
+                        {% endif %}">
+                        {{ item.status|title }}
+                    </span>
+                </td>
+
+                <!-- Buttons -->
+
+
+                <td class="px-6 py-4 text-right">
+                    <div class="flex justify-end gap-2">
+
+                                         <a href="{% url 'item_invoice' item.id %}"
+   class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">
+   Download Invoice
+</a>
+
+                        {% if item.status != "delivered" and item.status != "cancelled" %}
+                        <!-- Cancel Button -->
+                        <button 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg"
+                            data-modal-target="cancelModal{{ item.id }}">
+                            Cancel
+                        </button>
+                        {% endif %}
+
+                        {% if item.status == "delivered" %}
+                        <!-- Return Button -->
+                        <button 
+                            class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-lg"
+                            data-modal-target="returnModal{{ item.id }}">
+                            Return
+                        </button>
+                        {% endif %}
+
+                    </div>
+                </td>
+            </tr>
+
+
+
+            <!-- Cancel Modal -->
+<!-- Cancel Modal -->
+<div id="cancelModal{{ item.id }}" 
+     class="modal-overlay hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+
+    <div class="bg-white p-6 rounded-xl shadow-xl w-96">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800">Cancel This Item?</h3>
+
+        <p class="text-gray-600 mb-6">Are you sure you want to cancel this item?</p>
+
+        <form action="{% url 'cancel_item' item.id %}" method="POST">
+            {% csrf_token %}
+            
+            <div class="flex justify-end gap-3">
+                <!-- Close Modal -->
+                <button type="button"
+                    class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+                    onclick="document.getElementById('cancelModal{{ item.id }}').classList.add('hidden')">
+                    No
+                </button>
+
+                <!-- Confirm Cancel -->
+                <button type="submit"
+                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
+                    Yes, Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+            <!-- Return Modal -->
+            <div id="returnModal{{ item.id }}" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                <div class="bg-white p-6 rounded-xl shadow-xl w-96">
+                    <h3 class="text-lg font-semibold mb-3">Return Item</h3>
+                    <form action="#" method="POST">
+                        {% csrf_token %}
+                        <label class="text-sm text-gray-600">Reason (required)</label>
+                        <textarea name="reason" class="w-full border rounded-md mt-1 p-2" required></textarea>
+                        <button class="mt-4 w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg">Submit Return</button>
+                    </form>
+                </div>
+            </div>
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    
+    // Open modal
+    document.querySelectorAll("[data-modal-target]").forEach(button => {
+        button.addEventListener("click", () => {
+            const modalId = button.getAttribute("data-modal-target");
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.remove("hidden");
+        });
+    });
+
+    // Close modal when clicking outside the box
+    document.querySelectorAll(".modal-overlay").forEach(overlay => {
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) {
+                overlay.classList.add("hidden");
+            }
+        });
+    });
+});
+</script>
+
+
+{% endblock %}
