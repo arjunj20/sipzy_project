@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Sipzy{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+
+    .float-animation {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .shimmer-effect {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        background-size: 1000px 100%;
+        animation: shimmer 3s infinite;
+    }
+
+    .profile-card {
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .profile-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(162, 78, 52, 0.15);
+    }
+
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(162, 78, 52, 0.1);
+    }
+
+    .section-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+
+    .section-card:hover {
+        border-left-color: #A24E34;
+        background: rgba(162, 78, 52, 0.02);
+    }
+
+    .address-card {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .address-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(162, 78, 52, 0.05), transparent);
+        transition: left 0.5s;
+    }
+
+    .address-card:hover::before {
+        left: 100%;
+    }
+
+    .address-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .profile-image-container {
+        position: relative;
+        width: 160px;
+        height: 160px;
+        margin: 0 auto;
+    }
+
+    .profile-image {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 6px solid white;
+        box-shadow: 0 10px 30px rgba(162, 78, 52, 0.3);
+    }
+
+    .profile-badge {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: #A24E34;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 4px solid white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #A24E34 0%, #8D3A28 100%);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 35px rgba(162, 78, 52, 0.3);
+    }
+
+    .action-btn {
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+        transform: translateX(5px);
+    }
+
+    .stagger-animation > * {
+        opacity: 0;
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+    
+    .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
+    .stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
+    .stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
+    .stagger-animation > *:nth-child(4) { animation-delay: 0.4s; }
+    .stagger-animation > *:nth-child(5) { animation-delay: 0.5s; }
+    .stagger-animation > *:nth-child(6) { animation-delay: 0.6s; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Profile Hero Section -->
+<section class="relative bg-gradient-to-r from-[#B7472A] via-[#9A4530] to-[#A24E34] text-white py-16 overflow-hidden">
+    <div class="absolute top-0 left-0 w-72 h-72 bg-white/5 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-0 right-0 w-96 h-96 bg-black/10 rounded-full blur-3xl"></div>
+    
+    <div class="relative z-10 max-w-6xl mx-auto px-6 md:px-12">
+        <div class="flex flex-col md:flex-row items-center gap-8">
+            <!-- Profile Image -->
+            <div class="profile-image-container">
+                <img src="https://ui-avatars.com/api/?name=User&size=160&background=A24E34&color=fff" alt="Profile Picture" class="profile-image">
+                <div class="profile-badge">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Profile Info -->
+            <div class="flex-1 text-center md:text-left">
+                <h1 class="text-4xl md:text-5xl font-bold mb-2">{{ user.fullname }}</h1>
+                <p class="text-lg opacity-90 mb-4">{{ user.email }}</p>
+                <div class="flex flex-wrap gap-3 justify-center md:justify-start">
+                    <span class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold border border-white/30">
+                        Member since {{ user.joined_date|date:"M Y" }}
+                    </span>
+                    <span class="px-4 py-2 bg-yellow-400/20 backdrop-blur-sm rounded-full text-yellow-300 text-sm font-semibold border border-yellow-400/30">
+                        Gold Tier Member
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<section class="max-w-6xl mx-auto px-6 md:px-12 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- Left Sidebar - Quick Actions -->
+        <div class="md:col-span-1 stagger-animation">
+            <div class="glass-effect rounded-2xl p-6 shadow-lg profile-card">
+                <h2 class="text-2xl font-bold text-[#A24E34] mb-6">Quick Actions</h2>
+                
+                <div class="space-y-4">
+                    <a href="{% url 'order_list' %}" class="section-card flex items-center gap-4 p-4 rounded-xl bg-white hover:shadow-md action-btn">
+                        <div class="w-12 h-12 bg-gradient-to-br from-[#A24E34] to-[#8D3A28] rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">My Orders</h3>
+                            <p class="text-sm text-gray-600">View order history</p>
+                        </div>
+                    </a>
+
+                    <a href="#" class="section-card flex items-center gap-4 p-4 rounded-xl bg-white hover:shadow-md action-btn">
+                        <div class="w-12 h-12 bg-gradient-to-br from-[#B7472A] to-[#A24E34] rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">Change Password</h3>
+                            <p class="text-sm text-gray-600">Update security</p>
+                        </div>
+                    </a>
+
+                    <a href="#" class="section-card flex items-center gap-4 p-4 rounded-xl bg-white hover:shadow-md action-btn">
+                        <div class="w-12 h-12 bg-gradient-to-br from-[#8D3A28] to-[#6B2A1F] rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">Wishlist</h3>
+                            <p class="text-sm text-gray-600">Saved items</p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-2 gap-4 mt-6">
+                    <div class="stat-card p-4 rounded-xl text-white text-center">
+                        <p class="text-2xl font-bold">12</p>
+                        <p class="text-xs opacity-90">Total Orders</p>
+                    </div>
+                    <div class="stat-card p-4 rounded-xl text-white text-center">
+                        <p class="text-2xl font-bold">5</p>
+                        <p class="text-xs opacity-90">Wishlist Items</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Content - Addresses -->
+        <div class="md:col-span-2">
+            <div class="glass-effect rounded-2xl p-6 md:p-8 shadow-lg profile-card">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl md:text-3xl font-bold text-[#A24E34]">Saved Addresses</h2>
+                    <button class="px-6 py-2 bg-[#A24E34] text-white rounded-full text-sm font-semibold hover:bg-[#8D3A28] transition-all shadow-lg hover:shadow-xl hover:scale-105">
+                        + Add New
+                    </button>
+                </div>
+
+                {% if user.addresses.all %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 stagger-animation">
+                        {% for address in user.addresses.all %}
+                        <div class="address-card bg-white p-6 rounded-xl border-2 border-gray-100 hover:border-[#A24E34]/30">
+                            <div class="flex justify-between items-start mb-4">
+                                <h3 class="font-bold text-lg text-gray-800">{{ address.full_name }}</h3>
+                                <span class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-semibold">Default</span>
+                            </div>
+                            
+                            <div class="space-y-2 text-gray-600 text-sm mb-4">
+                                <p class="flex items-start gap-2">
+                                    <svg class="w-4 h-4 mt-0.5 text-[#A24E34] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span>{{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}</span>
+                                </p>
+                                <p class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#A24E34]" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                    </svg>
+                                    {{ address.city }}, {{ address.state }} - {{ address.pincode }}
+                                </p>
+                                <p class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#A24E34]" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                                    </svg>
+                                    {{ address.phone_number }}
+                                </p>
+                            </div>
+
+                            <div class="flex gap-3 pt-4 border-t border-gray-100">
+                                <button class="flex-1 px-4 py-2 bg-[#A24E34]/10 text-[#A24E34] rounded-lg text-sm font-semibold hover:bg-[#A24E34]/20 transition-all">
+                                    Edit
+                                </button>
+                                <button class="flex-1 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-100 transition-all">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-16">
+                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">No Addresses Saved</h3>
+                        <p class="text-gray-600 mb-6">Add your first address to get started with faster checkout</p>
+                        <button class="px-8 py-3 bg-[#A24E34] text-white rounded-full font-semibold hover:bg-[#8D3A28] transition-all shadow-lg hover:shadow-xl hover:scale-105">
+                            Add Your First Address
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="h-12"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add smooth scroll behavior
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add click animations
+        document.querySelectorAll('.action-btn, .stat-card').forEach(element => {
+            element.addEventListener('click', function() {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+        });
+    });
+</script>
+{% endblock %}
