@@ -1,0 +1,61 @@
+{% extends "admin_base.html" %}
+{% block content %}
+
+<h2 class="text-3xl font-bold mb-5">Order Items (Sub Orders)</h2>
+
+<form method="get" class="flex gap-4 mb-6">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search Order / Product / User" class="border p-2 rounded">
+
+    <select name="status" class="border p-2 rounded">
+        <option value="">All Status</option>
+        {% for value,label in items.paginator.object_list.model.ITEM_STATUS_CHOICES %}
+        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="sort" class="border p-2 rounded">
+        <option value="-created_at">Latest First</option>
+        <option value="created_at">Oldest First</option>
+    </select>
+
+    <button class="bg-blue-500 text-white px-4 py-2 rounded">Apply</button>
+    <a href="{% url 'admin_order_item_list' %}" class="bg-gray-500 text-white px-4 py-2 rounded">Clear</a>
+</form>
+
+<div class="overflow-x-auto">
+<table class="min-w-full bg-white shadow rounded">
+    <thead class="bg-gray-100 font-semibold">
+        <tr>
+            <th class="px-4 py-3">SubOrder ID</th>
+            <th class="px-4 py-3">Main Order</th>
+            <th class="px-4 py-3">Product</th>
+            <th class="px-4 py-3">Qty</th>
+            <th class="px-4 py-3">Price</th>
+            <th class="px-4 py-3">User</th>
+            <th class="px-4 py-3">Date</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Action</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for i in items %}
+        <tr class="border-b">
+            <td class="px-4 py-3">{{ i.sub_order_id }}</td>
+            <td class="px-4 py-3">{{ i.order.order_number }}</td>
+            <td class="px-4 py-3">{{ i.product.name }}</td>
+            <td class="px-4 py-3">{{ i.quantity }}</td>
+            <td class="px-4 py-3">₹{{ i.price }}</td>
+            <td class="px-4 py-3">{{ i.order.user.fullname }}</td>
+            <td class="px-4 py-3">{{ i.created_at|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-3">{{ i.status }}</td>
+            <td class="px-4 py-3">
+                <a href="{% url 'admin_order_item_detail' i.id %}"  class="bg-blue-600 text-white px-3 py-1 rounded">View</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% endblock %}

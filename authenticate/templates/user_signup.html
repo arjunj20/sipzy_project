@@ -16,37 +16,35 @@
     <div class="md:w-1/2 bg-[#F8F9FA] flex flex-col justify-center items-center p-10">
       <h2 class="text-3xl font-semibold text-[#B7472A] mb-6">SIGN UP</h2>
 
-      <form method="POST" class="w-full max-w-sm space-y-4">
-        {% csrf_token %}
-        <input type="text" name="fullname" placeholder="Full Name" class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]" >
-        {% if errors.fullname %}
-         <p class="text-red-600 text-sm mt-1">{{ errors.fullname }}</p>
-        {% endif %}
-        {% if errors.fullname_exist %}
-         <p class="text-red-600 text-sm mt-1">{{ errors.fullname_exist }}</p>
-        {% endif %}
+<form method="POST" class="w-full max-w-sm space-y-4" onsubmit="return validateSignup()">
+    {% csrf_token %}
 
+    <input type="text" id="fullname" name="fullname" placeholder="Full Name"
+        class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]">
+    <p id="fullname_error" class="text-red-600 text-sm mt-1"></p>
+    {% if errors.fullname %}<p class="text-red-600 text-sm">{{ errors.fullname }}</p>{% endif %}
+    {% if errors.fullname_exist %}<p class="text-red-600 text-sm">{{ errors.fullname_exist }}</p>{% endif %}
 
-        <input type="email" name="email" placeholder="Email" class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]" >
-         {% if errors.email %}
-         <p class="text-red-600 text-sm mt-1">{{ errors.email }}</p>
-        {% endif %}
-        {% if errors.email_exist %}
-         <p class="text-red-600 text-sm mt-1">{{ errors.email_exist }}</p>
-        {% endif %}
+    <input type="email" id="email" name="email" placeholder="Email"
+        class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]">
+    <p id="email_error" class="text-red-600 text-sm mt-1"></p>
+    {% if errors.email %}<p class="text-red-600 text-sm">{{ errors.email }}</p>{% endif %}
+    {% if errors.email_exist %}<p class="text-red-600 text-sm">{{ errors.email_exist }}</p>{% endif %}
 
+    <input type="password" id="password" name="password" placeholder="Password"
+        class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]">
+    <p id="password_error" class="text-red-600 text-sm mt-1"></p>
+    {% if errors.password_length %}<p class="text-red-600 text-sm">{{ errors.password_length }}</p>{% endif %}
 
-        <input type="password" name="password" placeholder="Password" class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]" >
-        {% if errors.password_match %}
-          <p class="text-red-600 text-sm mt-1">{{ errors.password_match }}</p>
-           {% endif %}
-        <input type="password" name="confirm_password" placeholder="Confirm Password" class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]" >
-          {% if errors.password_length %}
-          <p class="text-red-600 text-sm mt-1">{{ errors.password_length }}</p>
-           {% endif %}
+    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password"
+        class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]">
+    <p id="confirm_password_error" class="text-red-600 text-sm mt-1"></p>
+    {% if errors.password_match %}<p class="text-red-600 text-sm">{{ errors.password_match }}</p>{% endif %}
 
-        <button type="submit" class="w-full bg-[#B7472A] text-white py-3 rounded-md hover:bg-[#a03d22] transition">Submit</button>
-      </form>
+    <button type="submit" class="w-full bg-[#B7472A] text-white py-3 rounded-md hover:bg-[#a03d22] transition">
+        Submit
+    </button>
+</form>
 
       <div class="mt-5 text-gray-500 text-sm">OR</div>
 
@@ -58,5 +56,48 @@
       </p>
     </div>
   </div>
+
+
+<script>
+function validateSignup() {
+    let fullname = document.getElementById("fullname").value.trim();
+    let email = document.getElementById("email").value.trim();
+    let password = document.getElementById("password").value;
+    let confirmPassword = document.getElementById("confirm_password").value;
+
+
+    document.getElementById("fullname_error").textContent = "";
+    document.getElementById("email_error").textContent = "";
+    document.getElementById("password_error").textContent = "";
+    document.getElementById("confirm_password_error").textContent = "";
+
+    let isValid = true;
+
+    if (fullname === "") {
+        document.getElementById("fullname_error").textContent = "Full name is required.";
+        isValid = false;
+    }
+
+    if (email === "") {
+        document.getElementById("email_error").textContent = "Email is required.";
+        isValid = false;
+    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+        document.getElementById("email_error").textContent = "Enter a valid email address.";
+        isValid = false;
+    }
+
+    if (password.length < 6) {
+        document.getElementById("password_error").textContent = "Password must be at least 6 characters.";
+        isValid = false;
+    }
+
+    if (password !== confirmPassword) {
+        document.getElementById("confirm_password_error").textContent = "Passwords do not match.";
+        isValid = false;
+    }
+
+    return isValid; 
+}
+</script>
 </section>
 {% endblock %}

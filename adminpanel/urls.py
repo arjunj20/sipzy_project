@@ -28,5 +28,11 @@ urlpatterns = [
     path("images/<int:image_id>/delete/", views.product_image_delete, name="product_image_delete"),
 
 
+    path("order-items/", views.admin_order_item_list, name="admin_order_item_list"),
+    path("order-details/<int:item_id>/", views.admin_order_item_detail, name="admin_order_item_detail"),
+    path("order-update/<int:item_id>/update/", views.update_suborder_status, name="update_suborder_status"),
+
+
+
 
 ]

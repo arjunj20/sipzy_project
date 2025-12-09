@@ -121,10 +121,8 @@ def product_details(request, product_id):
         return render(request, "product_unavailable.html", 
                      {"message": "this product is currently unavailable"})
     
-    # Get primary variant (lowest price)
     primary_variant = product.variants.order_by("price").first()
     
-    # Handle variant selection from URL parameter
     variant_id = request.GET.get('variant')
     selected_variant = primary_variant
     
@@ -134,7 +132,6 @@ def product_details(request, product_id):
         except ProductVariants.DoesNotExist:
             selected_variant = primary_variant
     
-    # Handle quantity from URL parameter
     quantity = request.GET.get('quantity', 1)
     try:
         quantity = int(quantity)
@@ -145,27 +142,22 @@ def product_details(request, product_id):
     except (ValueError, TypeError):
         quantity = 1
     
-    # Calculate ratings (hardcoded for now - replace with actual review logic)
     average_rating = 4.5  
     review_count = 128    
     
-    # Get related products
     related_products = Products.objects.filter(
         category=product.category,
         is_active=True
     ).exclude(id=product.id)[:4]
     
-    # Calculate discount percentage
     discount_percentage = 0
     if selected_variant.price < primary_variant.price:
         discount_percentage = int(
             ((primary_variant.price - selected_variant.price) / primary_variant.price) * 100
         )
     
-    # Calculate total price
     total_price = selected_variant.price * quantity
     
-    # Get all product images (variants + additional images)
     all_images = []
     for variant in product.variants.all():
         all_images.append({
@@ -183,7 +175,6 @@ def product_details(request, product_id):
             'is_variant': False
         })
     
-    # Determine current main image
     current_image = request.GET.get('image')
     if current_image:
         main_image = current_image
@@ -200,7 +191,7 @@ def product_details(request, product_id):
         'review_count': review_count,
         'related_products': related_products,
         'discount_percentage': discount_percentage,
-        'reviews': [],  # Add actual reviews query here
+        'reviews': [],  
         'all_images': all_images,
         'main_image': main_image,
     }
@@ -265,20 +256,16 @@ def add_to_cart(request):
 
         cart = get_user_cart(request.user)
 
-        # Lock row to avoid race conditions
         cart_item = CartItems.objects.select_for_update().filter(cart=cart, variant=variant).first()
 
         if cart_item:
-            # Increase quantity safely
             new_qty = cart_item.quantity + qty
 
-            # max allowed by stock + limit
             max_allowed = min(variant.stock, ITEM_LIMIT)
 
             if new_qty > max_allowed:
                 new_qty = max_allowed
 
-            # Recompute tax and total for NEW quantity
             _, new_tax, new_total = compute_money(variant.price, gst_rate, new_qty)
 
             cart_item.quantity = new_qty
@@ -287,7 +274,6 @@ def add_to_cart(request):
             cart_item.save()
 
         else:
-            # Create a new cart item
             CartItems.objects.create(
                 cart=cart,
                 variant=variant,
@@ -296,7 +282,6 @@ def add_to_cart(request):
                 total_price=total_with_tax,
             )
 
-        # Update cart total values
         recalculate_cart_totals(cart)
 
     return redirect("cart_page")                  

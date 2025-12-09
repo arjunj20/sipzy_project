@@ -1,6 +1,7 @@
 from django.db import models
 from authenticate.models import CustomUser, Address
 from products.models import Products,ProductVariants
+from decimal import Decimal
 
 class Order(models.Model):
     PAYMENT_CHOICES = (
@@ -27,6 +28,25 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.id} - {self.user.fullname}"
+    
+
+
+    def recalculate_totals(self):
+        active_items = self.items.exclude(status="cancelled")
+        self.subtotal = sum(
+            (item.price * item.quantity)
+            for item in active_items
+        )
+        TAX_RATE = Decimal("0.18")  
+        self.tax = (self.subtotal * TAX_RATE).quantize(Decimal("0.01"))
+        self.total = (
+            self.subtotal
+            + self.tax
+            + self.shipping_fee
+            - self.discount
+        )
+        self.save(update_fields=["subtotal", "tax", "total"])
+
 
     def save(self, *args, **kwargs):
 
@@ -59,5 +79,35 @@ class OrderItem(models.Model):
     sub_order_id = models.CharField(max_length=50, blank=True, unique=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        creating = self.pk is None
+        super().save(*args, **kwargs)
+
+        if creating and not self.sub_order_id:
+            # sub order id format -> main order number + item id
+            self.sub_order_id = f"{self.order.order_number}-{self.id}"
+            self.save(update_fields=["sub_order_id"])
+
     def __str__(self):
         return f"{self.product.name} ({self.quantity})"
+
+
+class ReturnRequest(models.Model):
+
+    RETURN_STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("refunded", "Refunded"),
+    )
+
+    order_item = models.OneToOneField(
+        OrderItem, on_delete=models.CASCADE, related_name="return_request"
+    )
+
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=RETURN_STATUS_CHOICES, default="pending")
+
+    def __str__(self):
+        return f"ReturnRequest #{self.id} for {self.order_item.sub_order_id}"

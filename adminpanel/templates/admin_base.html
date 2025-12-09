@@ -65,9 +65,9 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center p-3 rounded-lg {% if 'balance' in request.resolver_match.url_name %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
+                        <a href="{% url 'admin_order_item_list' %}" class="flex items-center p-3 rounded-lg {% if 'balance' in request.resolver_match.url_name %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
                             <i class="fas fa-wallet mr-3"></i>
-                            <span>Balance Details</span>
+                            <span>Orders</span>
                         </a>
                     </li>
                     <li>

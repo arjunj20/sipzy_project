@@ -15,32 +15,36 @@
     <!-- Right Login Form -->
     <div class="md:w-1/2 bg-[#F8F9FA] flex flex-col justify-center items-center p-10">
       <h2 class="text-3xl font-semibold text-[#000] mb-6">SIGN IN</h2>
-
-    <form method="POST" class="w-full max-w-sm space-y-4">
+<form method="POST" class="w-full max-w-sm space-y-4" onsubmit="return validateLogin()">
     {% csrf_token %}
 
     <!-- Email -->
     <div>
-        <input type="email" name="email" placeholder="Email"
+        <input type="email" id="email" name="email" placeholder="Email"
             class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]"
             value="{{ request.POST.email }}">
         
+        <p id="email_error" class="text-red-500 text-sm mt-1"></p>
+
         {% if errors.email %}
-        <p class="text-red-500 text-sm mt-1">{{ errors.email }}</p>
+        <p class="text-red-500 text-sm">{{ errors.email }}</p>
+        {% endif %}
+        {% if errors.email_format %}
+        <p class="text-red-500 text-sm">{{ errors.email_format }}</p>
         {% endif %}
     </div>
 
     <!-- Password -->
     <div>
-        <input type="password" name="password" placeholder="Password"
+        <input type="password" id="password" name="password" placeholder="Password"
             class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]">
         
+        <p id="password_error" class="text-red-500 text-sm mt-1"></p>
         {% if errors.password %}
-        <p class="text-red-500 text-sm mt-1">{{ errors.password }}</p>
+        <p class="text-red-500 text-sm">{{ errors.password }}</p>
         {% endif %}
     </div>
 
-    <!-- Invalid Credentials / Inactive -->
     {% if errors.invalid %}
     <p class="text-red-500 text-sm mt-1">{{ errors.invalid }}</p>
     {% endif %}
@@ -49,11 +53,21 @@
     <p class="text-red-500 text-sm mt-1">{{ errors.inactive }}</p>
     {% endif %}
 
+    {% if errors.locked %}
+    <p class="text-red-500 text-sm mt-1">{{ errors.locked }}</p>
+    {% endif %}
+
+    {% if errors.attempts_left %}
+    <p class="text-red-500 text-sm mt-1">{{ errors.attempts_left }}</p>
+    {% endif %}
+
     <button type="submit"
         class="w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 transition">
         Submit
     </button>
 </form>
+
+
 
 
       <!-- Divider -->
@@ -83,4 +97,36 @@
     </div>
   </div>
 </section>
+<script>
+function validateLogin() {
+    let email = document.getElementById("email").value.trim();
+    let password = document.getElementById("password").value.trim();
+
+    // Clear old errors
+    document.getElementById("email_error").textContent = "";
+    document.getElementById("password_error").textContent = "";
+
+    let isValid = true;
+
+    // Email validation
+    if (email === "") {
+        document.getElementById("email_error").textContent = "Email is required.";
+        isValid = false;
+    } 
+    else if (!/^\S+@\S+\.\S+$/.test(email)) {
+        document.getElementById("email_error").textContent = "Enter a valid email.";
+        isValid = false;
+    }
+
+    // Password validation
+    if (password === "") {
+        document.getElementById("password_error").textContent = "Password is required.";
+        isValid = false;
+    }
+
+    // Prevent form submitting if false
+    return isValid;
+}
+</script>
+
 {% endblock %}

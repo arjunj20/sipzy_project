@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container max-w-lg mx-auto mt-10">
+    <h2 class="text-2xl font-bold mb-5">Edit Address</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <input class="form-input" type="text" name="full_name" value="{{ address.full_name }}" required>
+        <input class="form-input" type="text" name="phone_number" value="{{ address.phone_number }}" required>
+        <input class="form-input" type="text" name="address_line1" value="{{ address.address_line1 }}" required>
+        <input class="form-input" type="text" name="address_line2" value="{{ address.address_line2 }}">
+        <input class="form-input" type="text" name="city" value="{{ address.city }}" required>
+        <input class="form-input" type="text" name="state" value="{{ address.state }}" required>
+        <input class="form-input" type="text" name="pincode" value="{{ address.pincode }}" required>
+
+        <button class="btn btn-primary mt-4 w-full">Update Address</button>
+    </form>
+</div>
+
+{% endblock %}
