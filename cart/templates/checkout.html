@@ -625,9 +625,10 @@
                 <div class="checkout-section">
                     <div class="section-title">
                         <span>📍 Delivery Address</span>
-                        <button class="btn-icon" onclick="window.location.href='#'">
-                            <i class="bi bi-plus-lg"></i>
-                        </button>
+                       <button class="btn-icon" onclick="window.location.href='{% url 'add_address' %}'">
+    Add 
+</button>
+
                     </div>
                     
                     <div class="section-content">
@@ -670,10 +671,11 @@
                                                        onclick="event.stopPropagation()">
                                                 Deliver here
                                             </label>
-                                            <button class="btn-edit" 
-                                                    onclick="event.stopPropagation(); window.location.href='#'">
-                                                Edit
-                                            </button>
+                                        <button class="btn-edit"
+        onclick="event.stopPropagation(); window.location.href='{% url 'edit_address' address.id %}'">
+    Edit
+</button>
+
                                         </div>
                                     </div>
                                 {% endfor %}
@@ -685,10 +687,11 @@
                                 </div>
                                 <h4>No addresses saved</h4>
                                 <p>Add your delivery address to continue</p>
-                                <button class="btn-place-order" onclick="window.location.href='#'">
-                                    <i class="bi bi-plus-circle"></i>
-                                    Add New Address
-                                </button>
+                            <button class="btn-place-order" onclick="window.location.href='{% url 'add_address' %}'">
+    <i class="bi bi-plus-circle"></i>
+    Add New Address
+</button>
+
                             </div>
                         {% endif %}
                     </div>

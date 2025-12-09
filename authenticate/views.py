@@ -13,8 +13,10 @@ from django.contrib.auth import authenticate, login, logout
 from allauth.socialaccount.models import SocialAccount
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import make_password
-
-
+from django.shortcuts import render, redirect
+from django.db.models import Count
+from allauth.socialaccount.models import SocialAccount
+from django.views.decorators.cache import never_cache
 
 
 
@@ -24,57 +26,64 @@ def user_signup(request):
     if request.user.is_authenticated and not request.user.is_superuser:
         return redirect("user_homepage")
     
-    errors={}
+    errors = {}
 
     if request.method == 'POST':
         fullname = request.POST.get("fullname")
         email = request.POST.get("email")
         password = request.POST.get("password")
-        confirmpassword =request.POST.get("confirm_password")
-
-
-
+        confirmpassword = request.POST.get("confirm_password")
         if not fullname:
-            errors["fullname"] = "fullname is required"
-        
+            errors["fullname"] = "Full name is required."
+
         if not email:
-            errors["email"] = "email is required"
+            errors["email"] = "Email is required."
+
         if not password:
-            errors["password"] = "password is required"
+            errors["password"] = "Password is required."
         elif len(password) < 6:
-            errors["password_length"] = "password must be atleast 6 characters"
-        if password != confirmpassword:
-            errors["password_match"] = "passwords do not match"
+            errors["password_length"] = "Password must be at least 6 characters."
+
+        if password and confirmpassword and password != confirmpassword:
+            errors["password_match"] = "Passwords do not match."
+
         if email and CustomUser.objects.filter(email=email).exists():
-            errors["email_exist"] = "email is already taken.."
-        
+            errors["email_exist"] = "Email is already registered."
+
         if fullname and CustomUser.objects.filter(fullname=fullname).exists():
-            errors["fullname_exist"] = "name is already taken"
+            errors["fullname_exist"] = "Fullname already exists."
 
         if errors:
             return render(request, "user_signup.html", {"errors": errors})
-        
 
-        otp = random.randint(100000, 999999)
-        
-        request.session["signup_data"] = {
-            'fullname': fullname,
-            'email': email,
-            "password": password,
-            'otp': otp,
-            "otp_time": timezone.now().isoformat()
+        try:
+            otp = random.randint(100000, 999999)
 
-        }
+            request.session["signup_data"] = {
+                'fullname': fullname,
+                'email': email,
+                "password": password,
+                'otp': otp,
+                "otp_time": timezone.now().isoformat()
+            }
+            send_mail(
+                subject="Sipzy - Email Verification OTP",
+                message=(
+                    f"Hello {fullname},\n\n"
+                    f"Your verification OTP is {otp}. "
+                    "It will expire in 5 minutes.\n\nThank you!"
+                ),
+                from_email="sipzy505@gmail.com",
+                recipient_list=[email],
+                fail_silently=False,
+            )
 
-        send_mail(
-            subject="Sipzy - Email Verification OTP",
-            message=f"Hello {fullname},\n\nYour verification OTP is {otp}. It will expire in 5 minutes.\n\nThank you!",
-            from_email="sipzy505@gmail.com",
-            recipient_list=[email],
-            fail_silently=False,
-        )
+            return redirect("user_signupotp")
 
-        return redirect("user_signupotp")
+        except Exception as e:
+            print("SIGNUP ERROR:", e)
+            errors["general"] = "Something went wrong. Please try again."
+            return render(request, "user_signup.html", {"errors": errors})
 
     return render(request, "user_signup.html")
 
@@ -83,46 +92,72 @@ def user_signupotp(request):
 
     if request.user.is_authenticated and not request.user.is_superuser:
         return redirect("user_homepage")
-    error = {}
+
+    errors = {}
     signup_data = request.session.get("signup_data")
     if not signup_data:
+        messages.error(request, "Session expired. Please sign up again.")
         return redirect("user_signup")
-        
+
     correct_otp = str(signup_data["otp"])
 
-    otp_time = parse_datetime(signup_data["otp_time"])
-    otp_time = otp_time.astimezone(timezone.get_current_timezone())
+    try:
+        otp_time = parse_datetime(signup_data["otp_time"])
+        otp_time = otp_time.astimezone(timezone.get_current_timezone())
+    except Exception as e:
+        print("OTP TIME ERROR:", e)
+        messages.error(request, "OTP error. Please try again.")
+        return redirect("user_signup")
+
     now = timezone.now()
     elapsed = (now - otp_time).total_seconds()
-    total_allowed = 100  
-    remaining_time = max(0, int(total_allowed - elapsed))
+    allowed_time = 100  
+    remaining_time = max(0, int(allowed_time - elapsed))
 
     if request.method == 'POST':
-        otp1 = request.POST.get('otp1')
-        otp2 = request.POST.get('otp2')
-        otp3 = request.POST.get('otp3')
-        otp4 = request.POST.get('otp4')
-        otp5 = request.POST.get('otp5')
-        otp6 = request.POST.get('otp6')
-        
-        enteredotp = otp1 + otp2 + otp3 + otp4 + otp5 + otp6       
+        otp_digits = [
+            request.POST.get(f'otp{i}', '') for i in range(1, 7)
+        ]
+
+        if any(d.strip() == "" for d in otp_digits):
+            errors["otp_empty"] = "Please enter all 6 digits of the OTP."
+        if not all(d.isdigit() for d in otp_digits):
+            errors["otp_numeric"] = "OTP must contain only numbers."
+
+        entered_otp = "".join(otp_digits)
+
         if remaining_time <= 0:
+            errors["otp_expired"] = "OTP expired. Please resend OTP."
+
+        if entered_otp != correct_otp:
+            errors["incorrect_otp"] = "Incorrect OTP. Try again."
+
+        if errors:
             return render(request, "user_signupotp.html", {
-                "error": {"resend_error": "OTP expired. Please resend OTP."}, "remaining_time":0
+                "error": errors, 
+                "remaining_time": remaining_time
             })
-    
-        if enteredotp != correct_otp:
+
+        try:
+            user = CustomUser.objects.create_user(
+                fullname=signup_data["fullname"],
+                email=signup_data["email"],
+                password=signup_data["password"]
+            )
+            user.save()
+            del request.session["signup_data"]
+
+            messages.success(request, "Account created successfully!")
+            return redirect("user_login")
+
+        except Exception as e:
+            print("USER CREATION ERROR:", e)
+            errors["server_error"] = "Something went wrong. Please try again."
             return render(request, "user_signupotp.html", {
-                "error": {"incorrect_otp": "Incorrect OTP. Try again."}
-            })        
-        
-        if error:
-            return render(request, "user_signupotp.html", {"error": error})
-          
-        user = CustomUser.objects.create_user(fullname=signup_data["fullname"], email=signup_data["email"], password=signup_data["password"])
-        user.save()
-        del request.session["signup_data"]
-        return redirect("user_login")
+                "error": errors,
+                "remaining_time": remaining_time
+            })
+
 
     return render(request, "user_signupotp.html", {"remaining_time": remaining_time})
 
@@ -154,10 +189,6 @@ def resend_otp(request):
 
     )
     return redirect("user_signupotp")
-from django.shortcuts import render, redirect
-from django.db.models import Count
-from allauth.socialaccount.models import SocialAccount
-from django.views.decorators.cache import never_cache
 
 @never_cache
 def user_homepage(request):
@@ -168,7 +199,6 @@ def user_homepage(request):
     user = request.user
     fullname = user.fullname
 
-    # FETCH ALL VALID PRODUCTS
     products = (
         Products.objects
         .annotate(variant_count=Count("variants"))
@@ -181,17 +211,14 @@ def user_homepage(request):
         .select_related("brand", "category")
     )
 
-    # Add default variant (highest price)
     for product in products:
         product.default_variant = product.variants.order_by("-price").first()
 
-    # Handle Google Name
     if not fullname:
         google_account = SocialAccount.objects.filter(user=user, provider="google").first()
         if google_account:
             fullname = google_account.extra_data.get("name")
 
-    # Send SAME DATA to all sections
     return render(
         request,
         "user_home.html",
@@ -213,38 +240,92 @@ def landing_page(request):
 
 @never_cache
 def user_login(request):
-    
-
+  
     if request.user.is_authenticated and not request.user.is_superuser:
         return redirect("user_homepage")
+
     errors = {}
 
+    MAX_ATTEMPTS = 5
+    LOCKOUT_SECONDS = 300 
+
+    attempts = request.session.get("login_attempts", 0)
+    lockout_time = request.session.get("login_lockout_time")  
+    if lockout_time:
+        try:
+            lockout_dt = timezone.datetime.fromisoformat(lockout_time)
+            lockout_dt = lockout_dt.replace(tzinfo=timezone.utc).astimezone(timezone.get_current_timezone())
+            if timezone.now() < lockout_dt:
+                remaining = int((lockout_dt - timezone.now()).total_seconds())
+                minutes = remaining // 60
+                seconds = remaining % 60
+                errors["locked"] = f"Too many failed attempts. Try again in {minutes}m {seconds}s."
+                return render(request, "user_login.html", {"errors": errors})
+            else:
+                request.session.pop("login_attempts", None)
+                request.session.pop("login_lockout_time", None)
+                attempts = 0
+        except Exception:
+            request.session.pop("login_attempts", None)
+            request.session.pop("login_lockout_time", None)
+            attempts = 0
+
     if request.method == 'POST':
-        email = request.POST.get("email")
-        password = request.POST.get("password")
+        email = (request.POST.get("email") or "").strip()
+        password = request.POST.get("password") or ""
+
         if not email:
-            errors["email"] = "Email must be filled"
+            errors["email"] = "Email is required."
+        elif "@" not in email or "." not in email:
+            errors["email_format"] = "Enter a valid email address."
 
         if not password:
-            errors["password"] = "Password must be filled"
+            errors["password"] = "Password is required."
+
         if errors:
             return render(request, "user_login.html", {"errors": errors})
-        
-        user = authenticate(request, email=email, password=password)
+        try:
+            user = authenticate(request, email=email, password=password)
+        except Exception as e:
+            print("AUTH ERROR:", e)
+            errors["server"] = "Authentication service unavailable. Try again later."
+            return render(request, "user_login.html", {"errors": errors})
 
         if user is None:
-            errors["invalid"] = "Invalid email or password!"
-            return render(request, "user_login.html", {"errors": errors})
-        if not user.is_active:
-            errors["inactive"] = "User account is inactive"
-            return render(request, "user_login.html", {"errors": errors})
-        
-        login(request, user)
-        request.session["is_loggedin"] = True
-        user.is_loggedin = True
-        user.save()
-        return redirect("user_homepage")
+            attempts += 1
+            request.session["login_attempts"] = attempts
+            if attempts >= MAX_ATTEMPTS:
+                lockout_dt = timezone.now() + timedelta(seconds=LOCKOUT_SECONDS)
+                request.session["login_lockout_time"] = lockout_dt.isoformat()
+                errors["locked"] = f"Too many failed attempts. Try again in {LOCKOUT_SECONDS//60} minutes."
+                return render(request, "user_login.html", {"errors": errors})
 
+            errors["invalid"] = "Invalid email or password."
+            remaining = MAX_ATTEMPTS - attempts
+            errors["attempts_left"] = f"{remaining} attempt(s) left before lockout."
+            return render(request, "user_login.html", {"errors": errors})
+        try:
+            if not user.is_active:
+                errors["inactive"] = "User account is inactive. Contact support."
+                return render(request, "user_login.html", {"errors": errors})
+
+            login(request, user)
+            request.session["is_loggedin"] = True
+
+            try:
+                user.is_loggedin = True
+                user.save(update_fields=["is_loggedin"])
+            except Exception as e:
+                print("USER FLAG SAVE ERROR:", e)
+            request.session.pop("login_attempts", None)
+            request.session.pop("login_lockout_time", None)
+
+            return redirect("user_homepage")
+
+        except Exception as e:
+            print("LOGIN PROCESS ERROR:", e)
+            errors["server"] = "Unable to complete login. Try again later."
+            return render(request, "user_login.html", {"errors": errors})
     return render(request, "user_login.html")
 
 @never_cache
@@ -255,7 +336,6 @@ def user_logout(request):
         user.save()
         logout(request)
     return redirect("user_homepage")
-
 @never_cache
 def forgot_password(request):
 
@@ -265,35 +345,51 @@ def forgot_password(request):
     errors = {}
 
     if request.method == "POST":
-        email = request.POST.get("email")
-        user = CustomUser.objects.filter(email=email)
+
+        email = (request.POST.get("email") or "").strip()
         if not email:
-            errors["email"] = "email is required"
-        elif not CustomUser.objects.filter(email=email).exists():
-            errors["email"] = "Email is not registered"
-        # elif user.is_superuser == True:
-        #     errors["email"] = "email is not applicable"
-        for i in user:
-            if i.is_superuser:
-                errors["email"] = "email is not applicable"
+            errors["email"] = "Email is required."
+        elif "@" not in email or "." not in email:
+            errors["email"] = "Enter a valid email address."
+        else:
+            try:
+                user = CustomUser.objects.filter(email=email).first()
+            except Exception as e:
+                print("DB ERROR:", e)
+                errors["server"] = "Unable to process request. Try again later."
+                return render(request, "forgot_password.html", {"errors": errors})
+
+            if not user:
+                errors["email"] = "Email is not registered."
+
+            elif user.is_superuser:
+                errors["email"] = "This email is not allowed for password reset."
+
         if errors:
             return render(request, "forgot_password.html", {"errors": errors})
-        
-        otp = str(random.randint(100000, 999999))
+        try:
+            otp = str(random.randint(100000, 999999))
 
-        request.session["forgot_email"] = email
-        request.session["forgot_otp"] = otp
-        request.session["forgot_otp_time"] = timezone.now().isoformat()
+            request.session["forgot_email"] = email
+            request.session["forgot_otp"] = otp
+            request.session["forgot_otp_time"] = timezone.now().isoformat()
+            send_mail(
+                subject="Sipzy - Password Reset OTP",
+                message=(
+                    f"Hello,\n\nYour OTP for resetting your Sipzy password is {otp}. "
+                    f"It will expire in 5 minutes.\n\nThank you!"
+                ),
+                from_email="sipzy505@gmail.com",
+                recipient_list=[email],
+                fail_silently=False,
+            )
 
-        send_mail(
-            subject="Sipzy - Password Reset OTP",
-            message=f"Hello,\n\nYour OTP for resetting your Sipzy password is {otp}. "
-                    f"It will expire in 5 minutes.\n\nThank you!",
-            from_email="sipzy505@gmail.com",
-            recipient_list=[email],
-            fail_silently=False,
-        )
-        return redirect("forgot_password_otp")
+            return redirect("forgot_password_otp")
+
+        except Exception as e:
+            print("FORGOT PASSWORD ERROR:", e)
+            errors["server"] = "Failed to send OTP. Please try again."
+            return render(request, "forgot_password.html", {"errors": errors})
 
     return render(request, "forgot_password.html")
 

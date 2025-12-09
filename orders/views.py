@@ -19,7 +19,7 @@ def order_list(request):
     if q:
         orders = Order.objects.filter(order_number__icontains=q, user=request.user)
     else:
-        orders = Order.objects.filter(user=request.user)
+        orders = Order.objects.filter(user=request.user).order_by("-created_at")
 
     return render(request, "orders/order_list.html", {
         "orders": orders
@@ -103,6 +103,8 @@ def cancel_item(request, item_id):
         if item.variant:
             item.variant.stock += item.quantity
             item.variant.save(update_fields=["stock"])
+        
+        item.order.recalculate_totals()
 
         messages.success(request, "Item cancelled successfully.")
 
@@ -111,4 +113,26 @@ def cancel_item(request, item_id):
         messages.error(request, "Something went wrong while cancelling the item.")
     return redirect("order_detail", id=item.order.id)
 
-# Create your views here.
+
+from django.shortcuts import get_object_or_404, redirect
+from .models import OrderItem, ReturnRequest
+
+def submit_return_request(request, item_id):
+    if request.method != "POST":
+        return redirect("error_page") 
+
+    item = get_object_or_404(OrderItem, id=item_id)
+
+    if hasattr(item, "return_request"):
+        messages.warning(request, "Return request already submitted for this item.")
+        return redirect("order_detail", order_id=item.order.id)
+
+    reason = request.POST.get("reason")
+    ReturnRequest.objects.create(order_item=item, reason=reason)
+
+    item.status = "returned"
+    item.save(update_fields=["status"])
+
+    messages.success(request, "Your return request has been submitted.")
+    return redirect("order_detail", id=item.order.id)
+

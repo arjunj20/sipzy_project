@@ -1,0 +1,50 @@
+{% extends "admin_base.html" %}
+{% block content %}
+
+<h2 class="text-2xl font-bold mb-4">SubOrder: {{ item.sub_order_id }}</h2>
+
+<div class="bg-white p-6 rounded shadow">
+    <p><strong>Main Order:</strong> {{ item.order.order_number }}</p>
+    <p><strong>Product:</strong> {{ item.product.name }}</p>
+    <p><strong>Quantity:</strong> {{ item.quantity }}</p>
+    <p><strong>Price:</strong> ₹{{ item.price }}</p>
+    <p><strong>User:</strong> {{ item.order.user.fullname }}</p>
+    <p><strong>Status:</strong> <span id="current-status">{{ item.status }}</span></p>
+</div>
+
+<div class="mt-4">
+    <label class="font-bold">Change Status:</label>
+    <select id="status" class="border p-2 rounded">
+        {% for value,label in item.ITEM_STATUS_CHOICES %}
+        <option value="{{ value }}" {% if value == item.status %}selected{% endif %}>
+            {{ label }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <button id="updateBtn" class="bg-green-600 text-white px-4 py-2 rounded ml-2">Update</button>
+</div>
+
+<script>
+    const csrfToken = "{{ csrf_token }}";
+
+    document.getElementById("updateBtn").onclick = function() {
+        const status = document.getElementById("status").value;
+
+        fetch("{% url 'update_suborder_status' item.id %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: "status=" + status
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message);
+            if (data.success) location.reload();
+        });
+    }
+</script>
+
+{% endblock %}

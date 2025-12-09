@@ -8,6 +8,9 @@ from django.views.decorators.http import require_POST
 from decimal import Decimal
 from authenticate.models import Address
 from orders.models import Order,OrderItem
+from django.contrib import messages
+from authenticate.models import Address
+
 
 
 def cart_page(request):
@@ -17,13 +20,9 @@ def cart_page(request):
 
     cart = get_user_cart(request.user)
     items = cart.cart_items.select_related("variant", "variant__product")
-
-    # Remove inactive or unavailable items
     for i in items:
         if not i.variant.product.is_active or i.variant.stock == 0:
             i.delete()
-
-    # Refresh items after deletion
     items = cart.cart_items.select_related("variant", "variant__product")
 
     recalculate_cart_totals(cart)
@@ -81,7 +80,6 @@ def update_cart_item(request):
     item.total_price = (unit_price * quantity) + Decimal(str(item.tax_amount))
     item.save()
 
-    # ✅ ONLY CORRECT CALCULATION (remove the previous one)
     recalculate_cart_totals(cart)
 
     return JsonResponse({
@@ -140,6 +138,7 @@ def checkout_page(request):
         "total_price": total_price,
     }
     return render(request, "checkout.html" , context)
+
 
 def place_order(request):
 
@@ -216,3 +215,42 @@ def place_order(request):
 def order_placed(request, order_id):
     order = Order.objects.get(id=order_id, user=request.user)
     return render(request, "order_placed.html", {"order": order})
+
+
+def add_address(request):
+    if request.method == "POST":
+        Address.objects.create(
+            user=request.user,
+            full_name=request.POST.get("full_name"),
+            phone_number=request.POST.get("phone_number"),
+            address_line1=request.POST.get("address_line1"),
+            address_line2=request.POST.get("address_line2"),
+            city=request.POST.get("city"),
+            state=request.POST.get("state"),
+            country="India",
+            pincode=request.POST.get("pincode"),
+        )
+
+        messages.success(request, "Address added successfully.")
+        return redirect("checkout_page")  
+
+    return render(request, "add_address.html")
+
+
+def edit_address(request, id):
+    address = get_object_or_404(Address, id=id, user=request.user)
+
+    if request.method == "POST":
+        address.full_name = request.POST.get("full_name")
+        address.phone_number = request.POST.get("phone_number")
+        address.address_line1 = request.POST.get("address_line1")
+        address.address_line2 = request.POST.get("address_line2")
+        address.city = request.POST.get("city")
+        address.state = request.POST.get("state")
+        address.pincode = request.POST.get("pincode")
+        address.save()
+
+        messages.success(request, "Address updated successfully.")
+        return redirect("checkout_page")
+
+    return render(request, "edit_address.html", {"address": address})

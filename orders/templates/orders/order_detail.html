@@ -91,7 +91,12 @@
                         </button>
                         {% endif %}
 
-                        {% if item.status == "delivered" %}
+                       {% if item.status == "delivered" and not item.return_request %}
+                       {% if item.return_request %}
+    <span class="text-yellow-600 text-sm font-semibold">Return Requested</span>
+{% endif %}
+
+
                         <!-- Return Button -->
                         <button 
                             class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-lg"
@@ -142,7 +147,7 @@
             <div id="returnModal{{ item.id }}" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
                 <div class="bg-white p-6 rounded-xl shadow-xl w-96">
                     <h3 class="text-lg font-semibold mb-3">Return Item</h3>
-                    <form action="#" method="POST">
+                    <form action="{% url 'submit_return_request' item.id %}" method="POST">
                         {% csrf_token %}
                         <label class="text-sm text-gray-600">Reason (required)</label>
                         <textarea name="reason" class="w-full border rounded-md mt-1 p-2" required></textarea>

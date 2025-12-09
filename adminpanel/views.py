@@ -10,7 +10,9 @@ from django.core.paginator import Paginator
 import cloudinary.uploader
 from django.db import transaction
 from decimal import Decimal, InvalidOperation
-
+from orders.models import OrderItem
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 
 
@@ -688,3 +690,54 @@ def product_delete(request, product_id):
         return redirect("product_list")
 
     return redirect("product_list")
+
+@never_cache
+def admin_order_item_list(request):
+
+    search = request.GET.get("search", "")
+    status_filter = request.GET.get("status", "")
+    sort = request.GET.get("sort", "-created_at")
+
+    items = OrderItem.objects.select_related("order", "product", "variant", "order__user")
+    if search:
+        items = items.filter(
+            Q(sub_order_id__icontains=search) |
+            Q(order__order_number__icontains=search) |
+            Q(product__name__icontains=search) |
+            Q(order__user__fullname__icontains=search) |
+            Q(order__user__email__icontains=search)
+        )
+    if status_filter:
+        items = items.filter(status=status_filter)
+    items = items.order_by(sort)
+
+    paginator = Paginator(items, 12)
+    page = request.GET.get("page")
+    items = paginator.get_page(page)
+
+    return render(request, "suborder_list.html", {
+        "items": items,
+        "search": search,
+        "status_filter": status_filter,
+        "sort_by": sort,
+    })
+
+
+def admin_order_item_detail(request, item_id):
+    item = get_object_or_404(OrderItem.objects.select_related("order", "product", "variant", "order__user"), id=item_id)
+    return render(request, "suborder_detail.html", {"item": item})
+
+
+
+@require_POST
+def update_suborder_status(request, item_id):
+    item = get_object_or_404(OrderItem, id=item_id)
+    new_status = request.POST.get("status")
+
+    if new_status not in dict(OrderItem.ITEM_STATUS_CHOICES):
+        return JsonResponse({"success": False, "message": "Invalid status"})
+
+    item.status = new_status
+    item.save()
+    return JsonResponse({"success": True, "message": "Status updated successfully"})
+
