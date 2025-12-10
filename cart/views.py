@@ -10,9 +10,10 @@ from authenticate.models import Address
 from orders.models import Order,OrderItem
 from django.contrib import messages
 from authenticate.models import Address
+from django.views.decorators.cache import never_cache
 
 
-
+@never_cache
 def cart_page(request):
 
     if not request.user.is_authenticated or request.user.is_superuser:
@@ -38,9 +39,11 @@ def cart_page(request):
 
     return render(request, "cart_page.html", context)
 
-
+@never_cache
 @require_POST
 def update_cart_item(request):
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_homepage")
     errors = {}
     item_id = request.POST.get("item_id")
     quantity = request.POST.get("quantity")
@@ -95,9 +98,12 @@ def update_cart_item(request):
     })
 
 
-
+@never_cache
 @require_POST
 def ajax_delete_item(request):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("landing_page")
     item_id = request.POST.get("id")
 
     cart = get_user_cart(request.user)
@@ -118,7 +124,7 @@ def ajax_delete_item(request):
     })
 
 
-
+@never_cache
 def checkout_page(request):
 
     if not request.user.is_authenticated or request.user.is_superuser:
@@ -139,7 +145,7 @@ def checkout_page(request):
     }
     return render(request, "checkout.html" , context)
 
-
+@never_cache
 def place_order(request):
 
     if not request.user.is_authenticated or request.user.is_superuser:
@@ -212,12 +218,18 @@ def place_order(request):
 
     return redirect("checkout_page")
 
+@never_cache
 def order_placed(request, order_id):
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("landing_page")
     order = Order.objects.get(id=order_id, user=request.user)
     return render(request, "order_placed.html", {"order": order})
 
 
+@never_cache
 def add_address(request):
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("landing_page")
     if request.method == "POST":
         Address.objects.create(
             user=request.user,
@@ -236,8 +248,12 @@ def add_address(request):
 
     return render(request, "add_address.html")
 
-
+@never_cache
 def edit_address(request, id):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("landing_page")
+    
     address = get_object_or_404(Address, id=id, user=request.user)
 
     if request.method == "POST":
