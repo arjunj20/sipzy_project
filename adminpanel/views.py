@@ -694,6 +694,9 @@ def product_delete(request, product_id):
 @never_cache
 def admin_order_item_list(request):
 
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+
     search = request.GET.get("search", "")
     status_filter = request.GET.get("status", "")
     sort = request.GET.get("sort", "-created_at")
@@ -722,15 +725,22 @@ def admin_order_item_list(request):
         "sort_by": sort,
     })
 
-
+@never_cache
 def admin_order_item_detail(request, item_id):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+    
     item = get_object_or_404(OrderItem.objects.select_related("order", "product", "variant", "order__user"), id=item_id)
     return render(request, "suborder_detail.html", {"item": item})
 
 
-
+@never_cache
 @require_POST
 def update_suborder_status(request, item_id):
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+    
     item = get_object_or_404(OrderItem, id=item_id)
     new_status = request.POST.get("status")
 

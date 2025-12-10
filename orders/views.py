@@ -8,10 +8,13 @@ from reportlab.lib.units import mm
 from django.contrib import messages
 import tempfile
 
+from django.views.decorators.cache import never_cache
+
+@never_cache
 def order_list(request):
 
     if not request.user.is_authenticated or request.user.is_superuser:
-        return redirect("user_login")
+        return redirect("landing_page")
         
     
     q = request.GET.get('q', '')
@@ -25,8 +28,12 @@ def order_list(request):
         "orders": orders
     })
 
-
+@never_cache
 def order_detail(request, id):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("landing_page")
+
     order = get_object_or_404(Order, id=id, user=request.user)
     items = order.items.all()  
 
@@ -36,6 +43,7 @@ def order_detail(request, id):
     })
 
 def item_invoice(request, item_id):
+
     item = get_object_or_404(OrderItem, id=item_id, order__user=request.user)
     order = item.order
     user = request.user
@@ -87,7 +95,11 @@ def item_invoice(request, item_id):
     p.save()
 
     return response
+
+@never_cache
 def cancel_item(request, item_id):
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("landing_page")
     try:
         item = OrderItem.objects.get(id=item_id, order__user=request.user)
     except OrderItem.DoesNotExist:
@@ -117,7 +129,13 @@ def cancel_item(request, item_id):
 from django.shortcuts import get_object_or_404, redirect
 from .models import OrderItem, ReturnRequest
 
+
+@never_cache
 def submit_return_request(request, item_id):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("landing_page")
+    
     if request.method != "POST":
         return redirect("error_page") 
 

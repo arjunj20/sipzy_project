@@ -506,7 +506,7 @@ from django.contrib.auth.decorators import login_required
 @login_required
 def user_profile(request):
     if not request.user.is_authenticated or request.user.is_superuser:
-        return redirect("user_login")
+        return redirect("landing_page")
     user = request.user
     addresses = user.addresses.all()
     
