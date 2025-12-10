@@ -79,7 +79,7 @@ def update_cart_item(request):
 
     unit_tax = unit_price * (gst_rate / Decimal('100'))
     item.tax_amount = round(unit_tax * quantity, 2)
-
+    
     item.total_price = (unit_price * quantity) + Decimal(str(item.tax_amount))
     item.save()
 
