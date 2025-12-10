@@ -2,6 +2,32 @@
 {% load static %}
 
 {% block content %}
+<!-- ERROR MODAL -->
+
+<div id="globalModal"
+    class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+    
+    <div id="globalModalBox"
+        class="bg-white/90 backdrop-blur-xl rounded-2xl p-6 w-80 shadow-xl transform scale-90 opacity-0 transition-all duration-300">
+
+        <!-- Icon -->
+        <div id="modalIcon" class="text-4xl mb-3">⚠️</div>
+
+        <!-- Title -->
+        <h2 id="modalTitle" class="text-xl font-bold text-gray-800 mb-2"></h2>
+
+        <!-- Message -->
+        <p id="modalMessage" class="text-gray-600 mb-4 leading-relaxed"></p>
+
+        <!-- Close Button -->
+        <button id="modalCloseBtn"
+            class="px-4 py-2 bg-[#A24E34] text-white rounded-lg w-full hover:bg-[#8D3A28] transition">
+            OK
+        </button>
+    </div>
+</div>
+
+
 <div class="min-h-screen bg-gradient-to-br from-[#F4E9E2] via-[#FEFAF7] to-[#F4E9E2] py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
         <!-- Page Header -->
@@ -193,7 +219,7 @@
                         <!-- Shipping Fee -->
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shipping Fee</span>
-                            <span class="font-medium">
+                            <span class="shipping-value font-medium">
                                 {% if shipping_fee == 0 %}
                                 <span class="text-green-500">Free</span>
                                 {% else %}
@@ -297,9 +323,15 @@ document.querySelectorAll(".cart-item").forEach(item => {
                 qtyInput.value = data.corrected_quantity;
             }
 
-            if (data.errors && data.errors.quantity) {
-                showToast(data.errors.quantity);  
-            }
+      if (data.errors && data.errors.quantity) {
+    showModal({
+        icon: "⚠️",
+        title: "Quantity Limit",
+        message: data.errors.quantity
+    });
+}
+
+
 
             if (data.success) {
                 // Update Item Price
@@ -396,6 +428,37 @@ document.querySelectorAll(".remove-item").forEach(btn => {
     });
 });
 
+
+function showModal({ icon = "⚠️", title = "Alert", message = "" }) {
+
+    document.getElementById("modalIcon").textContent = icon;
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalMessage").textContent = message;
+
+    const modal = document.getElementById("globalModal");
+    const box = document.getElementById("globalModalBox");
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");  // <-- IMPORTANT
+
+    // animate modal
+    setTimeout(() => {
+        box.classList.remove("scale-90", "opacity-0");
+        box.classList.add("scale-100", "opacity-100");
+    }, 10);
+}
+
+document.getElementById("modalCloseBtn").addEventListener("click", () => {
+    const modal = document.getElementById("globalModal");
+    const box = document.getElementById("globalModalBox");
+
+    box.classList.add("scale-90", "opacity-0");
+
+    setTimeout(() => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");  // <-- REMOVE FLEX WHEN HIDDEN
+    }, 200);
+});
 
 </script>
 
