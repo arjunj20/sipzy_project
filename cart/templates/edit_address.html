@@ -131,7 +131,31 @@
                     </div>
 
                     <!-- City -->
-                    <div class="group form-field-wrapper">
+                   
+
+                    <!-- Pincode -->
+                    <div class="md:col-span-2 group form-field-wrapper">
+                        <div class="flex items-center mb-2">
+                            <svg class="w-5 h-5 text-amber-700 mr-2 group-focus-within:text-[#B7472A] transition-all duration-300 group-focus-within:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <label class="text-sm font-medium text-amber-900 group-focus-within:text-[#B7472A] transition-colors duration-300">Pincode</label>
+                        </div>
+                        <div class="relative input-container">
+                            <input 
+                                type="text" 
+                                name="pincode" 
+                                value="{{ address.pincode }}"
+                                required
+                                class="form-input-sipzy w-full pl-4 py-3.5 bg-white border border-amber-200 rounded-xl focus:border-[#B7472A] focus:ring-2 focus:ring-[#B7472A]/30 focus:ring-opacity-50 transition-all duration-300 placeholder-amber-500 text-amber-900"
+                            >
+                            <div class="input-shine"></div>
+                        </div>
+                    </div>
+
+
+                     <div class="group form-field-wrapper">
                         <div class="flex items-center mb-2">
                             <svg class="w-5 h-5 text-amber-700 mr-2 group-focus-within:text-[#B7472A] transition-all duration-300 group-focus-within:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
@@ -168,28 +192,7 @@
                             >
                             <div class="input-shine"></div>
                         </div>
-                    </div>
-
-                    <!-- Pincode -->
-                    <div class="md:col-span-2 group form-field-wrapper">
-                        <div class="flex items-center mb-2">
-                            <svg class="w-5 h-5 text-amber-700 mr-2 group-focus-within:text-[#B7472A] transition-all duration-300 group-focus-within:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                            <label class="text-sm font-medium text-amber-900 group-focus-within:text-[#B7472A] transition-colors duration-300">Pincode</label>
-                        </div>
-                        <div class="relative input-container">
-                            <input 
-                                type="text" 
-                                name="pincode" 
-                                value="{{ address.pincode }}"
-                                required
-                                class="form-input-sipzy w-full pl-4 py-3.5 bg-white border border-amber-200 rounded-xl focus:border-[#B7472A] focus:ring-2 focus:ring-[#B7472A]/30 focus:ring-opacity-50 transition-all duration-300 placeholder-amber-500 text-amber-900"
-                            >
-                            <div class="input-shine"></div>
-                        </div>
-                    </div>
+                    </div> 
 
                 </div>
 
@@ -807,6 +810,45 @@
             });
         });
     });
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const pincodeInput = document.querySelector('input[name="pincode"]');
+    const stateInput = document.querySelector('input[name="state"]');
+    const cityInput = document.querySelector('input[name="city"]');
+
+    const districtInput = document.querySelector('input[name="district"]');
+    // You don't have a district field — add only if needed
+
+    pincodeInput.addEventListener("keyup", function () {
+        const pincode = pincodeInput.value.trim();
+
+        if (pincode.length === 6) {
+            fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data[0].Status === "Success") {
+
+                        const post = data[0].PostOffice[0];
+
+                        // Auto-fill fields
+                        stateInput.value = post.State;
+                        cityInput.value = post.District;   // Your "City" field → using District
+                        
+                    } else {
+                        stateInput.value = "";
+                        cityInput.value = "";
+                    }
+                })
+                .catch(err => {
+                    stateInput.value = "";
+                    cityInput.value = "";
+                });
+        }
+    });
+});
 </script>
 
 {% endblock %}
