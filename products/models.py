@@ -1,7 +1,7 @@
 from django.db import models
 from cloudinary.models import CloudinaryField
 from django.utils.text import slugify
-
+import uuid
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -28,6 +28,7 @@ class Brand(models.Model):
 
 class Products(models.Model):
 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name="products" ,default=1)
     name = models.CharField(max_length=100)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
