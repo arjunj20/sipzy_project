@@ -29,7 +29,7 @@ urlpatterns = [
 
 
     path("order-items/", views.admin_order_item_list, name="admin_order_item_list"),
-    path("order-details/<int:item_id>/", views.admin_order_item_detail, name="admin_order_item_detail"),
+    path("order-details/<uuid:uuid>/", views.admin_order_item_detail, name="admin_order_item_detail"),
     path("order-update/<int:item_id>/update/", views.update_suborder_status, name="update_suborder_status"),
 
 
