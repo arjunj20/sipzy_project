@@ -249,12 +249,12 @@ def add_address(request):
     return render(request, "add_address.html")
 
 @never_cache
-def edit_address(request, id):
+def edit_address(request, uuid):
 
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
     
-    address = get_object_or_404(Address, id=id, user=request.user)
+    address = get_object_or_404(Address, uuid=uuid, user=request.user)
 
     if request.method == "POST":
         address.full_name = request.POST.get("full_name")
