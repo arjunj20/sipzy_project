@@ -726,11 +726,11 @@ def admin_order_item_list(request):
     })
 
 @never_cache
-def admin_order_item_detail(request, item_id):
+def admin_order_item_detail(request, uuid):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
     
-    item = get_object_or_404(OrderItem.objects.select_related("order", "product", "variant", "order__user"), id=item_id)
+    item = get_object_or_404(OrderItem.objects.select_related("order", "product", "variant", "order__user"), uuid=uuid)
     return render(request, "suborder_detail.html", {"item": item})
 
 

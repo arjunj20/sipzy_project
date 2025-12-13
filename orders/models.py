@@ -2,6 +2,7 @@ from django.db import models
 from authenticate.models import CustomUser, Address
 from products.models import Products,ProductVariants
 from decimal import Decimal
+import uuid
 
 class Order(models.Model):
     PAYMENT_CHOICES = (
@@ -9,6 +10,8 @@ class Order(models.Model):
         ("Razorpay", "Razorpay")
 
     )
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
     user = models.ForeignKey(CustomUser, related_name="orders", on_delete=models.CASCADE)
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True)
 
@@ -67,6 +70,8 @@ class OrderItem(models.Model):
         ("cancelled", "cancelled"),
         ("returned", "returned"),
     )
+
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Products, on_delete=models.SET_NULL, null=True)

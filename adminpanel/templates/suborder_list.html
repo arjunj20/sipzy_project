@@ -50,7 +50,7 @@
             <td class="px-4 py-3">{{ i.created_at|date:"Y-m-d H:i" }}</td>
             <td class="px-4 py-3">{{ i.status }}</td>
             <td class="px-4 py-3">
-                <a href="{% url 'admin_order_item_detail' i.id %}"  class="bg-blue-600 text-white px-3 py-1 rounded">View</a>
+                <a href="{% url 'admin_order_item_detail' i.uuid %}"  class="bg-blue-600 text-white px-3 py-1 rounded">View</a>
             </td>
         </tr>
         {% endfor %}

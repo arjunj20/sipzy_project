@@ -122,12 +122,12 @@ def product_details(request, uuid):
     
     primary_variant = product.variants.order_by("price").first()
     
-    variant_id = request.GET.get('variant')
+    variant_uuid = request.GET.get('variant')
     selected_variant = primary_variant
     
-    if variant_id:
+    if variant_uuid:
         try:
-            selected_variant = product.variants.get(id=variant_id, is_active=True)
+            selected_variant = product.variants.get(uuid=variant_uuid, is_active=True)
         except ProductVariants.DoesNotExist:
             selected_variant = primary_variant
     
@@ -162,7 +162,7 @@ def product_details(request, uuid):
         all_images.append({
             'url': variant.primary_image.url,
             'alt': variant.variant,
-            'variant_id': variant.id,
+            'variant_uuid': variant.uuid,
             'is_variant': True
         })
     
@@ -170,7 +170,7 @@ def product_details(request, uuid):
         all_images.append({
             'url': image.image.url,
             'alt': product.name,
-            'variant_id': None,
+            'variant_uuid': None,
             'is_variant': False
         })
     
@@ -229,16 +229,16 @@ def add_to_cart(request):
 
     if variant.stock == 0:
         request.session["error"] = "This variant is out of stock."
-        return redirect("product_details", product_id=variant.product.id)
+        return redirect("product_details", uuid=variant.product.uuid)
 
     if qty > variant.stock:
         qty = variant.stock
         request.session["error"] = f"Only {variant.stock} units available in stock."
-        return redirect("product_details", product_id=variant.product.id)
+        return redirect("product_details", uuid=variant.product.uuid)
 
     if qty > ITEM_LIMIT:
         request.session["error"] = f"Users can only select a maximum of {ITEM_LIMIT} units per item."
-        return redirect("product_details", product_id=variant.product.id)
+        return redirect("product_details", uuid=variant.product.uuid)
 
     def compute_money(unit_price, gst_rate, quantity):
         u = Decimal(str(unit_price))
@@ -264,7 +264,7 @@ def add_to_cart(request):
 
             if new_qty > max_allowed:
                 request.session["error"] = f"Maximum limit reached! You can only add {max_allowed - cart_item.quantity} more units."
-                return redirect("product_details", product_id=variant.product.id)
+                return redirect("product_details", uuid=variant.product.uuid)
 
             _, new_tax, new_total = compute_money(variant.price, gst_rate, new_qty)
 
@@ -285,6 +285,6 @@ def add_to_cart(request):
 
         recalculate_cart_totals(cart)
 
-    return redirect("product_details", product_id=variant.product.id)
+    return redirect("product_details", uuid=variant.product.uuid)
 
                   

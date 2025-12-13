@@ -29,12 +29,12 @@ def order_list(request):
     })
 
 @never_cache
-def order_detail(request, id):
+def order_detail(request, uuid):
 
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
 
-    order = get_object_or_404(Order, id=id, user=request.user)
+    order = get_object_or_404(Order, uuid=uuid, user=request.user)
     items = order.items.all()  
 
     return render(request, "orders/order_detail.html", {

@@ -42,6 +42,7 @@ class Products(models.Model):
 
 class ProductVariants(models.Model):
 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique =True)
     product = models.ForeignKey(Products, on_delete=models.CASCADE, related_name="variants")
     variant = models.CharField(max_length=100 )
     price = models.DecimalField(max_digits=10, decimal_places=2) 

@@ -23,7 +23,7 @@
             <!-- Thumbnail Images -->
             <div class="flex space-x-2 overflow-x-auto py-2">
                 {% for img in all_images %}
-                <a href="?variant={{ selected_variant.id }}&quantity={{ quantity }}&image={{ img.url }}"
+                <a href="?variant={{ selected_variant.uuid }}&quantity={{ quantity }}&image={{ img.url }}"
                    class="flex-shrink-0 w-20 h-20 border-2 rounded-lg overflow-hidden hover:border-[#B7472A] transition-colors {% if img.url == main_image %}border-[#B7472A]{% else %}border-transparent{% endif %}">
                     <img src="{{ img.url }}" alt="{{ img.alt }}" class="w-full h-full object-contain">
                 </a>
@@ -67,7 +67,7 @@
                 <h3 class="font-semibold text-gray-800 mb-3">Select Size:</h3>
                 <div class="flex flex-wrap gap-2">
                     {% for variant in product.variants.all %}
-                    <a href="?variant={{ variant.id }}&quantity={{ quantity }}"
+                    <a href="?variant={{ variant.uuid }}&quantity={{ quantity }}"
                        class="px-4 py-2 border-2 rounded-lg transition-colors inline-block text-center {% if variant.id == selected_variant.id %}border-[#B7472A] bg-[#B7472A] text-white{% else %}border-gray-300 text-gray-700 hover:border-[#B7472A]{% endif %}">
                         {{ variant.variant }}
                     </a>
@@ -123,7 +123,7 @@
                 <!-- Wishlist Button -->
                 <form method="POST" action="#">
                     {% csrf_token %}
-                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="product_id" value="{{ product.uuid }}">
                     <button type="submit" class="w-full border border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
