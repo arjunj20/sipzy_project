@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+import uuid
 
 
 class UserManager(BaseUserManager):
@@ -52,6 +53,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return self.fullname or self.email or ""
     
 class Address(models.Model):
+
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     user =  models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="addresses")
     full_name = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15)
