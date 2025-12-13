@@ -103,7 +103,7 @@
             </td>
             <td class="py-4 px-6 text-gray-500">{{ p.created_at|date:"Y-m-d" }}</td>
             <td class="py-4 px-6 text-center">
-<a href="{% url 'product_edit' p.id %}" class="px-3 py-1 bg-gray-100 rounded-lg mr-2">Edit</a>
+<a href="{% url 'product_edit' p.uuid %}" class="px-3 py-1 bg-gray-100 rounded-lg mr-2">Edit</a>
               <form method="POST" action="{% url 'product_delete' p.id %}" style="display:inline;">
                 {% csrf_token %}
                 <button type="submit" onclick="return confirm('Deactivate this product?')" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg">Deactivate</button>
