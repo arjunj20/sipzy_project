@@ -63,12 +63,14 @@ class Order(models.Model):
            
 class OrderItem(models.Model):
     ITEM_STATUS_CHOICES = (
-        ("pending", "pending"),
-        ("processing", "processing"),
-        ("shipped", "shipped"),
-        ("delivered", "delivered"),
-        ("cancelled", "cancelled"),
-        ("returned", "returned"),
+        ("pending", "Pending"),
+        ("processing", "Processing"),
+        ("shipped", "Shipped"),
+        ("delivered", "Delivered"),
+
+        ("return_requested", "Return Requested"),
+        ("returned", "Returned"),
+        ("cancelled", "Cancelled"),
     )
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -85,20 +87,21 @@ class OrderItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        creating = self.pk is None
+        is_new = self.pk is None
+
         super().save(*args, **kwargs)
 
-        if creating and not self.sub_order_id:
-            # sub order id format -> main order number + item id
-            self.sub_order_id = f"{self.order.order_number}-{self.id}"
-            self.save(update_fields=["sub_order_id"])
+        if is_new and not self.sub_order_id:
+            OrderItem.objects.filter(pk=self.pk).update(
+                sub_order_id=f"{self.order.order_number}-{self.id}"
+            )
+
 
     def __str__(self):
         return f"{self.product.name} ({self.quantity})"
 
 
 class ReturnRequest(models.Model):
-
     RETURN_STATUS_CHOICES = (
         ("pending", "Pending"),
         ("approved", "Approved"),
@@ -111,8 +114,7 @@ class ReturnRequest(models.Model):
     )
 
     reason = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=RETURN_STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"ReturnRequest #{self.id} for {self.order_item.sub_order_id}"

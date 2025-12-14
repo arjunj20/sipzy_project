@@ -14,8 +14,8 @@
     </select>
 
     <select name="sort" class="border p-2 rounded">
-        <option value="-created_at">Latest First</option>
-        <option value="created_at">Oldest First</option>
+        <option value="-created_at" {% if sort_by == "-created_at" %}selected{% endif %}>Latest First</option>
+        <option value="created_at" {% if sort_by == "created_at" %}selected{% endif %}>Oldest First</option>
     </select>
 
     <button class="bg-blue-500 text-white px-4 py-2 rounded">Apply</button>
@@ -53,9 +53,53 @@
                 <a href="{% url 'admin_order_item_detail' i.uuid %}"  class="bg-blue-600 text-white px-3 py-1 rounded">View</a>
             </td>
         </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9" class="px-4 py-6 text-center text-gray-500">No items found</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
 </div>
+
+<!-- ✅ PAGINATION BLOCK - ADD THIS -->
+{% if items.paginator.num_pages > 1 %}
+<div class="flex justify-between items-center mt-6 bg-white p-4 rounded shadow">
+    
+    <!-- Info -->
+    <div class="text-sm text-gray-600">
+        Showing {{ items.start_index }} to {{ items.end_index }} of {{ items.paginator.count }} entries
+    </div>
+
+    <!-- Controls -->
+    <div class="flex gap-2 items-center">
+        {% if items.has_previous %}
+        <a href="?page={{ items.previous_page_number }}&search={{ search }}&status={{ status_filter }}&sort={{ sort_by }}" 
+           class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+            Previous
+        </a>
+        {% else %}
+        <span class="px-4 py-2 bg-gray-100 text-gray-400 rounded cursor-not-allowed">
+            Previous
+        </span>
+        {% endif %}
+
+        <span class="px-4 py-2 bg-blue-600 text-white rounded">
+            Page {{ items.number }} of {{ items.paginator.num_pages }}
+        </span>
+
+        {% if items.has_next %}
+        <a href="?page={{ items.next_page_number }}&search={{ search }}&status={{ status_filter }}&sort={{ sort_by }}" 
+           class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+            Next
+        </a>
+        {% else %}
+        <span class="px-4 py-2 bg-gray-100 text-gray-400 rounded cursor-not-allowed">
+            Next
+        </span>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 
 {% endblock %}
