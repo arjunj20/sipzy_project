@@ -493,12 +493,12 @@ def product_create(request):
 
 @never_cache
 @transaction.atomic
-def product_edit(request, product_id):
+def product_edit(request, uuid):
 
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
     
-    product = get_object_or_404(Products, pk=product_id)
+    product = get_object_or_404(Products, uuid=uuid)
     brands = Brand.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True)
     variants = product.variants.all().order_by('-created_at')
@@ -542,7 +542,7 @@ def product_edit(request, product_id):
             product.save()
 
             success = "Product updated successfully!"
-            return redirect("product_edit", product_id=product.id)
+            return redirect("product_edit", uuid=product.uuid)
 
         elif action == "add_images":
             new_images = request.FILES.getlist("images[]")
@@ -558,10 +558,10 @@ def product_edit(request, product_id):
                 })
 
             for img in new_images:
-                url = _upload_to_cloudinary(img, folder=f"products/{product.id}")
+                url = _upload_to_cloudinary(img, folder=f"products/{product.uuid}")
                 ProductImage.objects.create(product=product, image=url)
 
-            return redirect("product_edit", product_id=product.id)
+            return redirect("product_edit", uuid=product.uuid)
 
     
         elif action == "add_variant":
@@ -620,7 +620,7 @@ def product_edit(request, product_id):
                 primary_image=img_url,
             )
 
-            return redirect("product_edit", product_id=product.id)
+            return redirect("product_edit", uuid=product.uuid)
 
     return render(request, "product_edit.html", {
         "product": product,
@@ -661,7 +661,7 @@ def product_image_delete(request, image_id):
     
     errors = {}
     image = get_object_or_404(ProductImage, pk=image_id)
-    product_id = image.product.id
+    uuid = image.product.uuid
 
     if request.method == "POST":
         if not image:
@@ -671,9 +671,9 @@ def product_image_delete(request, image_id):
             })
 
         image.delete()
-        return redirect("product_edit", product_id=product_id)
+        return redirect("product_edit", uuid=uuid)
 
-    return redirect("product_edit", product_id=product_id)
+    return redirect("product_edit", uuid=uuid)
 
 @never_cache
 @transaction.atomic
