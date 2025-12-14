@@ -54,7 +54,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     
 class Address(models.Model):
 
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+   
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)    
+
     user =  models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="addresses")
     full_name = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15)
