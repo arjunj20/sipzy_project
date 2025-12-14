@@ -691,46 +691,67 @@ def product_delete(request, product_id):
 
     return redirect("product_list")
 
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.views.decorators.cache import never_cache
 @never_cache
 def admin_order_item_list(request):
 
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
 
-    search = request.GET.get("search", "")
-    status_filter = request.GET.get("status", "")
+    search = request.GET.get("search", "").strip()
+    status_filter = request.GET.get("status", "").strip()
     sort = request.GET.get("sort", "-created_at")
 
-    items = OrderItem.objects.select_related("order", "product", "variant", "order__user")
+    allowed_sorts = {"created_at", "-created_at", "status", "-status"}
+    if sort not in allowed_sorts:
+        sort = "-created_at"
+
+    items_qs = (
+        OrderItem.objects
+        .select_related(
+            "order",
+            "product",
+            "variant",
+            "order__user",
+            "return_request"
+        )
+    )
+
     if search:
-        items = items.filter(
+        items_qs = items_qs.filter(
             Q(sub_order_id__icontains=search) |
             Q(order__order_number__icontains=search) |
             Q(product__name__icontains=search) |
             Q(order__user__fullname__icontains=search) |
             Q(order__user__email__icontains=search)
         )
-    if status_filter:
-        items = items.filter(status=status_filter)
-    items = items.order_by(sort)
 
-    paginator = Paginator(items, 12)
-    page = request.GET.get("page")
-    items = paginator.get_page(page)
+    if status_filter:
+        items_qs = items_qs.filter(status=status_filter)
+
+    items_qs = items_qs.order_by(sort)
+
+    paginator = Paginator(items_qs, 8)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
 
     return render(request, "suborder_list.html", {
-        "items": items,
+        "items": page_obj,
         "search": search,
         "status_filter": status_filter,
         "sort_by": sort,
+        "status_choices": OrderItem.ITEM_STATUS_CHOICES,  # ✅ ADD THIS
     })
+
 
 @never_cache
 def admin_order_item_detail(request, uuid):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
     
-    item = get_object_or_404(OrderItem.objects.select_related("order", "product", "variant", "order__user"), uuid=uuid)
+    item = get_object_or_404(OrderItem.objects.select_related("order", "product", "variant", "order__user", "return_request"), uuid=uuid)
     return render(request, "suborder_detail.html", {"item": item})
 
 
@@ -747,7 +768,23 @@ def update_suborder_status(request, item_id):
     if new_status not in dict(OrderItem.ITEM_STATUS_CHOICES):
         return JsonResponse({"success": False, "message": "Invalid status"})
 
+    if new_status == "returned" and not hasattr(item, "return_request"):
+        return JsonResponse({
+            "success": False,
+            "message": "Return must be requested by user first"
+        })
+
+    if new_status == "returned":
+        rr = item.return_request
+        rr.status = "approved"
+        rr.save(update_fields=["status"])
+
     item.status = new_status
-    item.save()
-    return JsonResponse({"success": True, "message": "Status updated successfully"})
+    item.save(update_fields=["status"])
+
+    return JsonResponse({
+        "success": True,
+        "message": "Status updated successfully"
+    })
+
 

@@ -129,28 +129,43 @@ def cancel_item(request, item_id):
 from django.shortcuts import get_object_or_404, redirect
 from .models import OrderItem, ReturnRequest
 
-
 @never_cache
-def submit_return_request(request, item_id):
+def submit_return_request(request, uuid):
 
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
-    
+
     if request.method != "POST":
-        return redirect("error_page") 
+        return redirect("error_page")
 
-    item = get_object_or_404(OrderItem, id=item_id)
+    item = get_object_or_404(
+        OrderItem,
+        uuid=uuid,
+        order__user=request.user
+    )
 
-    if hasattr(item, "return_request"):
-        messages.warning(request, "Return request already submitted for this item.")
-        return redirect("order_detail", order_id=item.order.id)
+    if item.status != "delivered":
+        messages.warning(request, "This item cannot be returned.")
+        return redirect("order_detail", uuid=item.order.uuid)
 
-    reason = request.POST.get("reason")
-    ReturnRequest.objects.create(order_item=item, reason=reason)
+    if ReturnRequest.objects.filter(order_item=item).exists():
+        messages.warning(request, "Return already requested.")
+        return redirect("order_detail", uuid=item.order.uuid)
 
-    item.status = "returned"
-    item.save(update_fields=["status"])
+    # create return request
+    ReturnRequest.objects.create(
+        order_item=item,
+        reason=request.POST.get("reason")
+    )
 
-    messages.success(request, "Your return request has been submitted.")
-    return redirect("order_detail", id=item.order.id)
+    # 🔥 FORCE UPDATE (NO save(), NO signals, NO overrides)
+    OrderItem.objects.filter(pk=item.pk).update(
+        status="return_requested"
+    )
 
+    messages.success(
+        request,
+        "Return request submitted. Waiting for admin approval."
+    )
+
+    return redirect("order_detail", uuid=item.order.uuid)
