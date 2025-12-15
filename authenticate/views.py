@@ -500,22 +500,7 @@ def resend_forgot_otp(request):
 
     return redirect("forgot_password_otp")
 
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 
-@login_required
-def user_profile(request):
-    if not request.user.is_authenticated or request.user.is_superuser:
-        return redirect("landing_page")
-    user = request.user
-    addresses = user.addresses.all()
-    
-    context = {
-        'user': user,
-        'addresses': addresses,
-    }
-    
-    return render(request, 'profile.html', context)
 
 
 

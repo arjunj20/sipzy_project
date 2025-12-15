@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-4">
+  <div class="card shadow-sm mx-auto" style="max-width: 520px;">
+    <div class="card-body">
+
+      <h4 class="mb-3">Add Address</h4>
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <input class="form-control mb-2" name="full_name" placeholder="Full Name">
+        <input class="form-control mb-2" name="phone_number" placeholder="Phone Number">
+        <input class="form-control mb-2" name="address_line1" placeholder="Address Line 1">
+        <input class="form-control mb-2" name="address_line2" placeholder="Address Line 2 (Optional)">
+        <input class="form-control mb-2" name="city" placeholder="City">
+        <input class="form-control mb-2" name="state" placeholder="State">
+        <input class="form-control mb-3" name="pincode" placeholder="Pincode">
+
+        <button class="btn btn-primary w-100">Save Address</button>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
