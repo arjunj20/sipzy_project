@@ -42,54 +42,92 @@ def order_detail(request, uuid):
         "items": items,
     })
 
-def item_invoice(request, item_id):
+def order_invoice(request, order_id):
+    order = get_object_or_404(
+        Order,
+        id=order_id,
+        user=request.user
+    )
 
-    item = get_object_or_404(OrderItem, id=item_id, order__user=request.user)
-    order = item.order
+    items = order.items.all()  # related_name on OrderItem
     user = request.user
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="Invoice_{item.sub_order_id}.pdf"'
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="Invoice_{order.order_number}.pdf"'
+    )
 
     p = canvas.Canvas(response, pagesize=A4)
     width, height = A4
+    y = height - 50
 
-    # Title
+    # 🔹 Header
     p.setFont("Helvetica-Bold", 20)
-    p.drawString(30, height - 50, "INVOICE")
+    p.drawString(30, y, "INVOICE")
 
-    # Order Information
+    y -= 40
     p.setFont("Helvetica", 12)
-    p.drawString(30, height - 100, f"Item Order ID : {item.sub_order_id}")
-    p.drawString(30, height - 120, f"Order Number  : {order.order_number}")
-    p.drawString(30, height - 140, f"Date          : {order.created_at.strftime('%d-%m-%Y %H:%M')}")
+    p.drawString(30, y, f"Order Number : {order.order_number}")
+    y -= 20
+    p.drawString(30, y, f"Order Date   : {order.created_at.strftime('%d-%m-%Y %H:%M')}")
 
-    # Billing Details
-    p.drawString(30, height - 180, "Billing To:")
-    p.drawString(50, height - 200, f"{user.fullname}")
-    p.drawString(50, height - 220, f"{order.address.address_line1}")
-    p.drawString(50, height - 240, f"{order.address.city}, {order.address.state}")
-    p.drawString(50, height - 260, f"{order.address.pincode}")
-
-    # Product Table Header
+    # 🔹 Billing Address
+    y -= 40
     p.setFont("Helvetica-Bold", 12)
-    p.drawString(30, height - 300, "Product")
-    p.drawString(200, height - 300, "Variant")
-    p.drawString(300, height - 300, "Qty")
-    p.drawString(350, height - 300, "Price")
-    p.drawString(420, height - 300, "Total")
-
-    # Product Row
+    p.drawString(30, y, "Billing Address:")
+    y -= 20
     p.setFont("Helvetica", 12)
-    p.drawString(30, height - 330, item.product.name)
-    p.drawString(200, height - 330, item.variant.variant if item.variant else "-")
-    p.drawString(300, height - 330, str(item.quantity))
-    p.drawString(350, height - 330, f"₹{item.price}")
-    p.drawString(420, height - 330, f"₹{item.price * item.quantity}")
+    p.drawString(30, y, user.fullname)
+    y -= 20
+    p.drawString(30, y, order.address.address_line1)
+    y -= 20
+    p.drawString(30, y, f"{order.address.city}, {order.address.state}")
+    y -= 20
+    p.drawString(30, y, order.address.pincode)
 
-    # Final Total
+    # 🔹 Table Header
+    y -= 40
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(30, y, "Product")
+    p.drawString(230, y, "Variant")
+    p.drawString(330, y, "Qty")
+    p.drawString(370, y, "Price")
+    p.drawString(450, y, "Total")
+
+    y -= 20
+    p.setFont("Helvetica", 12)
+
+    # 🔹 Items
+    for item in items:
+        if y < 80:
+            p.showPage()
+            y = height - 50
+
+        p.drawString(30, y, item.product.name)
+        p.drawString(230, y, item.variant.variant if item.variant else "-")
+        p.drawString(330, y, str(item.quantity))
+        p.drawString(370, y, f"₹{item.price}")
+        p.drawString(450, y, f"₹{item.price * item.quantity}")
+        y -= 20
+
+    # 🔹 Totals
+    y -= 30
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(330, y, "Subtotal:")
+    p.drawString(450, y, f"₹{order.subtotal}")
+
+    y -= 20
+    p.drawString(330, y, "Shipping:")
+    p.drawString(450, y, f"₹{order.shipping_fee}")
+
+    y -= 20
+    p.drawString(330, y, "Tax:")
+    p.drawString(450, y, f"₹{order.tax}")
+
+    y -= 20
     p.setFont("Helvetica-Bold", 14)
-    p.drawString(30, height - 380, f"TOTAL AMOUNT: ₹{item.price * item.quantity}")
+    p.drawString(330, y, "TOTAL:")
+    p.drawString(450, y, f"₹{order.total}")
 
     p.showPage()
     p.save()

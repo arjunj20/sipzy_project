@@ -20,9 +20,14 @@
             <p><strong>Shipping Fee:</strong> ₹{{ order.shipping_fee }}</p>
             <p><strong>Tax:</strong> ₹{{ order.tax }}</p>
             <p><strong>Total Amount:</strong> <span class="font-bold">₹{{ order.total }}</span></p>
+            
         </div>
-    </div>
 
+    </div>
+        <a href="{% url 'order_invoice' order.id %}"
+   class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">
+   Download Invoice
+</a>
     <!-- Items -->
     <div class="bg-white shadow-sm rounded-xl border overflow-hidden mt-6">
         <table class="w-full">
@@ -85,11 +90,8 @@
                     <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-2">
 
-                            <!-- Invoice -->
-                            <a href="{% url 'item_invoice' item.id %}"
-                               class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">
-                                Download Invoice
-                            </a>
+         
+                          
 
                             <!-- Cancel -->
                             {% if item.status == "pending" or item.status == "processing" %}
