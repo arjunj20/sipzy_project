@@ -563,65 +563,7 @@ def product_edit(request, uuid):
 
             return redirect("product_edit", uuid=product.uuid)
 
-    
-        elif action == "add_variant":
-            variant_name = request.POST.get("variant", "").strip()
-            price = request.POST.get("price", "").strip()
-            stock = request.POST.get("stock", "").strip()
-            primary_image = request.FILES.get("primary_image")
-
-            if not variant_name:
-                errors["variant"] = "Variant name is required."
-
-            if not price:
-                errors["price"] = "Price is required."
-            else:
-                try:
-                    price_val = Decimal(price)
-                    if price_val <= 0:
-                        errors["price"] = "Price must be greater than 0."
-                except:
-                    errors["price"] = "Price must be a valid number."
-
-            if not stock:
-                errors["stock"] = "Stock quantity is required."
-            else:
-                try:
-                    stock_val = int(stock)
-                    if stock_val < 0:
-                        errors["stock"] = "Stock cannot be negative."
-                except:
-                    errors["stock"] = "Stock must be a number."
-
-            if not primary_image:
-                errors["primary_image"] = "Primary image is required."
-
-            if primary_image:
-                upload=cloudinary_upload(primary_image)
-                img_url = upload.get("secure_url")
-            else:
-                errors["primary_image"] = "Primary image is required."
-
-            if errors:
-                return render(request, "product_edit.html", {
-                    "product": product,
-                    "brands": brands,
-                    "categories": categories,
-                    "variants": variants,
-                    "errors": errors
-                })
-            
-
-            ProductVariants.objects.create(
-                product=product,
-                variant=variant_name,
-                price=price_val,
-                stock=stock_val,
-                primary_image=img_url,
-            )
-
-            return redirect("product_edit", uuid=product.uuid)
-
+   
     return render(request, "product_edit.html", {
         "product": product,
         "brands": brands,
@@ -629,27 +571,7 @@ def product_edit(request, uuid):
         "variants": variants
     })
 
-@never_cache
-@transaction.atomic
-def variant_delete(request, variant_id):
 
-    if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('admin_login')
-    errors = {}
-    variant = get_object_or_404(ProductVariants, pk=variant_id)
-    product_id = variant.product.id
-
-    if request.method == "POST":
-        if not variant:
-            errors["variant"] = "Variant not found."
-            return render(request, "product_edit.html", {
-                "errors": errors
-            })
-
-        variant.delete()
-        return redirect("product_edit", product_id=product_id)
-
-    return redirect("product_edit", product_id=product_id)
 
 
 @never_cache
@@ -786,5 +708,88 @@ def update_suborder_status(request, item_id):
         "success": True,
         "message": "Status updated successfully"
     })
+
+
+def admin_variant_list(request, product_uuid):
+
+    product = get_object_or_404(Products, uuid=product_uuid)
+    variants = product.variants.all()
+    errors={}
+    success = None
+
+    if request.method == 'POST':
+        variant_name = request.POST.get("variant", "").strip()
+        price = request.POST.get("price", "").strip()
+        stock = request.POST.get("stock", "").strip()
+        primary_image = request.FILES.get("primary_image")
+        if not variant_name:
+            errors["variant"] = "Variant name is required."
+
+        if not price:
+            errors["price"] = "Price is required."
+        else:
+            try:
+                price_val = Decimal(price)
+                if price_val <= 0:
+                    errors["price"] = "Price must be greater than 0."
+            except:
+                errors["price"] = "Price must be a valid number."
+
+        if not stock:
+            errors["stock"] = "Stock quantity is required."
+        else:
+            try:
+                stock_val = int(stock)
+                if stock_val < 0:
+                    errors["stock"] = "Stock cannot be negative."
+            except:
+                errors["stock"] = "Stock must be a number."
+
+        if not primary_image:
+            errors["primary_image"] = "Primary image is required."
+
+        if primary_image and not errors:
+            upload = cloudinary_upload(primary_image)
+            img_url = upload.get("secure_url")
+
+        if errors:
+            return render(request, "admin/variant_list.html", {
+                "product": product,
+                "variants": variants,
+                "errors": errors
+            })
+        ProductVariants.objects.create(
+            product=product,
+            variant=variant_name,
+            price=price_val,
+            stock=stock_val,
+            primary_image=img_url,
+        )
+
+        success = "Variant added successfully"
+        return redirect("variant_list", product_uuid=product.uuid)
+
+
+    return render(request, "variant_list.html", {
+        "product": product,
+        "variants": variants,
+        "errors": errors,
+        "success": success
+            })
+
+@never_cache
+@transaction.atomic
+def variant_delete(request, uuid):
+
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
+
+    variant = get_object_or_404(ProductVariants, uuid=uuid)
+    product_uuid = variant.product.uuid  
+
+    if request.method == "POST":
+        variant.delete()
+
+    return redirect("variant_list", product_uuid=product_uuid)
 
 
