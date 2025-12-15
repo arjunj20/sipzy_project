@@ -190,13 +190,12 @@ def submit_return_request(request, uuid):
         messages.warning(request, "Return already requested.")
         return redirect("order_detail", uuid=item.order.uuid)
 
-    # create return request
     ReturnRequest.objects.create(
         order_item=item,
         reason=request.POST.get("reason")
     )
 
-    # 🔥 FORCE UPDATE (NO save(), NO signals, NO overrides)
+
     OrderItem.objects.filter(pk=item.pk).update(
         status="return_requested"
     )
