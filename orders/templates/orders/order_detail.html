@@ -69,21 +69,28 @@
 
                     <!-- Status Badge -->
                     <td class="px-6 py-4">
-                        <span class="px-3 py-1 text-xs rounded-full text-white
-                            {% if item.status == 'pending' %} bg-yellow-500
-                            {% elif item.status == 'processing' %} bg-blue-500
-                            {% elif item.status == 'shipped' %} bg-indigo-500
-                            {% elif item.status == 'delivered' %} bg-green-600
-                            {% elif item.status == 'return_requested' %} bg-yellow-700
-                            {% elif item.status == 'cancelled' %} bg-red-600
-                            {% elif item.status == 'returned' %} bg-gray-700
-                            {% endif %}">
-                            {% if item.status == "return_requested" %}
-                                Return Requested
-                            {% else %}
-                                {{ item.status|title }}
-                            {% endif %}
-                        </span>
+                    <!-- Item Status -->
+<p class="text-sm">
+    <strong>Status:</strong>
+    <span class="font-semibold">
+        {{ item.get_status_display }}
+    </span>
+</p>
+
+<!-- Return Status (ONLY if return exists) -->
+{% if item.return_request %}
+<p class="text-sm mt-1">
+    <strong>Return Status:</strong>
+    <span class="font-semibold
+        {% if item.return_request.status == 'pending' %}text-yellow-600
+        {% elif item.return_request.status == 'approved' %}text-green-600
+        {% elif item.return_request.status == 'rejected' %}text-red-600
+        {% elif item.return_request.status == 'refunded' %}text-indigo-600{% endif %}">
+        {{ item.return_request.get_status_display }}
+    </span>
+</p>
+{% endif %}
+
                     </td>
 
                     <!-- Actions -->
@@ -103,7 +110,7 @@
                             {% endif %}
 
                             <!-- Return -->
-                            {% if item.status == "delivered" %}
+                            {% if item.status == "delivered" and not item.return_request %}
                             <button
                                 class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-lg"
                                 data-modal-target="returnModal{{ item.id }}">

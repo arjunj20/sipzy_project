@@ -664,7 +664,7 @@ def admin_order_item_list(request):
         "search": search,
         "status_filter": status_filter,
         "sort_by": sort,
-        "status_choices": OrderItem.ITEM_STATUS_CHOICES,  # ✅ ADD THIS
+        "status_choices": OrderItem.ITEM_STATUS_CHOICES, 
     })
 
 
@@ -680,28 +680,80 @@ def admin_order_item_detail(request, uuid):
 @never_cache
 @require_POST
 def update_suborder_status(request, item_id):
-
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('admin_login')
-    
+        return redirect("admin_login")
+
     item = get_object_or_404(OrderItem, id=item_id)
-    new_status = request.POST.get("status")
+    action = request.POST.get("status")
 
-    if new_status not in dict(OrderItem.ITEM_STATUS_CHOICES):
-        return JsonResponse({"success": False, "message": "Invalid status"})
+    # ================= RETURN APPROVAL / REJECTION =================
+    if action in ["approved", "rejected"]:
+        if not hasattr(item, "return_request"):
+            return JsonResponse({
+                "success": False,
+                "message": "No return request found"
+            })
 
-    if new_status == "returned" and not hasattr(item, "return_request"):
-        return JsonResponse({
-            "success": False,
-            "message": "Return must be requested by user first"
-        })
-
-    if new_status == "returned":
         rr = item.return_request
-        rr.status = "approved"
+        rr.status = action
         rr.save(update_fields=["status"])
 
-    item.status = new_status
+        if action == "rejected":
+            item.status = "delivered"
+            item.save(update_fields=["status"])
+
+        return JsonResponse({
+            "success": True,
+            "message": f"Return {action} successfully"
+        })
+
+    # ================= MARK AS RETURNED (⬅️ YOUR CODE GOES HERE) =================
+    if action == "returned":
+        if not hasattr(item, "return_request") or item.return_request.status != "approved":
+            return JsonResponse({
+                "success": False,
+                "message": "Return must be approved first"
+            })
+
+        # 1️⃣ Mark item as returned
+        item.status = "returned"
+        item.save(update_fields=["status"])
+
+        # 2️⃣ Restock inventory
+        if item.variant:
+            item.variant.stock += item.quantity
+            item.variant.save(update_fields=["stock"])
+
+        # 3️⃣ Recalculate order totals
+        item.order.recalculate_totals()
+
+        return JsonResponse({
+            "success": True,
+            "message": "Item marked as returned and order totals updated"
+        })
+
+    # ================= NORMAL ORDER STATUS FLOW =================
+    VALID_STATUS_TRANSITIONS = {
+        "pending": ["processing", "cancelled"],
+        "processing": ["shipped", "cancelled"],
+        "shipped": ["delivered"],
+    }
+
+    current = item.status
+
+    if current not in VALID_STATUS_TRANSITIONS:
+        return JsonResponse({
+            "success": False,
+            "message": "Status cannot be changed at this stage"
+        })
+
+    if action not in VALID_STATUS_TRANSITIONS[current]:
+        return JsonResponse({
+            "success": False,
+            "message": f"Cannot change status from {current} to {action}"
+        })
+
+    item.status = action
     item.save(update_fields=["status"])
 
     return JsonResponse({

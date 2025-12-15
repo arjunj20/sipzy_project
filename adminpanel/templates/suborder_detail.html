@@ -13,15 +13,30 @@
         </div>
         <div>
             <p class="mb-2"><strong>User:</strong> {{ item.order.user.fullname }}</p>
-            <p class="mb-2"><strong>Status:</strong> 
-                <span id="current-status" class="px-3 py-1 rounded text-sm font-semibold
-                    {% if item.status == 'delivered' %}bg-green-100 text-green-800
-                    {% elif item.status == 'cancelled' or item.status == 'return_requested' %}bg-red-100 text-red-800
-                    {% elif item.status == 'shipped' %}bg-blue-100 text-blue-800
-                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                    {{ item.get_status_display }}
-                </span>
-            </p>
+<p class="mb-2">
+    <strong>Item Status:</strong>
+    <span class="px-3 py-1 rounded text-sm font-semibold
+        {% if item.status == 'delivered' %}bg-green-100 text-green-800
+        {% elif item.status == 'cancelled' %}bg-red-100 text-red-800
+        {% elif item.status == 'shipped' %}bg-blue-100 text-blue-800
+        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+        {{ item.get_status_display }}
+    </span>
+</p>
+
+{% if item.return_request %}
+<p class="mb-2">
+    <strong>Return Status:</strong>
+    <span class="px-3 py-1 rounded text-sm font-semibold
+        {% if item.return_request.status == 'pending' %}bg-yellow-100 text-yellow-800
+        {% elif item.return_request.status == 'approved' %}bg-green-100 text-green-800
+        {% elif item.return_request.status == 'rejected' %}bg-red-100 text-red-800
+        {% elif item.return_request.status == 'refunded' %}bg-indigo-100 text-indigo-800{% endif %}">
+        {{ item.return_request.get_status_display }}
+    </span>
+</p>
+{% endif %}
+
         </div>
     </div>
 
@@ -62,13 +77,39 @@
     <div class="flex items-center gap-4">
         <div class="flex-1">
             <label class="block font-semibold mb-2">Change Status:</label>
-            <select id="status" class="border p-2 rounded w-full focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                {% for value,label in item.ITEM_STATUS_CHOICES %}
-                <option value="{{ value }}" {% if value == item.status %}selected{% endif %}>
-                    {{ label }}
-                </option>
-                {% endfor %}
-            </select>
+        <select id="status" class="border p-2 rounded w-full">
+
+    <!-- Always show current item status -->
+    <option value="{{ item.status }}" selected>
+        {{ item.get_status_display }}
+    </option>
+
+    {% if item.status == "pending" %}
+        <option value="processing">Processing</option>
+        <option value="cancelled">Cancel</option>
+    {% endif %}
+
+    {% if item.status == "processing" %}
+        <option value="shipped">Shipped</option>
+        <option value="cancelled">Cancel</option>
+    {% endif %}
+
+    {% if item.status == "shipped" %}
+        <option value="delivered">Delivered</option>
+    {% endif %}
+
+    {% if item.status == "return_requested" %}
+        <!-- THESE ARE ADMIN ACTIONS, NOT ITEM STATUSES -->
+        <option value="approved">Approve Return</option>
+        <option value="rejected">Reject Return</option>
+    {% endif %}
+
+    {% if item.return_request and item.return_request.status == "approved" %}
+        <option value="returned">Mark as Returned</option>
+    {% endif %}
+
+</select>
+    
         </div>
 
         <div class="pt-7">
