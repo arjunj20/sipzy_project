@@ -42,7 +42,6 @@ def edit_profile(request):
             errors["fullname"] = "Name is required"
 
         if image and not errors:
-            # upload to cloudinary manually
             upload = cloudinary_upload(
                 image,
                 folder="profile_images"
@@ -59,7 +58,6 @@ def edit_profile(request):
         user.fullname = fullname
 
         if image:
-            # save cloudinary URL (or public_id)
             user.profile_image = img_url
 
         user.save()
@@ -267,7 +265,7 @@ def edit_addresses(request, uuid):
     address = get_object_or_404(
         Address,
         uuid=uuid,
-        user=request.user  # 🔒 prevents editing others' addresses
+        user=request.user 
     )
     errors = {}
 
