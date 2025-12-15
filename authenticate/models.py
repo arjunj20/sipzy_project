@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 import uuid
+from cloudinary.models import CloudinaryField
 
 
 class UserManager(BaseUserManager):
@@ -36,7 +37,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     fullname = models.CharField(max_length=100, null=True)
     email = models.EmailField(max_length=100, unique=True)
-
+   
+    profile_image = CloudinaryField(
+        "profile_image",
+        null=True,
+        blank=True
+    )
     is_active = models.BooleanField(default=True)
     is_superuser = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
