@@ -24,13 +24,20 @@ urlpatterns = [
     path("product-create/", views.product_create, name="product_create"),
     path("product-edit/<uuid:uuid>/", views.product_edit, name="product_edit"),
 
-    path("variants/<int:variant_id>/delete/", views.variant_delete, name="variant_delete"),
+    path("variants/<uuid:uuid>/delete/", views.variant_delete, name="variant_delete"),
     path("images/<int:image_id>/delete/", views.product_image_delete, name="product_image_delete"),
 
 
     path("order-items/", views.admin_order_item_list, name="admin_order_item_list"),
     path("order-details/<uuid:uuid>/", views.admin_order_item_detail, name="admin_order_item_detail"),
     path("order-update/<int:item_id>/update/", views.update_suborder_status, name="update_suborder_status"),
+
+    path(
+        'variant-list/<uuid:product_uuid>/',
+        views.admin_variant_list,
+        name='variant_list'
+        )
+
 
 
 

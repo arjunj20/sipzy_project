@@ -103,6 +103,11 @@
             </td>
             <td class="py-4 px-6 text-gray-500">{{ p.created_at|date:"Y-m-d" }}</td>
             <td class="py-4 px-6 text-center">
+              <a href="{% url 'variant_list' p.uuid %}"
+   class="px-3 py-1 bg-green-100 text-green-700 rounded-lg mr-2">
+   Variants
+</a>
+
 <a href="{% url 'product_edit' p.uuid %}" class="px-3 py-1 bg-gray-100 rounded-lg mr-2">Edit</a>
               <form method="POST" action="{% url 'product_delete' p.id %}" style="display:inline;">
                 {% csrf_token %}
