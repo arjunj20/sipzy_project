@@ -141,20 +141,22 @@
                             Are you sure you want to cancel this item?
                         </p>
 
-                        <form action="{% url 'cancel_item' item.id %}" method="POST">
-                            {% csrf_token %}
-                            <div class="flex justify-end gap-3">
-                                <button type="button"
-                                        class="px-4 py-2 bg-gray-300 rounded-lg"
-                                        onclick="document.getElementById('cancelModal{{ item.id }}').classList.add('hidden')">
-                                    No
-                                </button>
-                                <button type="submit"
-                                        class="px-4 py-2 bg-red-600 text-white rounded-lg">
-                                    Yes, Cancel
-                                </button>
-                            </div>
-                        </form>
+                      <form action="{% url 'cancel_item' item.uuid %}" method="POST">
+    {% csrf_token %}
+
+    <label class="text-sm text-gray-600">Reason for cancellation</label>
+    <textarea name="reason"
+              class="w-full border rounded-md mt-1 p-2"
+              required></textarea>
+
+    <div class="flex justify-end gap-3 mt-4">
+        <button type="submit"
+                class="px-4 py-2 bg-red-600 text-white rounded-lg">
+            Confirm Cancel
+        </button>
+    </div>
+</form>
+
                     </div>
                 </div>
 

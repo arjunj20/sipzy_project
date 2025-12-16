@@ -133,27 +133,42 @@ def order_invoice(request, order_id):
     p.save()
 
     return response
-
 @never_cache
-def cancel_item(request, item_id):
+def cancel_item(request, uuid):
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
-    try:
-        item = OrderItem.objects.get(id=item_id, order__user=request.user)
-    except OrderItem.DoesNotExist:
-        messages.error(request, "Item not found or unauthorized access.")
-        return redirect("order_list") 
+
+    if request.method != "POST":
+        return redirect("order_list")
+
+    item = get_object_or_404(
+        OrderItem,
+        uuid=uuid,
+        order__user=request.user
+    )
+
+    # ❌ Cannot cancel delivered / returned items
+    if item.status in ["delivered", "cancelled", "returned"]:
+        messages.error(request, "This item cannot be cancelled.")
+        return redirect("order_detail", uuid=item.order.uuid)
+
+    reason = request.POST.get("reason", "").strip()
+    if not reason:
+        messages.error(request, "Cancellation reason is required.")
+        return redirect("order_detail", uuid=item.order.uuid)
 
     try:
-        if item.status in ["delivered", "cancelled"]:
-            messages.error(request, "This item cannot be cancelled.")
-            return redirect("order_detail", id=item.order.id)
+        # 1️⃣ Cancel item
         item.status = "cancelled"
-        item.save()
+        item.cancel_reason = reason
+        item.save(update_fields=["status", "cancel_reason"])
+
+        # 2️⃣ Restore stock
         if item.variant:
             item.variant.stock += item.quantity
             item.variant.save(update_fields=["stock"])
-        
+
+        # 3️⃣ Recalculate order totals
         item.order.recalculate_totals()
 
         messages.success(request, "Item cancelled successfully.")
@@ -161,7 +176,8 @@ def cancel_item(request, item_id):
     except Exception as e:
         print("CANCEL ERROR:", e)
         messages.error(request, "Something went wrong while cancelling the item.")
-    return redirect("order_detail", id=item.order.id)
+
+    return redirect("order_detail", uuid=item.order.uuid)
 
 
 from django.shortcuts import get_object_or_404, redirect
