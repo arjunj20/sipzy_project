@@ -43,7 +43,7 @@ def cart_page(request):
 @require_POST
 def update_cart_item(request):
     if not request.user.is_authenticated or request.user.is_superuser:
-        return redirect("user_homepage")
+        return redirect("user_login")
     errors = {}
     item_id = request.POST.get("item_id")
     quantity = request.POST.get("quantity")

@@ -14,11 +14,16 @@ from django.contrib.auth import  logout
 from django.db.models import Count
 from orders.models import Order
 from authenticate.models import Address
+from django.conf import settings
+
 
 
 @login_required
 @never_cache
 def user_profile(request):
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
+    
     user = request.user
     addresses = user.addresses.all()
     counts = Order.objects.filter(user=user).count()
@@ -31,6 +36,8 @@ def user_profile(request):
 
 @login_required
 def edit_profile(request):
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
     user = request.user
     errors = {}
 
@@ -71,6 +78,10 @@ def edit_profile(request):
 @login_required
 @never_cache
 def change_email(request):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
+    
     if request.method == "POST":
         new_email = request.POST.get("email")
         errors = {}
@@ -112,6 +123,10 @@ from django.utils.dateparse import parse_datetime
 @login_required
 @never_cache
 def email_otp(request):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
+    
     errors = {}
     data = request.session.get("change_email")
 
@@ -130,7 +145,7 @@ def email_otp(request):
 
     now = timezone.now()
     elapsed = (now - otp_time).total_seconds()
-    allowed_time = 300  
+    allowed_time = 100  
     remaining_time = max(0, int(allowed_time - elapsed))
 
     if request.method == "POST":
@@ -172,9 +187,42 @@ def email_otp(request):
     })
 
 
+
+@login_required
+@never_cache
+def resend_email_otp(request):
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
+
+    data = request.session.get("change_email")
+    if not data:
+        messages.error(request, "Session expired. Please try again.")
+        return redirect("change_email")
+
+    new_otp = random.randint(100000, 999999)
+
+    data["otp"] = new_otp
+    data["otp_time"] = timezone.now().isoformat()
+    request.session["change_email"] = data
+    send_mail(
+        subject="Your OTP for Email Change",
+        message=f"Your OTP is {new_otp}. It is valid for 5 minutes.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[data["email"]],
+        fail_silently=False,
+    )
+
+    messages.success(request, "A new OTP has been sent to your email.")
+    return redirect("email_otp")
+
+
+
 @login_required
 @never_cache
 def change_password(request):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
     errors = {}
 
     if request.method == "POST":
@@ -217,6 +265,9 @@ def change_password(request):
 @login_required
 @never_cache
 def add_addresses(request):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
     errors = {}
 
     if request.method == "POST":
@@ -262,6 +313,10 @@ def add_addresses(request):
 @login_required
 @never_cache
 def edit_addresses(request, uuid):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
+    
     address = get_object_or_404(
         Address,
         uuid=uuid,
@@ -293,3 +348,18 @@ def edit_addresses(request, uuid):
     return render(request, "edit_addresses.html", {
         "address": address
     })
+
+@never_cache
+def delete_address(request, uuid):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
+
+    address = get_object_or_404(
+        Address,
+        uuid=uuid,
+        user=request.user   
+    )
+
+    address.delete()
+    return redirect("user_profile")

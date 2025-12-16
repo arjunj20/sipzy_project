@@ -133,6 +133,7 @@ def order_invoice(request, order_id):
     p.save()
 
     return response
+
 @never_cache
 def cancel_item(request, uuid):
     if not request.user.is_authenticated or request.user.is_superuser:
@@ -147,7 +148,7 @@ def cancel_item(request, uuid):
         order__user=request.user
     )
 
-    # ❌ Cannot cancel delivered / returned items
+
     if item.status in ["delivered", "cancelled", "returned"]:
         messages.error(request, "This item cannot be cancelled.")
         return redirect("order_detail", uuid=item.order.uuid)
@@ -158,17 +159,14 @@ def cancel_item(request, uuid):
         return redirect("order_detail", uuid=item.order.uuid)
 
     try:
-        # 1️⃣ Cancel item
+
         item.status = "cancelled"
         item.cancel_reason = reason
         item.save(update_fields=["status", "cancel_reason"])
-
-        # 2️⃣ Restore stock
         if item.variant:
             item.variant.stock += item.quantity
             item.variant.save(update_fields=["stock"])
 
-        # 3️⃣ Recalculate order totals
         item.order.recalculate_totals()
 
         messages.success(request, "Item cancelled successfully.")

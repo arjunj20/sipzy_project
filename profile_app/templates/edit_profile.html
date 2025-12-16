@@ -469,9 +469,24 @@
 
             <!-- Secondary Actions -->
             <div style="text-align: center; margin-top: 2.5rem; padding-top: 2.5rem; border-top: 2px solid var(--border-color);">
-                <a href="{% url 'change_email' %}" class="btn btn-secondary">
-                    📧 Change Email
-                </a>
+              {% if user.has_usable_password %}
+    <!-- Normal user: can change email -->
+    <a href="{% url 'change_email' %}" class="btn btn-secondary">
+        📧 Change Email
+    </a>
+{% else %}
+    <!-- Google authenticated user -->
+    <button class="btn btn-secondary"
+            style="
+                opacity: 0.6;
+                cursor: not-allowed;
+                border-style: dashed;
+            "
+            title="Email is managed by your Google account">
+        🔐 Email Managed by Google
+    </button>
+{% endif %}
+
                 <div style="margin-top: 1.5rem;">
                     <a href="{% url 'user_profile' %}" style="color: var(--text-secondary); text-decoration: none; font-size: 1rem; font-weight: 500;">
                         ← Back to Profile
