@@ -8,7 +8,7 @@ urlpatterns = [
     path('order-invoice/<int:order_id>/', views.order_invoice, name="order_invoice"),
         
         
-    path("cancel/<int:item_id>/", views.cancel_item, name="cancel_item"),
+    path("cancel/<uuid:uuid>/", views.cancel_item, name="cancel_item"),
     path("return-item/<uuid:uuid>/", views.submit_return_request, name="submit_return_request"),
 
 
