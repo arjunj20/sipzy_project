@@ -395,8 +395,8 @@
                             id="full_name"
                             name="full_name"
                             class="form-control"
-                            placeholder="John Doe"
-                            required
+                            placeholder="Full Name"
+                            
                             autocomplete="name"
                         >
                         <div class="input-helper">
@@ -404,6 +404,11 @@
                             <span>As it appears on your ID</span>
                         </div>
                     </div>
+                    {% if errors.full_name %}
+    <span class="error-message">
+        {{ errors.full_name }}
+    </span>
+{% endif %}
 
                     <!-- Phone Number -->
                     <div class="form-group">
@@ -415,7 +420,7 @@
                             class="form-control"
                             placeholder="+91 98765 43210"
                             pattern="[0-9]{10,12}"
-                            required
+                            
                             autocomplete="tel"
                         >
                         <div class="input-helper">
@@ -423,7 +428,11 @@
                             <span>10-12 digits only</span>
                         </div>
                     </div>
-
+                    {% if errors.phone_number %}
+    <span class="error-message">
+        {{ errors.phone_number }}
+    </span>
+{% endif %}
                     <!-- Address Line 1 -->
                     <div class="form-group full-width">
                         <label class="form-label" for="address_line1">Address Line 1</label>
@@ -433,10 +442,15 @@
                             name="address_line1"
                             class="form-control"
                             placeholder="House number, street name, landmark"
-                            required
+                            
                             autocomplete="address-line1"
                         >
                     </div>
+                    {% if errors.address_line1 %}
+    <span class="error-message">
+        {{ errors.address_line1 }}
+    </span>
+{% endif %}
 
                     <!-- Address Line 2 -->
                     <div class="form-group full-width">
@@ -462,7 +476,7 @@
                             placeholder="400001"
                             pattern="[0-9]{6}"
                             maxlength="6"
-                            required
+                            
                             autocomplete="postal-code"
                         >
                         <div class="input-helper">
@@ -470,6 +484,11 @@
                             <span>6 digit PIN code</span>
                         </div>
                     </div>
+                    {% if errors.pincode %}
+    <span class="error-message">
+        {{ errors.pincode }}
+    </span>
+{% endif %}
 
                     <!-- City -->
                     <div class="form-group">
@@ -480,10 +499,15 @@
                             name="city"
                             class="form-control"
                             placeholder="Mumbai"
-                            required
+                            
                             autocomplete="address-level2"
                         >
                     </div>
+                    {% if errors.city %}
+    <span class="error-message">
+        {{ errors.city }}
+    </span>
+{% endif %}
 
                     <!-- State -->
                     <div class="form-group full-width">
@@ -494,11 +518,16 @@
                             name="state"
                             class="form-control"
                             placeholder="Maharashtra"
-                            required
+                            
                             autocomplete="address-level1"
                         >
                     </div>
                 </div>
+                {% if errors.state %}
+    <span class="error-message">
+        {{ errors.state }}
+    </span>
+{% endif %}
 
                 <!-- Address Preview -->
                 <div class="address-preview" id="addressPreview">

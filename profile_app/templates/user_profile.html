@@ -565,9 +565,25 @@
             <a href="{% url 'edit_profile' %}" class="btn-custom btn-primary-custom">
                 <span>✏️</span> Edit Profile
             </a>
-            <a href="{% url 'change_password' %}" class="btn-custom btn-primary-custom">
-                <span>🔒</span> Change Password
-            </a>
+          {% if user.has_usable_password %}
+    <a href="{% url 'change_password' %}" class="btn-custom btn-primary-custom">
+        <span>🔒</span> Change Password
+    </a>
+{% else %}
+    <button class="btn-custom"
+            style="
+                background: rgba(255,255,255,0.2);
+                backdrop-filter: blur(10px);
+                color: white;
+                border: 1px dashed rgba(255,255,255,0.5);
+                cursor: not-allowed;
+                opacity: 0.7;
+            "
+            title="Password is managed by Google account">
+        <span>🔐</span> Password Managed by Google
+    </button>
+{% endif %}
+
             <a href="#" class="btn-custom btn-primary-custom>
                 <span>📦</span> My Orders
             </a>
@@ -646,13 +662,17 @@
                                     </p>
                                 </div>
                                 <div class="d-flex flex-column flex-md-row gap-2">
-                                    <span class="address-badge">Primary</span>
                                     <div class="address-actions">
                                               <a href="{% url 'edit_addresses' address.uuid %}"
            class="btn-sm-custom btn-edit">
            Edit
-        </a>
-                                        <button class="btn-sm-custom btn-delete">Delete</button>
+        </a><form method="POST" action="{% url 'delete_address' address.uuid %}">
+    {% csrf_token %}
+    <button type="submit" class="btn-sm-custom btn-delete">
+        Delete
+    </button>
+</form>
+
                                     </div>
                                 </div>
                             </div>
@@ -666,10 +686,7 @@
                     </div>
                 {% endif %}
                 
-                <button class="add-address-btn mt-3">
-                    <span style="font-size: 1.5rem;">➕</span>
-                    Add New Address
-                </button>
+               
             </div>
         </div>
     </div>

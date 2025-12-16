@@ -12,4 +12,8 @@ urlpatterns = [
     path("address/edit/<uuid:uuid>/", views.edit_addresses, name="edit_addresses"),
 
     path("address-add/", views.add_addresses, name="add_addresses"),
+    path("address-delete/<uuid:uuid>/", views.delete_address, name="delete_address"),
+    path("resend-otp/", views.resend_email_otp, name="resend_email_otp"),
+
+
 ]

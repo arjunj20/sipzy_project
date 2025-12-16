@@ -686,7 +686,6 @@ def update_suborder_status(request, item_id):
     item = get_object_or_404(OrderItem, id=item_id)
     action = request.POST.get("status")
 
-    # ================= RETURN APPROVAL / REJECTION =================
     if action in ["approved", "rejected"]:
         if not hasattr(item, "return_request"):
             return JsonResponse({
@@ -707,7 +706,6 @@ def update_suborder_status(request, item_id):
             "message": f"Return {action} successfully"
         })
 
-    # ================= MARK AS RETURNED (⬅️ YOUR CODE GOES HERE) =================
     if action == "returned":
         if not hasattr(item, "return_request") or item.return_request.status != "approved":
             return JsonResponse({
@@ -715,24 +713,17 @@ def update_suborder_status(request, item_id):
                 "message": "Return must be approved first"
             })
 
-        # 1️⃣ Mark item as returned
         item.status = "returned"
         item.save(update_fields=["status"])
-
-        # 2️⃣ Restock inventory
         if item.variant:
             item.variant.stock += item.quantity
             item.variant.save(update_fields=["stock"])
-
-        # 3️⃣ Recalculate order totals
         item.order.recalculate_totals()
 
         return JsonResponse({
             "success": True,
             "message": "Item marked as returned and order totals updated"
         })
-
-    # ================= NORMAL ORDER STATUS FLOW =================
     VALID_STATUS_TRANSITIONS = {
         "pending": ["processing", "cancelled"],
         "processing": ["shipped", "cancelled"],
