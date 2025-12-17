@@ -1,0 +1,268 @@
+{% extends "admin_base.html" %}
+{% load static %}
+{% block title %}Add Product Offer{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes fadeIn { 
+        from { opacity: 0; transform: translateY(20px);} 
+        to { opacity:1; transform: translateY(0);} 
+    }
+    .animate-fade-in { 
+        animation: fadeIn 0.45s ease-out; 
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .alert-error {
+        background-color: #fee2e2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex-1 p-6 md:p-8 overflow-y-auto">
+    <!-- Header Section -->
+    <div class="mb-6 animate-fade-in">
+        <div class="flex items-center gap-2 mb-2">
+            <a href="{% url 'offer_list' %}" class="text-gray-600 hover:text-gray-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <h1 class="text-3xl font-bold text-gray-800">Add Product Offer</h1>
+        </div>
+        <p class="text-gray-600">Create a new discount offer for a product</p>
+    </div>
+
+    <!-- Error Messages -->
+    {% if errors %}
+    <div class="alert-error animate-fade-in">
+        <div class="flex items-start">
+            <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+                <p class="font-semibold mb-1">Please correct the following errors:</p>
+                <ul class="list-disc list-inside space-y-1">
+                    {% for field, message in errors.items %}
+                        <li class="text-sm">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden animate-fade-in">
+        <div class="px-6 py-4 border-b bg-gray-50">
+            <h2 class="text-lg font-semibold text-gray-800">Offer Details</h2>
+        </div>
+
+        <form method="post" novalidate class="p-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Offer Name -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Offer Name <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        name="offer_name" 
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        value="{{ request.POST.offer_name|default:'' }}" 
+                        placeholder="e.g., Summer Sale 2024"
+                        required
+                    >
+                    {% if errors.offer_name %}
+                    <p class="text-sm text-red-600 mt-1">{{ errors.offer_name }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Product Selection -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Product <span class="text-red-500">*</span>
+                    </label>
+                    <select 
+                        name="product" 
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        required
+                    >
+                        <option value="">-- Select Product --</option>
+                        {% for product in products %}
+                            <option value="{{ product.id }}"
+                                {% if request.POST.product == product.id|stringformat:"s" %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ product.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.product %}
+                    <p class="text-sm text-red-600 mt-1">{{ errors.product }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Discount Percentage -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Discount Percentage <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="number" 
+                            name="discount_percent" 
+                            class="w-full px-4 py-2.5 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            min="1" 
+                            max="90"
+                            value="{{ request.POST.discount_percent|default:'' }}" 
+                            placeholder="10"
+                            required
+                        >
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">%</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Enter value between 1-90%</p>
+                    {% if errors.discount_percent %}
+                    <p class="text-sm text-red-600 mt-1">{{ errors.discount_percent }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Status Toggle -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Offer Status
+                    </label>
+                    <div class="flex items-center h-[42px]">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                name="is_active" 
+                                class="sr-only peer"
+                                {% if request.POST.is_active or request.method != "POST" %}
+                                    checked
+                                {% endif %}
+                            >
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            <span class="ml-3 text-sm font-medium text-gray-700">Active</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Start Date -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Start Date <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="date" 
+                        name="start_date" 
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        value="{{ request.POST.start_date|default:'' }}" 
+                        required
+                    >
+                    {% if errors.start_date %}
+                    <p class="text-sm text-red-600 mt-1">{{ errors.start_date }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- End Date -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        End Date <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="date" 
+                        name="end_date" 
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        value="{{ request.POST.end_date|default:'' }}" 
+                        required
+                    >
+                    {% if errors.end_date %}
+                    <p class="text-sm text-red-600 mt-1">{{ errors.end_date }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-8 pt-6 border-t flex items-center gap-3">
+                <button 
+                    type="submit" 
+                    class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-all"
+                >
+                    <span class="flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Save Offer
+                    </span>
+                </button>
+                <a 
+                    href="{% url 'offer_list' %}" 
+                    class="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-all"
+                >
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Card -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4 animate-fade-in">
+        <div class="flex items-start">
+            <svg class="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+                <h4 class="text-sm font-semibold text-blue-900 mb-1">Offer Guidelines</h4>
+                <ul class="text-sm text-blue-800 space-y-1">
+                    <li>• Discount percentage must be between 1% and 90%</li>
+                    <li>• End date must be after the start date</li>
+                    <li>• Only one active offer per product is recommended</li>
+                    <li>• Inactive offers won't be displayed to customers</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const startDate = new Date(document.querySelector('[name="start_date"]').value);
+    const endDate = new Date(document.querySelector('[name="end_date"]').value);
+    const discount = parseInt(document.querySelector('[name="discount_percent"]').value);
+    
+    if (endDate <= startDate) {
+        e.preventDefault();
+        alert('End date must be after start date');
+        return false;
+    }
+    
+    if (discount < 1 || discount > 90) {
+        e.preventDefault();
+        alert('Discount must be between 1% and 90%');
+        return false;
+    }
+});
+
+// Auto-set minimum end date based on start date
+document.querySelector('[name="start_date"]').addEventListener('change', function() {
+    const endDateInput = document.querySelector('[name="end_date"]');
+    endDateInput.min = this.value;
+});
+</script>
+{% endblock %}
