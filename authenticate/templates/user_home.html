@@ -1,341 +1,134 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sipzy – Premium Spirits</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @keyframes slideLeft {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        
-        @keyframes slideRight {
-            0% { transform: translateX(-50%); }
-            100% { transform: translateX(0); }
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-        
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(162, 78, 52, 0.3); }
-            50% { box-shadow: 0 0 40px rgba(162, 78, 52, 0.6); }
-        }
 
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
-        }
-        
-        @keyframes fadeInUp {
-            0% { opacity: 0; transform: translateY(30px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
+{% block title %}Sipzy – Premium Spirits{% endblock %}
 
-        .slide-left {
-            animation: slideLeft 40s linear infinite;
-        }
-        
-        .slide-right {
-            animation: slideRight 40s linear infinite;
-        }
-        
-        .float-animation {
-            animation: float 3s ease-in-out infinite;
-        }
+{% block content %}
 
-        .glow-effect {
-            animation: glow 2s ease-in-out infinite;
-        }
-
-        .shimmer-effect {
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            background-size: 1000px 100%;
-            animation: shimmer 3s infinite;
-        }
-
-        .product-card {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-        }
-
-        .product-card:hover {
-            transform: translateY(-10px) scale(1.05);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
-
-        .hover-shine {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hover-shine::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            transform: rotate(45deg);
-            transition: all 0.6s;
-        }
-
-        .hover-shine:hover::before {
-            left: 100%;
-        }
-
-        /* Enhanced scroll container */
-        .scroll-container {
-            display: flex;
-            overflow: hidden;
-            position: relative;
-            cursor: grab;
-        }
-
-        .scroll-container:active {
-            cursor: grabbing;
-        }
-
-        .scroll-content {
-            display: flex;
-            gap: 4rem;
-            padding: 2rem 0;
-            will-change: transform;
-        }
-
-        /* Duplicate content for seamless loop */
-        .scroll-content.duplicated::after {
-            content: '';
-            display: flex;
-            gap: 4rem;
-        }
-
-        /* Gamification Progress Bar */
-        .progress-ring {
-            transform: rotate(-90deg);
-        }
-
-        .progress-ring-circle {
-            stroke-dasharray: 283;
-            stroke-dashoffset: 283;
-            animation: progress 2s ease-out forwards;
-        }
-
-        @keyframes progress {
-            to {
-                stroke-dashoffset: 70.75;
-            }
-        }
-        
-        /* New animations */
-        .fade-in-up {
-            animation: fadeInUp 0.8s ease-out forwards;
-        }
-        
-        .pulse-animation {
-            animation: pulse 2s infinite;
-        }
-        
-        .stagger-animation > * {
-            opacity: 0;
-            animation: fadeInUp 0.6s ease-out forwards;
-        }
-        
-        .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
-        .stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
-        .stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
-        .stagger-animation > *:nth-child(4) { animation-delay: 0.4s; }
-        .stagger-animation > *:nth-child(5) { animation-delay: 0.5s; }
-        
-        /* Enhanced visual elements */
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .gradient-overlay {
-            position: relative;
-        }
-        
-        .gradient-overlay::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 40%;
-            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .gradient-overlay:hover::after {
-            opacity: 1;
-        }
-        
-        .section-divider {
-            height: 1px;
-            background: linear-gradient(to right, transparent, rgba(162, 78, 52, 0.3), transparent);
-            margin: 4rem auto;
-            max-width: 80%;
-        }
-        
-        .floating-label {
-            position: absolute;
-            top: -10px;
-            left: 20px;
-            background: #A24E34;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            transform: translateY(0);
-            transition: transform 0.3s ease;
-        }
-        
-        .product-card:hover .floating-label {
-            transform: translateY(-5px);
-        }
-        
-        /* Scrollbar styling */
-        .scroll-container::-webkit-scrollbar {
-            height: 6px;
-        }
-        
-        .scroll-container::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 10px;
-        }
-        
-        .scroll-container::-webkit-scrollbar-thumb {
-            background: rgba(162, 78, 52, 0.3);
-            border-radius: 10px;
-        }
-        
-        .scroll-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(162, 78, 52, 0.5);
-        }
-        
-        /* Pause animation on hover */
-        .scroll-container:hover .scroll-content {
-            animation-play-state: paused;
-        }
-    </style>
-</head>
-
-<body class="bg-gradient-to-br from-[#F4E9E2] via-[#FEFAF7] to-[#F4E9E2]">
-
-<!-- ================= HEADER ================= -->
-<header class="w-full px-6 md:px-12 py-4 flex justify-between items-center bg-gradient-to-r from-[#B7472A] to-[#8D3A28] text-white shadow-2xl sticky top-0 z-50 backdrop-blur-sm">
-    <!-- Logo -->
-    <div class="flex items-center gap-3 cursor-pointer hover-shine">
-        <img src="/static/images/logo-removebg-preview 1.png" alt="Sipzy Logo" class="h-14 md:h-16 float-animation" />
-    </div>
-
-    <!-- Nav -->
-    <nav class="hidden md:flex gap-8 text-sm font-medium">
-        <a href="{% url 'user_homepage' %}" class="hover:text-yellow-300 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-yellow-300 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">Home</a>
-        <a href="{% url 'userproduct_list' %}" class="hover:text-yellow-300 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-yellow-300 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">Shop</a>
-        <a href="#" class="hover:text-yellow-300 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-yellow-300 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">Contact Us</a>
-        <a href="#" class="hover:text-yellow-300 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-yellow-300 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">About Us</a>
-    </nav>
-
-    <!-- Icons -->
-    <div class="flex gap-5 items-center">
-        <!-- Welcome Message for Logged-in User -->
-        <div class="flex items-center gap-2 text-sm">
-            <span class="text-yellow-300 font-semibold">Welcome, {{fullname}}!</span>
-        </div>
-        
-        <a href="{% url 'cart_page' %}" class="hover:scale-110 transition-transform duration-300">
-            <img src="/static/images/Cart.png" alt="Cart" class="h-6 w-6" />
-        </a>
-        
-        <div class="w-px h-6 bg-white/30"></div>
-        
-        <a href="{% url 'user_profile' %}" class="hover:scale-110 transition-transform duration-300">
-            <img src="/static/images/Person.png" alt="Account" class="h-6 w-6" />
-        </a>
-        
-        <a href="#" class="hover:scale-110 transition-transform duration-300">
-            <img src="/static/images/Line 1.png" alt="Wishlist" class="h-6 w-6" />
-        </a>
-        
-        <a href="{% url 'user_logout' %}" class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-xs font-semibold hover:bg-white/30 transition-all duration-300">
-            Log Out
-        </a>
-    </div>
-</header>
-
-<!-- ================= HERO SECTION ================= -->
-<section class="relative grid grid-cols-1 md:grid-cols-2 items-center px-8 md:px-16 py-20 bg-gradient-to-r from-[#B7472A] via-[#9A4530] to-[#A24E34] text-white overflow-hidden">
+<!-- ================= ENHANCED HERO SECTION ================= -->
+<section class="relative hero-gradient grid grid-cols-1 md:grid-cols-2 items-center px-8 md:px-16 py-24 text-white overflow-hidden min-h-[90vh]">
     
-    <!-- Background decorative elements -->
-    <div class="absolute top-0 left-0 w-72 h-72 bg-white/5 rounded-full blur-3xl"></div>
-    <div class="absolute bottom-0 right-0 w-96 h-96 bg-black/10 rounded-full blur-3xl"></div>
+    <!-- Floating particles -->
+    <div class="particle w-2 h-2 bg-amber-400/30 rounded-full" style="top: 10%; left: 15%; animation-delay: 0s;"></div>
+    <div class="particle w-3 h-3 bg-orange-400/20 rounded-full" style="top: 70%; left: 10%; animation-delay: 1s;"></div>
+    <div class="particle w-2 h-2 bg-amber-300/40 rounded-full" style="top: 30%; left: 80%; animation-delay: 2s;"></div>
+    <div class="particle w-4 h-4 bg-orange-300/20 rounded-full" style="top: 80%; left: 75%; animation-delay: 1.5s;"></div>
+    <div class="particle w-2 h-2 bg-amber-400/30 rounded-full" style="top: 50%; left: 5%; animation-delay: 3s;"></div>
+    <div class="particle w-3 h-3 bg-orange-400/25 rounded-full" style="top: 20%; left: 90%; animation-delay: 2.5s;"></div>
+
+    <!-- Large decorative elements -->
+    <div class="absolute top-10 right-10 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-10 left-10 w-80 h-80 bg-orange-600/10 rounded-full blur-3xl"></div>
 
     <div class="flex flex-col gap-6 pr-4 relative z-10 stagger-animation">
         <div class="inline-block fade-in-up">
-            <span class="px-4 py-2 bg-yellow-400/20 backdrop-blur-sm rounded-full text-yellow-300 text-xs font-semibold border border-yellow-400/30 pulse-animation">
+            <span class="px-5 py-2 glass-card rounded-full text-amber-300 text-xs font-bold pulse-animation">
                 ✨ Premium Collection 2024
             </span>
         </div>
         
-        <h1 class="text-5xl md:text-6xl font-bold leading-tight fade-in-up">
-            Adventure Awaits with <span class="text-yellow-300">Signature Spirits.</span>
+        <h1 class="text-5xl md:text-7xl font-bold leading-tight fade-in-up">
+            Adventure Awaits with<br/>
+            <span class="text-glow text-amber-400">Signature Spirits.</span>
         </h1>
 
-        <p class="text-base md:text-lg opacity-90 max-w-xl leading-relaxed fade-in-up">
+        <p class="text-base md:text-lg opacity-90 max-w-xl leading-relaxed fade-in-up text-gray-300">
             Discover our collection of rich, smooth, and premium spirits crafted for every occasion. From cozy nights to grand celebrations.
         </p>
 
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-3 gap-4 mt-4 fade-in-up">
+            <div class="glass-card p-4 rounded-xl stat-card">
+                <p class="text-2xl font-bold text-amber-400">500+</p>
+                <p class="text-xs opacity-70">Premium Labels</p>
+            </div>
+            <div class="glass-card p-4 rounded-xl stat-card">
+                <p class="text-2xl font-bold text-amber-400">10k+</p>
+                <p class="text-xs opacity-70">Happy Customers</p>
+            </div>
+            <div class="glass-card p-4 rounded-xl stat-card">
+                <p class="text-2xl font-bold text-amber-400">★ 4.9</p>
+                <p class="text-xs opacity-70">User Rating</p>
+            </div>
+        </div>
+
         <!-- Gamification Element -->
-        <div class="flex items-center gap-4 mt-4 fade-in-up">
-            <div class="flex items-center gap-2">
-                <svg class="w-12 h-12">
-                    <circle class="progress-ring" cx="24" cy="24" r="20" stroke="#FDE68A" stroke-width="4" fill="none" />
-                    <circle class="progress-ring-circle" cx="24" cy="24" r="20" stroke="#FCD34D" stroke-width="4" fill="none" />
+        <div class="glass-card rounded-2xl p-5 mt-4 fade-in-up max-w-sm">
+            <div class="flex items-center gap-4">
+                <svg class="w-16 h-16">
+                    <circle class="progress-ring" cx="32" cy="32" r="28" stroke="rgba(251, 191, 36, 0.2)" stroke-width="4" fill="none" />
+                    <circle class="progress-ring-circle" cx="32" cy="32" r="28" stroke="#FCD34D" stroke-width="4" fill="none" />
                 </svg>
                 <div>
-                    <p class="text-xs opacity-70">Member Status</p>
-                    <p class="text-sm font-bold text-yellow-300">75% to Gold Tier</p>
+                    <p class="text-xs opacity-70 mb-1">Member Status</p>
+                    <p class="text-lg font-bold text-amber-300">75% to Gold Tier</p>
                 </div>
             </div>
         </div>
 
-        <div class="flex gap-4 mt-2 fade-in-up">
-            <a href="#" class="px-8 py-3 bg-black text-white rounded-full hover:bg-gray-900 transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl hover:scale-105 glow-effect">
+        <div class="flex gap-4 mt-6 fade-in-up">
+            <a href="#" class="px-8 py-4 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-full hover:from-amber-500 hover:to-orange-500 transition-all duration-300 font-semibold shadow-2xl hover:shadow-amber-500/50 hover:scale-105 glow-effect">
                 Know More
             </a>
-            <a href="{% url 'userproduct_list'  %}" class="px-8 py-3 bg-white/10 backdrop-blur-sm text-white rounded-full hover:bg-white/20 transition-all duration-300 font-semibold border border-white/30">
+            <a href="{% url 'userproduct_list' %}" class="px-8 py-4 glass-card text-white rounded-full hover:bg-white/20 transition-all duration-300 font-semibold">
                 Shop Now →
             </a>
         </div>
     </div>
 
-    <!-- Hero Image -->
-    <div class="flex justify-center items-center relative mt-8 md:mt-0 fade-in-up">
+    <!-- Hero Glass Bottle Animation -->
+    <div class="flex justify-center items-center relative mt-8 md:mt-0 fade-in-up bottle-3d">
         <div class="relative">
-            <div class="absolute inset-0 bg-yellow-400/20 rounded-full blur-3xl glow-effect"></div>
-            <img src="/static/images/image21.png" alt="Jack Daniel's" class="h-80 md:h-96 relative z-10 float-animation drop-shadow-2xl" />
+            <!-- Glow effects -->
+            <div class="absolute inset-0 bg-gradient-to-br from-amber-400/30 via-orange-500/20 to-amber-600/30 rounded-full blur-3xl glow-effect"></div>
+            
+            <!-- Glass reflection effect -->
+            <div class="absolute top-1/4 left-1/4 w-1/2 h-1/2 bg-white/10 rounded-full blur-2xl"></div>
+            
+            <!-- Glass Bottle Container -->
+            <div class="h-96 w-64 bg-gradient-to-br from-amber-900/40 to-orange-950/40 rounded-3xl relative z-10 float-animation shadow-2xl border border-amber-600/20 backdrop-blur-sm overflow-hidden">
+                <!-- Bottle Shape -->
+                <div class="absolute inset-x-0 top-8 mx-auto w-32 h-80 bg-gradient-to-b from-amber-800/30 via-amber-700/20 to-amber-900/30 rounded-t-full backdrop-blur-md border-2 border-amber-500/30">
+                    <!-- Bottle Neck -->
+                    <div class="absolute inset-x-0 -top-16 mx-auto w-12 h-20 bg-gradient-to-b from-amber-800/40 to-amber-700/30 rounded-t-lg border-2 border-amber-500/30 backdrop-blur-md">
+                        <!-- Cap -->
+                        <div class="absolute inset-x-0 -top-4 mx-auto w-14 h-6 bg-gradient-to-b from-amber-600/50 to-amber-700/40 rounded-t-md border-2 border-amber-400/40"></div>
+                    </div>
+                    
+                    <!-- Liquid Inside -->
+                    <div class="absolute inset-x-2 bottom-4 top-24 bg-gradient-to-b from-amber-600/60 via-amber-500/50 to-amber-700/60 rounded-b-3xl backdrop-blur-sm">
+                        <!-- Light Reflection -->
+                        <div class="absolute top-4 left-2 w-8 h-32 bg-gradient-to-br from-white/30 to-transparent rounded-full blur-sm"></div>
+                    </div>
+                    
+                    <!-- Glass Shine Effect -->
+                    <div class="absolute top-8 right-2 w-16 h-48 bg-gradient-to-br from-white/20 to-transparent rounded-full blur-md transform rotate-12"></div>
+                </div>
+                
+                <!-- Sparkle Effects -->
+                <div class="absolute top-20 left-12 w-2 h-2 bg-amber-300 rounded-full animate-ping"></div>
+                <div class="absolute top-32 right-16 w-1 h-1 bg-white rounded-full animate-ping" style="animation-delay: 0.5s;"></div>
+                <div class="absolute bottom-32 left-20 w-1.5 h-1.5 bg-amber-400 rounded-full animate-ping" style="animation-delay: 1s;"></div>
+                
+                <!-- Premium Label -->
+                <div class="absolute inset-x-0 top-1/2 mx-auto w-24 h-16 bg-amber-900/60 border-2 border-amber-500/50 backdrop-blur-sm flex items-center justify-center rounded-lg">
+                    <div class="text-center">
+                        <p class="text-amber-300 text-xs font-bold">PREMIUM</p>
+                        <p class="text-amber-200 text-[10px]">COLLECTION</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Floating badge -->
+            <div class="absolute -top-4 -right-4 glass-card px-6 py-3 rounded-2xl pulse-animation border-2 border-amber-400/30">
+                <p class="text-sm font-bold text-amber-300">Limited</p>
+                <p class="text-xs opacity-70">Edition</p>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- ================= FEATURED PRODUCTS (Slide Left) ================= -->
+<!-- ================= FEATURED PRODUCTS ================= -->
 <section class="w-full py-16 text-center bg-white">
     
     <div class="mb-12 fade-in-up">
@@ -441,7 +234,7 @@
 
 <div class="section-divider"></div>
 
-<!-- ================= HAND PICKED (Slide Right) ================= -->
+<!-- ================= HAND PICKED ================= -->
 <section class="w-full py-16 text-center bg-white">
     
     <div class="mb-12 fade-in-up">
@@ -497,7 +290,7 @@
 
 <div class="section-divider"></div>
 
-<!-- ================= TRENDING NOW (Slide Left) ================= -->
+<!-- ================= TRENDING NOW ================= -->
 <section class="w-full py-16 text-center bg-gradient-to-br from-gray-50 to-white">
     
     <div class="mb-12 fade-in-up">
@@ -551,70 +344,9 @@
     </div>
 </section>
 
-<!-- ================= FOOTER ================= -->
-<footer class="bg-[#B7472A] text-white py-12 px-8">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-sm max-w-6xl mx-auto">
-        <!-- Column 1 -->
-        <div>
-            <h3 class="font-bold mb-4 text-lg">SHOP</h3>
-            <ul class="space-y-2">
-                <li><a href="#" class="hover:text-yellow-300 transition-colors">Indoor Plants</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition-colors">Outdoor Plants</a></li>
-            </ul>
-        </div>
+{% endblock %}
 
-        <!-- Column 2 -->
-        <div>
-            <h3 class="font-bold mb-4 text-lg">SUPPORT</h3>
-            <ul class="space-y-2">
-                <li><a href="#" class="hover:text-yellow-300 transition-colors">Order Status</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition-colors">Product Support</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition-colors">Shipping & Return Policy</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition-colors">Complaint Registration</a></li>
-            </ul>
-        </div>
-
-        <!-- Column 3 -->
-        <div>
-            <h3 class="font-bold mb-4 text-lg">ABOUT US</h3>
-            <ul class="space-y-2">
-                <li><a href="#" class="hover:text-yellow-300 transition-colors">Contact Us</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition-colors">Privacy Policy</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition-colors">Terms of use</a></li>
-                <li><a href="#" class="hover:text-yellow-300 transition-colors">FAQ</a></li>
-            </ul>
-        </div>
-
-        <!-- Column 4 -->
-        <div>
-            <h3 class="font-bold mb-4 text-lg">CONTACT</h3>
-            <div class="space-y-2">
-                <p>Email: <a href="mailto:sipzy@gmail.com" class="underline hover:text-yellow-300">sipzy@gmail.com</a></p>
-                <p>Phone: +91 8888888888</p>
-            </div>
-            
-            <h3 class="font-bold mt-6 mb-3 text-lg">CONNECT WITH US</h3>
-            <div class="flex space-x-4">
-                <a href="#" class="hover:scale-110 transition-transform">
-                    <img src="{% static 'images/Vector.png' %}" alt="Instagram" class="h-6 w-6">
-                </a>
-                <a href="#" class="hover:scale-110 transition-transform">
-                    <img src="{% static 'images/Vector (1).png' %}" alt="Facebook" class="h-6 w-6">
-                </a>
-                <a href="#" class="hover:scale-110 transition-transform">
-                    <img src="{% static 'images/Vector (2).png' %}" alt="X" class="h-6 w-6">
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Logo + Copyright -->
-    <div class="flex flex-col justify-center items-center mt-12 pt-8 border-t border-white/20">
-        <img src="{% static 'images/logo-removebg-preview 1.png' %}" alt="Sipzy Footer Logo" class="h-12 w-auto mb-4">
-        <p class="text-sm">© 2024 Sipzy. All Rights Reserved.</p>
-    </div>
-</footer>
-
+{% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Enhanced scroll functionality
@@ -647,7 +379,7 @@
                 if (!isDown) return;
                 e.preventDefault();
                 const x = e.pageX - container.offsetLeft;
-                const walk = (x - startX) * 2; // Scroll speed multiplier
+                const walk = (x - startX) * 2;
                 container.scrollLeft = scrollLeft - walk;
             });
             
@@ -674,6 +406,4 @@
         });
     });
 </script>
-
-</body>   
-</html> 
+{% endblock %}
