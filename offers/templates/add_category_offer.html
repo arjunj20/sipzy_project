@@ -1,0 +1,60 @@
+{% extends "admin_base.html" %}
+{% block title %}Add Category Offer{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8 max-w-4xl mx-auto">
+
+<h1 class="text-3xl font-bold mb-4">Add Category Offer</h1>
+
+<form method="POST" class="bg-white shadow rounded-xl p-6">
+{% csrf_token %}
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+<div class="md:col-span-2">
+<label class="block font-medium mb-1">Offer Name</label>
+<input name="offer_name" class="w-full border rounded-lg px-4 py-2" required>
+</div>
+
+<div class="md:col-span-2">
+<label class="block font-medium mb-1">Category</label>
+<select name="category" class="w-full border rounded-lg px-4 py-2" required>
+<option value="">Select Category</option>
+{% for category in categories %}
+<option value="{{ category.id }}">{{ category.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div>
+<label class="block font-medium mb-1">Discount (%)</label>
+<input type="number" name="discount_percent" min="1" max="90"
+       class="w-full border rounded-lg px-4 py-2" required>
+</div>
+
+<div>
+<label class="block font-medium mb-1">Start Date</label>
+<input type="date" name="start_date" class="w-full border rounded-lg px-4 py-2" required>
+</div>
+
+<div>
+<label class="block font-medium mb-1">End Date</label>
+<input type="date" name="end_date" class="w-full border rounded-lg px-4 py-2" required>
+</div>
+
+<div class="flex items-center mt-6">
+<input type="checkbox" name="is_active" checked>
+<span class="ml-2">Active</span>
+</div>
+
+</div>
+
+<div class="mt-6 flex gap-3">
+<button class="px-6 py-2 bg-blue-600 text-white rounded-lg">Save</button>
+<a href="{% url 'category_offer_list' %}"
+   class="px-6 py-2 bg-gray-100 rounded-lg">Cancel</a>
+</div>
+
+</form>
+</div>
+{% endblock %}
