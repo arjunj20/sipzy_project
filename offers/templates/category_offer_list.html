@@ -1,0 +1,153 @@
+{% extends "admin_base.html" %}
+{% block title %}Category Offers{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px);}
+    to { opacity:1; transform: translateY(0);}
+}
+.animate-fade-in { animation: fadeIn 0.45s ease-out; }
+.table-row:hover { background:#F9FAFB; transform:translateY(-1px); }
+
+.status-active { background:#10B981; color:white; padding:6px 12px; border-radius:999px; font-size:12px; }
+.status-inactive { background:#9CA3AF; color:white; padding:6px 12px; border-radius:999px; font-size:12px; }
+.status-expired { background:#EF4444; color:white; padding:6px 12px; border-radius:999px; font-size:12px; }
+
+.discount-badge {
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:white; padding:6px 12px;
+    border-radius:8px; font-weight:600;
+}
+
+.date-range {
+    background:#EFF6FF;
+    color:#1e40af;
+    padding:6px 12px;
+    border-radius:8px;
+    font-size:0.875rem;
+    font-weight:500;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8 animate-fade-in">
+
+    <!-- Header -->
+    <div class="flex justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">Category Offers</h1>
+            <p class="text-gray-600">Manage offers by category</p>
+        </div>
+        <a href="{% url  'category_add_offer' %}"
+           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            + Add Category Offer
+        </a>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 text-sm font-medium text-gray-600">
+                <tr>
+                    <th class="p-4 text-left">Offer</th>
+                    <th class="p-4 text-left">Category</th>
+                    <th class="p-4 text-left">Discount</th>
+                    <th class="p-4 text-left">Validity Period</th>
+                    <th class="p-4 text-left">Status</th>
+                    <th class="p-4 text-center">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y divide-gray-200">
+            {% for offer in offers %}
+                <tr class="table-row">
+                    <td class="p-4 font-medium text-gray-800">
+                        {{ offer.offer_name }}
+                    </td>
+
+                    <td class="p-4 text-gray-600">
+                        {{ offer.category.name }}
+                    </td>
+
+                    <td class="p-4">
+                        <span class="discount-badge">
+                            {{ offer.discount_percent }}% OFF
+                        </span>
+                    </td>
+
+                    <!-- ✅ DATE RANGE ADDED -->
+                    <td class="p-4">
+                        <span class="date-range">
+                            {{ offer.start_date|date:"M d, Y" }} –
+                            {{ offer.end_date|date:"M d, Y" }}
+                        </span>
+                    </td>
+
+                    <td class="p-4">
+                        {% if offer.is_expired %}
+                            <span class="status-expired">Expired</span>
+                        {% elif offer.is_active %}
+                            <span class="status-active">Active</span>
+                        {% else %}
+                            <span class="status-inactive">Inactive</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="p-4 text-center">
+                        <div class="flex justify-center gap-2">
+
+                            {% if not offer.is_expired %}
+                                <a href="{% url 'edit_category_offer' offer.uuid %}"
+                                   class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+                                    Edit
+                                </a>
+                            {% else %}
+                                <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded text-sm">
+                                    Edit
+                                </span>
+                            {% endif %}
+
+                            {% if offer.is_expired %}
+                                <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded text-sm">
+                                    Expired
+                                </span>
+
+                            {% elif offer.is_active %}
+                                <form method="POST" action="{% url 'deactivate_category_offer' offer.uuid %}">
+                                    {% csrf_token %}
+                                    <button
+                                        onclick="return confirm('Deactivate this offer?')"
+                                        class="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">
+                                        Deactivate
+                                    </button>
+                                </form>
+
+
+
+                            {% else %}
+                                <form method="POST" action="{% url 'activate_category_offer' offer.uuid %}">
+                                    {% csrf_token %}
+                                    <button
+                                        onclick="return confirm('Activate this offer?')"
+                                        class="px-3 py-1 bg-green-100 text-green-600 rounded hover:bg-green-200">
+                                        Activate
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="p-6 text-center text-gray-500">
+                        No category offers found.
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
