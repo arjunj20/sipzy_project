@@ -36,6 +36,11 @@
             <!-- Product Header -->
             <div>
                 <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ product.name }}</h1>
+                {% if offer %}
+<span class="inline-block bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full mb-2">
+    {{ offer.offer_name }}
+</span>
+{% endif %}
                 <p class="text-gray-600 mb-3">{{ product.brand.name }}</p>
                 
                 <!-- Ratings -->
@@ -52,15 +57,34 @@
             </div>
 
             <!-- Price Section -->
-            <div class="bg-gray-50 rounded-lg p-4">
-                <div class="flex items-center mb-2">
-                    <span class="text-2xl font-bold text-gray-800 mr-3">${{ selected_variant.price }}</span>
-                    {% if selected_variant.price < primary_variant.price %}
-                    <span class="text-lg text-gray-500 line-through mr-2">${{ primary_variant.price }}</span>
-                    <span class="bg-green-500 text-white text-sm font-medium px-2 py-1 rounded">Save {{ discount_percentage }}%</span>
-                    {% endif %}
-                </div>
-            </div>
+<div class="bg-gray-50 rounded-lg p-4">
+    {% if offer %}
+
+        <div class="flex items-center mb-1">
+            <span class="text-2xl font-bold text-[#B7472A] mr-3">
+                ₹{{ final_unit_price }}
+            </span>
+
+            <span class="text-lg text-gray-500 line-through mr-2">
+                ₹{{ selected_variant.price }}
+            </span>
+
+            <span class="bg-green-500 text-white text-sm font-semibold px-2 py-1 rounded">
+                {{ offer.discount_percent }}% OFF
+            </span>
+        </div>
+
+        <p class="text-sm text-green-700 font-medium">
+            You save ₹{{ selected_variant.price|floatformat:2|add:"-"|add:final_unit_price }}
+        </p>
+
+    {% else %}
+        <span class="text-2xl font-bold text-gray-800">
+            ₹{{ selected_variant.price }}
+        </span>
+    {% endif %}
+</div>
+
 
             <!-- Variant Selection -->
             <div>
@@ -90,12 +114,12 @@
             <div class="space-y-3">                <div class="flex items-center space-x-4">
                     <!-- Quantity Selector -->
                     <div class="flex items-center border border-gray-300 rounded-lg">
-                        <a href="?variant={{ selected_variant.id }}&quantity={{ quantity|add:'-1' }}&image={{ main_image }}"
+                        <a href="?variant={{ selected_variant.uuid }}&quantity={{ quantity|add:'-1' }}&image={{ main_image }}"
                            class="px-3 py-2 text-gray-600 hover:text-gray-800 {% if quantity <= 1 %}pointer-events-none opacity-50{% endif %}">
                             -
                         </a>
                         <span class="w-16 text-center border-0">{{ quantity }}</span>
-                        <a href="?variant={{ selected_variant.id }}&quantity={{ quantity|add:'1' }}&image={{ main_image }}"
+                        <a href="?variant={{ selected_variant.uuid }}&quantity={{ quantity|add:'1' }}&image={{ main_image }}"
                            class="px-3 py-2 text-gray-600 hover:text-gray-800 {% if quantity >= selected_variant.stock %}pointer-events-none opacity-50{% endif %}">
                             +
                         </a>
@@ -110,7 +134,8 @@
                         <input type="hidden" name="quantity" value="{{ quantity }}">
                         <button type="submit" 
                                 class="w-full bg-[#B7472A] text-white py-3 px-6 rounded-lg font-semibold hover:bg-[#8D3A28] transition-colors">
-                            Add to Cart - ${{ total_price }}
+                            Add to Cart — ₹{{ total_price }}
+
                     </button>
                     </form>
                     {% else %}
@@ -258,7 +283,20 @@
                     <h3 class="font-semibold text-gray-800 mb-2">{{ related_product.name }}</h3>
                     <p class="text-gray-600 text-sm mb-3">{{ related_product.brand.name }}</p>
                     <div class="flex justify-between items-center">
-                        <span class="font-bold text-gray-800">${{ related_product.variants.first.price }}</span>
+{% if related_product.offer %}
+
+
+    <span class="font-bold text-gray-800">
+        ₹{{ related_product.final_price }}
+    </span>
+    <span class="text-sm text-gray-500 line-through ml-2">
+        ₹{{ related_product.default_variant.price }}
+    </span>
+{% else %}
+    <span class="font-bold text-gray-800">
+        ₹{{ related_product.default_variant.price }}
+    </span>
+{% endif %}
                         <a href="{% url 'product_details' related_product.uuid %}" class="bg-[#B7472A] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#8D3A28] transition-colors">
                             View Details
                         </a>

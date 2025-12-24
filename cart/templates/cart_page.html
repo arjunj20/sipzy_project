@@ -104,17 +104,21 @@
                                focus:ring-2 focus:ring-[#A24E34] focus:border-transparent">
 
                     {% for variant in item.variant.product.variants.all %}
-                        <option value="{{ variant.id }}"
-                                {% if variant.id == item.variant.id %}selected{% endif %}
-                                {% if variant.stock == 0 %}disabled{% endif %}>
-                            {{ variant.variant }} - ₹{{ variant.price }}
-                            {% if variant.stock == 0 %}
-                                (Out of Stock)
-                            {% else %}
-                                ({{ variant.stock }} available)
-                            {% endif %}
-                        </option>
-                    {% endfor %}
+<option value="{{ variant.id }}"
+    {% if variant.id == item.variant.id %}selected{% endif %}
+    {% if variant.stock == 0 %}disabled{% endif %}>
+
+    {{ variant.variant }} -
+    ₹{{ variant.price }} (Base Price)
+
+    {% if variant.stock == 0 %}
+        (Out of Stock)
+    {% else %}
+        ({{ variant.stock }} available)
+    {% endif %}
+</option>
+{% endfor %}
+
 
                 </select>
             </div>
@@ -123,11 +127,32 @@
             <div class="mt-4 flex flex-wrap items-center justify-between">
 
                 <!-- Unit Price -->
-<div class="flex items-center gap-2 mb-2 sm:mb-0">
-    <span class="unit-price-display font-bold text-[#A24E34]">
-        ₹{{ item.variant.price }}
-    </span>
+<!-- Unit Price -->
+<div class="flex flex-col gap-1 mb-2 sm:mb-0">
+
+    <div class="flex items-center gap-2">
+        {% if item.unit_price < item.variant.price %}
+            <span class="text-sm text-gray-400 line-through">
+                ₹{{ item.variant.price }}
+            </span>
+
+            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                Offer
+            </span>
+        {% endif %}
+
+        <span class="unit-price-display font-bold text-[#A24E34] text-lg">
+            ₹{{ item.unit_price }}
+        </span>
+    </div>
+
+    {% if item.unit_price < item.variant.price %}
+        <span class="text-xs text-green-600">
+            Offer price applied
+        </span>
+    {% endif %}
 </div>
+
 
 
                 <!-- Quantity Controls -->
@@ -149,12 +174,13 @@
                 <div class="mt-2 sm:mt-0">
 
                     <!-- Hidden Unit Price (needed for AJAX) -->
-                    <span class="unit-price hidden">{{ item.variant.price }}</span>
+                    <span class="unit-price hidden">{{ item.unit_price }}</span>
+
 
                     <!-- Item Total Display -->
                     <span class="item-total text-lg font-bold">
-                        ₹{% widthratio item.variant.price 1 item.quantity %}
-                    </span>
+    ₹{{ item.total_price }}
+</span>
                 </div>
 
             </div>
@@ -323,35 +349,43 @@ document.querySelectorAll(".cart-item").forEach(item => {
                 qtyInput.value = data.corrected_quantity;
             }
 
-      if (data.errors && data.errors.quantity) {
-    showModal({
-        icon: "⚠️",
-        title: "Quantity Limit",
-        message: data.errors.quantity
-    });
-}
-
-
+            if (data.errors && data.errors.quantity) {
+                showModal({
+                    icon: "⚠️",
+                    title: "Quantity Limit",
+                    message: data.errors.quantity
+                });
+            }
 
             if (data.success) {
-                // Update Item Price
-                item.querySelector(".item-total").textContent = "₹" + data.item_total;
 
-                // Update Cart Totals
+                // ✅ UPDATE UNIT PRICE (OFFER PRICE)
+                const unitPriceEl = item.querySelector(".unit-price-display");
+                if (unitPriceEl && data.unit_price) {
+                    unitPriceEl.textContent = "₹" + data.unit_price;
+                }
+
+                // ✅ UPDATE ITEM TOTAL
+                item.querySelector(".item-total").textContent = "₹" + data.item_total;
+                item.querySelector(".unit-price-display").textContent = "₹" + data.unit_price;
+item.querySelector(".item-total").textContent = "₹" + data.item_total;
+
+
+                // ✅ UPDATE CART SUMMARY
                 document.querySelector(".subtotal-value").textContent = "₹" + data.subtotal;
                 document.querySelector(".total-value").textContent = "₹" + data.total;
 
                 document.querySelectorAll(".tax-value").forEach(el => {
-                el.textContent = "₹" + data.tax;
+                    el.textContent = "₹" + data.tax;
                 });
 
+                const shippingValue = parseFloat(data.shipping);
                 document.querySelectorAll(".shipping-value").forEach(el => {
-                el.textContent = data.shipping === 0 ? "Free" : "₹" + data.shipping;
+                    el.textContent = shippingValue === 0 ? "Free" : "₹" + data.shipping;
                 });
             }
         });
     }
-    
 
     minusBtn.addEventListener("click", () => {
         let value = parseInt(qtyInput.value);
@@ -372,14 +406,10 @@ document.querySelectorAll(".cart-item").forEach(item => {
     if (variantSelect) {
         variantSelect.addEventListener("change", sendUpdate);
     }
-
-
-
 });
 
 
-
-
+// REMOVE ITEM
 document.querySelectorAll(".remove-item").forEach(btn => {
     btn.addEventListener("click", function() {
         const itemId = this.dataset.id;
@@ -397,28 +427,25 @@ document.querySelectorAll(".remove-item").forEach(btn => {
         .then(data => {
             if (data.success) {
 
-                // Smooth fade-out animation
                 itemDiv.style.transition = "opacity 0.3s ease";
                 itemDiv.style.opacity = "0";
 
-                // THEN remove element
                 setTimeout(() => {
                     itemDiv.remove();
 
-                    // Update subtotal + total
                     document.querySelectorAll(".subtotal-value").forEach(el => {
                         el.textContent = "₹" + data.subtotal;
                     });
-            document.querySelectorAll(".tax-value").forEach(el => {
-                el.textContent = "₹" + data.tax;
-            });
 
-            document.querySelectorAll(".shipping-value").forEach(el => {
-                el.textContent = data.shipping === 0 ? "Free" : "₹" + data.shipping;
-            });
+                    document.querySelectorAll(".tax-value").forEach(el => {
+                        el.textContent = "₹" + data.tax;
+                    });
 
+                    const shippingValue = parseFloat(data.shipping);
+                    document.querySelectorAll(".shipping-value").forEach(el => {
+                        el.textContent = shippingValue === 0 ? "Free" : "₹" + data.shipping;
+                    });
 
-                    // If cart becomes empty, refresh
                     if (data.remaining_items === 0) {
                         window.location.reload();
                     }
@@ -429,8 +456,8 @@ document.querySelectorAll(".remove-item").forEach(btn => {
 });
 
 
+// MODAL
 function showModal({ icon = "⚠️", title = "Alert", message = "" }) {
-
     document.getElementById("modalIcon").textContent = icon;
     document.getElementById("modalTitle").textContent = title;
     document.getElementById("modalMessage").textContent = message;
@@ -439,9 +466,8 @@ function showModal({ icon = "⚠️", title = "Alert", message = "" }) {
     const box = document.getElementById("globalModalBox");
 
     modal.classList.remove("hidden");
-    modal.classList.add("flex");  // <-- IMPORTANT
+    modal.classList.add("flex");
 
-    // animate modal
     setTimeout(() => {
         box.classList.remove("scale-90", "opacity-0");
         box.classList.add("scale-100", "opacity-100");
@@ -456,11 +482,11 @@ document.getElementById("modalCloseBtn").addEventListener("click", () => {
 
     setTimeout(() => {
         modal.classList.add("hidden");
-        modal.classList.remove("flex");  // <-- REMOVE FLEX WHEN HIDDEN
+        modal.classList.remove("flex");
     }, 200);
 });
-
 </script>
+
 
 
 

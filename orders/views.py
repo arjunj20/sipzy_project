@@ -35,12 +35,17 @@ def order_detail(request, uuid):
         return redirect("landing_page")
 
     order = get_object_or_404(Order, uuid=uuid, user=request.user)
+
+    # 🔥 ADD THIS LINE (THIS IS THE FIX)
+    order.recalculate_totals()
+
     items = order.items.all()  
 
     return render(request, "orders/order_detail.html", {
         "order": order,
         "items": items,
     })
+
 
 def order_invoice(request, order_id):
     order = get_object_or_404(

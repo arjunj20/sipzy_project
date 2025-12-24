@@ -9,6 +9,8 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.db import transaction
 from django.views.decorators.cache import never_cache
 
+from offers.utils import get_best_offer_for_product, apply_offer
+
 
 @never_cache
 def userproduct_list(request):
@@ -79,8 +81,20 @@ def userproduct_list(request):
     page_obj = paginator.get_page(page_number)
 
     for product in page_obj:
-        variant = product.variants.order_by("price").first()
+        variant = min(product.variants.all(), key=lambda v: v.price, default=None)
         product.default_variant = variant
+
+        product.final_price = None
+        product.applied_offer = None
+        if variant:
+            offer = get_best_offer_for_product(product)
+            if offer:
+                product.final_price = apply_offer(variant.price, offer)
+                product.applied_offer = offer
+            else:
+                product.final_price = variant.price
+                product.applied_offer = None
+
 
     qs = request.GET.copy()
     if "page" in qs:
@@ -95,6 +109,8 @@ def userproduct_list(request):
         "5000+": "Above ₹5,000",
     }
 
+
+
     return render(request, "userproduct_list.html", {
         "products": page_obj,
         "categories": Category.objects.filter(is_active=True),
@@ -106,6 +122,7 @@ def userproduct_list(request):
         "sort_option": sort_option,
         "querystring": querystring,
         "price_ranges": price_ranges,
+        
     })
 
 
@@ -147,15 +164,34 @@ def product_details(request, uuid):
     related_products = Products.objects.filter(
         category=product.category,
         is_active=True
-    ).exclude(id=product.id)[:4]
+    ).exclude(id=product.id).prefetch_related("variants")[:4]
+
+    for rp in related_products:
+        variant = rp.variants.order_by("price").first()
+        rp.default_variant = variant
+
+        rp.offer = None
+        rp.final_price = None
+
+        if variant:
+            offer = get_best_offer_for_product(rp)
+            if offer:
+                rp.offer = offer
+                rp.final_price = apply_offer(variant.price, offer)
+            else:
+                rp.final_price = variant.price
+
     
-    discount_percentage = 0
-    if selected_variant.price < primary_variant.price:
-        discount_percentage = int(
-            ((primary_variant.price - selected_variant.price) / primary_variant.price) * 100
-        )
+    offer = None
+
+    final_unit_price = selected_variant.price
+
+    offer = get_best_offer_for_product(product)
+
+    if offer:
+        final_unit_price = apply_offer(selected_variant.price, offer)
     
-    total_price = selected_variant.price * quantity
+    total_price = final_unit_price * quantity
     
     all_images = []
     for variant in product.variants.all():
@@ -185,6 +221,8 @@ def product_details(request, uuid):
 
     context = {
         'product': product,
+        "offer": offer,
+        "final_unit_price": final_unit_price,
         'primary_variant': primary_variant,
         'selected_variant': selected_variant,
         'quantity': quantity,
@@ -192,7 +230,6 @@ def product_details(request, uuid):
         'average_rating': average_rating,
         'review_count': review_count,
         'related_products': related_products,
-        'discount_percentage': discount_percentage,
         'reviews': [],  
         'all_images': all_images,
         'main_image': main_image,
@@ -215,76 +252,49 @@ def add_to_cart(request):
         return redirect("userproduct_list")
 
     variant_id = request.POST.get("variant_id")
-    
-    try:
-        qty = int(request.POST.get("quantity", 1))
-    except (ValueError, TypeError):
-        qty = 1
+    qty = max(1, int(request.POST.get("quantity", 1)))
 
-    if qty < 1:
-        qty = 1
-    
     variant = get_object_or_404(ProductVariants, id=variant_id, is_active=True)
+
+    # 🔐 Stock & limit checks
     ITEM_LIMIT = 5
+    qty = min(qty, variant.stock, ITEM_LIMIT)
 
-    if variant.stock == 0:
-        request.session["error"] = "This variant is out of stock."
-        return redirect("product_details", uuid=variant.product.uuid)
+    # ✅ APPLY OFFER HERE
+    offer = get_best_offer_for_product(variant.product)
+    unit_price = apply_offer(variant.price, offer) if offer else variant.price
 
-    if qty > variant.stock:
-        qty = variant.stock
-        request.session["error"] = f"Only {variant.stock} units available in stock."
-        return redirect("product_details", uuid=variant.product.uuid)
-
-    if qty > ITEM_LIMIT:
-        request.session["error"] = f"Users can only select a maximum of {ITEM_LIMIT} units per item."
-        return redirect("product_details", uuid=variant.product.uuid)
-
-    def compute_money(unit_price, gst_rate, quantity):
-        u = Decimal(str(unit_price))
-        g = Decimal(str(gst_rate or 0))
-
-        unit_tax = (u * g / Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        tax_amount = (unit_tax * quantity).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        price_without_tax = (u * quantity).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        total_with_tax = (price_without_tax + tax_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-        return unit_tax, tax_amount, total_with_tax
-
-    gst_rate = getattr(variant, "gst_rate", 18.0)
-    unit_tax, tax_for_qty, total_with_tax = compute_money(variant.price, gst_rate, qty)
+    # ✅ TAX ON DISCOUNTED PRICE
+    gst_rate = getattr(variant, "gst_rate", 18)
+    unit_tax = (unit_price * Decimal(gst_rate) / 100).quantize(Decimal("0.01"))
+    tax_amount = unit_tax * qty
+    total_price = (unit_price * qty) + tax_amount
 
     with transaction.atomic():
         cart = get_user_cart(request.user)
-        cart_item = CartItems.objects.select_for_update().filter(cart=cart, variant=variant).first()
 
-        if cart_item:
-            new_qty = cart_item.quantity + qty
-            max_allowed = min(variant.stock, ITEM_LIMIT)
+        item = CartItems.objects.select_for_update().filter(
+            cart=cart,
+            variant=variant
+        ).first()
 
-            if new_qty > max_allowed:
-                request.session["error"] = f"Maximum limit reached! You can only add {max_allowed - cart_item.quantity} more units."
-                return redirect("product_details", uuid=variant.product.uuid)
-
-            _, new_tax, new_total = compute_money(variant.price, gst_rate, new_qty)
-
-            cart_item.quantity = new_qty
-            cart_item.tax_amount = new_tax
-            cart_item.total_price = new_total
-            cart_item.save()
-            request.session["message"] = "Item quantity updated in cart"
+        if item:
+            item.quantity += qty
+            item.unit_price = unit_price
+            item.tax_amount = unit_tax * item.quantity
+            item.total_price = (unit_price * item.quantity) + item.tax_amount
+            item.save()
         else:
             CartItems.objects.create(
                 cart=cart,
                 variant=variant,
                 quantity=qty,
-                tax_amount=tax_for_qty,
-                total_price=total_with_tax,
+                unit_price=unit_price,
+                tax_amount=tax_amount,
+                total_price=total_price,
             )
-            request.session["message"] = "Item added to cart successfully"
 
         recalculate_cart_totals(cart)
 
+    request.session["message"] = "Item added to cart"
     return redirect("product_details", uuid=variant.product.uuid)
-
-                  
