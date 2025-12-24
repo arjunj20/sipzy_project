@@ -27,7 +27,7 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    order_number = models.CharField(max_length=20, unique=True, blank=True)
+    order_number = models.CharField(max_length=20, unique=True, blank=True, null=True)
 
     def __str__(self):
         return f"Order {self.id} - {self.user.fullname}"
@@ -64,13 +64,14 @@ class Order(models.Model):
 
 
     def save(self, *args, **kwargs):
-
-        creating = self.pk is None 
-        super().save(*args, **kwargs) 
-
-        if creating:
+        if not self.order_number:
+            super().save(*args, **kwargs)   # get ID
             self.order_number = f"sz{1000 + self.id}"
             super().save(update_fields=["order_number"])
+        else:
+            super().save(*args, **kwargs)
+
+
 
            
 class OrderItem(models.Model):
