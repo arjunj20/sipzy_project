@@ -35,27 +35,32 @@ class Order(models.Model):
 
 
 
+    from decimal import Decimal
+
     def recalculate_totals(self):
         active_items = self.items.exclude(
             status__in=["cancelled", "returned"]
         )
 
         self.subtotal = sum(
-            (item.price * item.quantity)
+            item.price * item.quantity
             for item in active_items
         )
 
         TAX_RATE = Decimal("0.18")
-        self.tax = (self.subtotal * TAX_RATE).quantize(Decimal("0.01"))
 
+        # 🔹 Extract tax from inclusive price (INFO ONLY)
+        self.tax = (self.subtotal * TAX_RATE / (1 + TAX_RATE)).quantize(Decimal("0.01"))
+
+        # 🔹 DO NOT add tax again
         self.total = (
             self.subtotal
-            + self.tax
             + self.shipping_fee
             - self.discount
         )
 
         self.save(update_fields=["subtotal", "tax", "total"])
+
 
 
     def save(self, *args, **kwargs):

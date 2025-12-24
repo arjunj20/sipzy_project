@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from .utils import get_user_cart,recalculate_cart_totals
+from .utils import get_user_cart,recalculate_cart_totals, revalidate_cart_prices
 from django.http import JsonResponse
 from .models import CartItems,Cart
 from .utils import get_user_cart
@@ -15,36 +15,41 @@ from django.views.decorators.cache import never_cache
 
 @never_cache
 def cart_page(request):
-
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
 
     cart = get_user_cart(request.user)
-    items = cart.cart_items.select_related("variant", "variant__product")
-    for i in items:
-        if not i.variant.product.is_active or i.variant.stock == 0:
-            i.delete()
-    items = cart.cart_items.select_related("variant", "variant__product")
+
+    revalidate_cart_prices(cart)
 
     recalculate_cart_totals(cart)
 
     context = {
         "cart": cart,
-        "cart_items": items,
+        "cart_items": cart.cart_items.all(),
         "sub_total": cart.item_subtotal,
+        "tax": cart.tax,
         "shipping_fee": cart.shipping_fee,
         "total": cart.total_price,
-        "tax": cart.tax,
     }
 
     return render(request, "cart_page.html", context)
+
+from decimal import Decimal
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.cache import never_cache
+from offers.utils import get_best_offer_for_product, apply_offer
+from products.models import ProductVariants
 
 @never_cache
 @require_POST
 def update_cart_item(request):
     if not request.user.is_authenticated or request.user.is_superuser:
-        return redirect("user_login")
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
     errors = {}
+
     item_id = request.POST.get("item_id")
     quantity = request.POST.get("quantity")
     variant_id = request.POST.get("variant_id")
@@ -52,50 +57,68 @@ def update_cart_item(request):
     cart = get_user_cart(request.user)
 
     try:
-        item = CartItems.objects.get(id=item_id, cart=cart)
+        item = CartItems.objects.select_related(
+            "variant", "variant__product"
+        ).get(id=item_id, cart=cart)
     except CartItems.DoesNotExist:
         return JsonResponse({"error": "Item not found"}, status=404)
 
+    # ---------------- Quantity ----------------
     try:
         quantity = int(quantity)
-    except:
+    except (TypeError, ValueError):
         quantity = 1
 
-    if quantity < 1:
-        quantity = 1
+    quantity = max(quantity, 1)
 
+    # ---------------- Variant change ----------------
     if variant_id:
-        item.variant_id = variant_id
+        # IMPORTANT: reload variant object
+        item.variant = ProductVariants.objects.get(id=variant_id)
 
+        # Recalculate unit price for new variant
+        offer = get_best_offer_for_product(item.variant.product)
+        item.unit_price = (
+            apply_offer(item.variant.price, offer)
+            if offer else item.variant.price
+        )
+
+    # ---------------- Stock limit ----------------
     max_limit = min(item.variant.stock, 5)
-
     if quantity > max_limit:
         quantity = max_limit
-        errors["quantity"] = f"Oops! You’ve reached the limit. Only {max_limit} units are allowed."
+        errors["quantity"] = f"Only {max_limit} units available."
 
     item.quantity = quantity
-    unit_price = Decimal(str(item.variant.price))
-    gst_rate = Decimal(str(item.variant.gst_rate))
 
-    unit_tax = unit_price * (gst_rate / Decimal('100'))
-    item.tax_amount = round(unit_tax * quantity, 2)
-    
-    item.total_price = (unit_price * quantity) + Decimal(str(item.tax_amount))
+    # ---------------- Tax (on unit_price) ----------------
+    gst_rate = Decimal(str(getattr(item.variant, "gst_rate", 18)))
+    unit_tax = (item.unit_price * gst_rate / Decimal("100")).quantize(
+        Decimal("0.01")
+    )
+
+    item.tax_amount = unit_tax * quantity
+    item.total_price = (item.unit_price * quantity) + item.tax_amount
+
     item.save()
 
+    # ---------------- Cart totals ----------------
     recalculate_cart_totals(cart)
+
+    
 
     return JsonResponse({
         "success": True,
-        "item_total": float(item.total_price),
-        "unit_price": float(item.variant.price),
-        "subtotal": float(cart.item_subtotal),
-        "shipping": float(cart.shipping_fee),
-        "tax": float(cart.tax),
-        "total": float(cart.total_price),
+        "unit_price": str(item.unit_price),
+        "item_total": str(item.total_price),
+        "subtotal": str(cart.item_subtotal),
+        "shipping": str(cart.shipping_fee),
+        "tax": str(cart.tax),
+        "total": str(cart.total_price),
         "corrected_quantity": quantity,
         "errors": errors,
     })
+
 
 
 @never_cache

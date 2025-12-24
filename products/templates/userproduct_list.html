@@ -446,20 +446,43 @@
                         </p>
                     {% endif %}
                     
-                    <div class="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
-                        {% if product.default_variant and product.default_variant.price %}
-                            <span class="price-tag text-xl font-bold">
-                                ₹{{ product.default_variant.price }}
-                            </span>
-                        {% else %}
-                            <span class="text-gray-500 text-sm">Price unavailable</span>
-                        {% endif %}
-                        
-                        <a href="{% url 'product_details' product.uuid %}" 
-                           class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">
-                            View Details
-                        </a>
-                    </div>
+                        <div class="mt-auto pt-3 border-t border-gray-100">
+    {% if product.default_variant %}
+
+        {% if product.applied_offer %}
+            <!-- Offer Badge -->
+            <div class="mb-1">
+                <span class="text-xs bg-red-500 text-white px-2 py-1 rounded-full">
+                    {{ product.applied_offer.discount_percent }}% OFF
+                </span>
+            </div>
+
+            <!-- Original Price -->
+            <p class="text-sm text-gray-400 line-through">
+                ₹{{ product.default_variant.price }}
+            </p>
+
+            <!-- Final Price -->
+            <p class="price-tag text-xl font-bold">
+                ₹{{ product.final_price }}
+            </p>
+        {% else %}
+            <!-- No Offer -->
+            <p class="price-tag text-xl font-bold">
+                ₹{{ product.default_variant.price }}
+            </p>
+        {% endif %}
+
+    {% else %}
+        <p class="text-gray-500 text-sm">Price unavailable</p>
+    {% endif %}
+
+    <a href="{% url 'product_details' product.uuid %}" 
+       class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold mt-2 inline-block">
+        View Details
+    </a>
+</div>
+
                 </div>
             </div>
             {% empty %}

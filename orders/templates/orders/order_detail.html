@@ -13,21 +13,32 @@
     <!-- Order Summary -->
     <div class="bg-white shadow-sm rounded-xl border p-5 mb-8">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Order Summary</h3>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <p><strong>Order Date:</strong> {{ order.created_at|date:"d M Y, h:i A" }}</p>
             <p><strong>Payment:</strong> {{ order.payment_method }} ({{ order.payment_status }})</p>
+
             <p><strong>Subtotal:</strong> ₹{{ order.subtotal }}</p>
             <p><strong>Shipping Fee:</strong> ₹{{ order.shipping_fee }}</p>
-            <p><strong>Tax:</strong> ₹{{ order.tax }}</p>
-            <p><strong>Total Amount:</strong> <span class="font-bold">₹{{ order.total }}</span></p>
-            
-        </div>
 
+            <!-- IMPORTANT: TAX REMOVED -->
+            <p class="sm:col-span-2 text-sm text-gray-500">
+                * Prices are inclusive of all applicable taxes
+            </p>
+
+            <p class="sm:col-span-2">
+                <strong>Total Amount:</strong>
+                <span class="font-bold text-lg">₹{{ order.total }}</span>
+            </p>
+        </div>
     </div>
-        <a href="{% url 'order_invoice' order.id %}"
-   class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">
-   Download Invoice
-</a>
+
+    <!-- Invoice -->
+    <a href="{% url 'order_invoice' order.id %}"
+       class="inline-block mb-6 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">
+        Download Invoice
+    </a>
+
     <!-- Items -->
     <div class="bg-white shadow-sm rounded-xl border overflow-hidden mt-6">
         <table class="w-full">
@@ -65,42 +76,39 @@
                     </td>
 
                     <td class="px-6 py-4">{{ item.quantity }}</td>
-                    <td class="px-6 py-4">₹{{ item.price }}</td>
 
-                    <!-- Status Badge -->
+                    <!-- Price is TAX-INCLUSIVE -->
                     <td class="px-6 py-4">
-                    <!-- Item Status -->
-<p class="text-sm">
-    <strong>Status:</strong>
-    <span class="font-semibold">
-        {{ item.get_status_display }}
-    </span>
-</p>
+                        ₹{{ item.price }}
+                    </td>
 
-<!-- Return Status (ONLY if return exists) -->
-{% if item.return_request %}
-<p class="text-sm mt-1">
-    <strong>Return Status:</strong>
-    <span class="font-semibold
-        {% if item.return_request.status == 'pending' %}text-yellow-600
-        {% elif item.return_request.status == 'approved' %}text-green-600
-        {% elif item.return_request.status == 'rejected' %}text-red-600
-        {% elif item.return_request.status == 'refunded' %}text-indigo-600{% endif %}">
-        {{ item.return_request.get_status_display }}
-    </span>
-</p>
-{% endif %}
+                    <!-- Status -->
+                    <td class="px-6 py-4">
+                        <p class="text-sm">
+                            <strong>Status:</strong>
+                            <span class="font-semibold">
+                                {{ item.get_status_display }}
+                            </span>
+                        </p>
 
+                        {% if item.return_request %}
+                        <p class="text-sm mt-1">
+                            <strong>Return Status:</strong>
+                            <span class="font-semibold
+                                {% if item.return_request.status == 'pending' %}text-yellow-600
+                                {% elif item.return_request.status == 'approved' %}text-green-600
+                                {% elif item.return_request.status == 'rejected' %}text-red-600
+                                {% elif item.return_request.status == 'refunded' %}text-indigo-600{% endif %}">
+                                {{ item.return_request.get_status_display }}
+                            </span>
+                        </p>
+                        {% endif %}
                     </td>
 
                     <!-- Actions -->
                     <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-2">
 
-         
-                          
-
-                            <!-- Cancel -->
                             {% if item.status == "pending" or item.status == "processing" %}
                             <button
                                 class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg"
@@ -109,7 +117,6 @@
                             </button>
                             {% endif %}
 
-                            <!-- Return -->
                             {% if item.status == "delivered" and not item.return_request %}
                             <button
                                 class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-lg"
@@ -127,7 +134,6 @@
                                 Returned
                             </span>
                             {% endif %}
-
                         </div>
                     </td>
                 </tr>
@@ -141,22 +147,20 @@
                             Are you sure you want to cancel this item?
                         </p>
 
-                      <form action="{% url 'cancel_item' item.uuid %}" method="POST">
-    {% csrf_token %}
+                        <form action="{% url 'cancel_item' item.uuid %}" method="POST">
+                            {% csrf_token %}
+                            <label class="text-sm text-gray-600">Reason for cancellation</label>
+                            <textarea name="reason"
+                                      class="w-full border rounded-md mt-1 p-2"
+                                      required></textarea>
 
-    <label class="text-sm text-gray-600">Reason for cancellation</label>
-    <textarea name="reason"
-              class="w-full border rounded-md mt-1 p-2"
-              required></textarea>
-
-    <div class="flex justify-end gap-3 mt-4">
-        <button type="submit"
-                class="px-4 py-2 bg-red-600 text-white rounded-lg">
-            Confirm Cancel
-        </button>
-    </div>
-</form>
-
+                            <div class="flex justify-end gap-3 mt-4">
+                                <button type="submit"
+                                        class="px-4 py-2 bg-red-600 text-white rounded-lg">
+                                    Confirm Cancel
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
@@ -189,7 +193,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-
     document.querySelectorAll("[data-modal-target]").forEach(button => {
         button.addEventListener("click", () => {
             const modal = document.getElementById(
@@ -204,7 +207,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (e.target === overlay) overlay.classList.add("hidden");
         });
     });
-
 });
 </script>
 
