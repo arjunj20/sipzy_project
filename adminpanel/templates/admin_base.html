@@ -77,7 +77,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center p-3 rounded-lg {% if 'coupon' in request.resolver_match.url_name %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
+                        <a href="{% url 'coupon_list' %}" class="flex items-center p-3 rounded-lg {% if 'coupon' in request.resolver_match.url_name %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
                             <i class="fas fa-ticket-alt mr-3"></i>
                             <span>Coupons</span>
                         </a>
