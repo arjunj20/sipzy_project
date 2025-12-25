@@ -1,0 +1,60 @@
+{% extends "admin_base.html" %}
+{% block title %}Coupons{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto mt-8 p-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <h3 class="text-3xl font-bold text-gray-900">Coupons</h3>
+        <a href="{% url 'add_coupon' %}" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">+ Add Coupon</a>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto bg-white rounded-lg shadow-md border border-gray-200">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Order</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Validity</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for coupon in coupons %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ coupon.code }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{{ coupon.discount_amount }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{{ coupon.min_order_amount }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ coupon.valid_from|date:"d M Y" }} – {{ coupon.valid_to|date:"d M Y" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ coupon.used_count }} / {{ coupon.usage_limit }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if coupon.is_active %}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                        {% else %}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{% url 'delete_coupon' coupon.id %}"
+                           class="px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-200"
+                           onclick="return confirm('Are you sure?')">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-sm text-gray-500">No coupons found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
