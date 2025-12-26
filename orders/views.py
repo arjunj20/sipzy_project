@@ -7,6 +7,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from django.contrib import messages
 import tempfile
+from django.urls import reverse
 
 from django.views.decorators.cache import never_cache
 
@@ -25,7 +26,12 @@ def order_list(request):
         orders = Order.objects.filter(user=request.user).order_by("-created_at")
 
     return render(request, "orders/order_list.html", {
-        "orders": orders
+        "orders": orders,
+        "breadcrumbs": [
+            {"label": "Home", "url": "/"},
+            {"label": "My Profile", "url": reverse("user_profile")},
+            {"label": "My Orders", "url": ""}
+        ]
     })
 
 @never_cache

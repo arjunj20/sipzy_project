@@ -11,6 +11,7 @@ from orders.models import Order,OrderItem
 from django.contrib import messages
 from authenticate.models import Address
 from django.views.decorators.cache import never_cache
+from django.urls import reverse
 
 
 @never_cache
@@ -31,6 +32,10 @@ def cart_page(request):
         "tax": cart.tax,
         "shipping_fee": cart.shipping_fee,
         "total": cart.total_price,
+        "breadcrumbs": [
+            {"label": "Home", "url": "/"},
+            {"label": "Cart", "url": ""}
+        ]   
     }
 
     return render(request, "cart_page.html", context)
@@ -165,6 +170,11 @@ def checkout_page(request):
         "subtotal": subtotal,
         "shipping_fee": shipping_fee,
         "total_price": total_price,
+        "breadcrumbs": [
+            {"label": "Home", "url": "/"},
+            {"label": "Cart", "url": reverse("cart_page")},
+            {"label": "Checkout", "url": ""}
+        ]
     }
     return render(request, "checkout.html" , context)
 

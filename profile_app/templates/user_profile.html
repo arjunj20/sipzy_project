@@ -666,7 +666,8 @@
                                               <a href="{% url 'edit_addresses' address.uuid %}"
            class="btn-sm-custom btn-edit">
            Edit
-        </a><form method="POST" action="{% url 'delete_address' address.uuid %}">
+        </a>
+        <form method="POST" action="{% url 'delete_address' address.uuid %}"  onsubmit="return confirmDelete();">
     {% csrf_token %}
     <button type="submit" class="btn-sm-custom btn-delete">
         Delete
@@ -693,6 +694,11 @@
 </div>
 
 <script>
+
+function confirmDelete() {
+    return confirm("Are you sure you want to delete this address?");
+}
+
     document.addEventListener('DOMContentLoaded', function() {
         // Ripple effect for interactive cards
         const interactiveCards = document.querySelectorAll('.address-card, .quick-action-card, .stat-item');

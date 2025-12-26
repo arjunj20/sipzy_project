@@ -10,6 +10,8 @@ from django.db import transaction
 from django.views.decorators.cache import never_cache
 
 from offers.utils import get_best_offer_for_product, apply_offer
+from django.urls import reverse
+
 
 
 @never_cache
@@ -122,6 +124,10 @@ def userproduct_list(request):
         "sort_option": sort_option,
         "querystring": querystring,
         "price_ranges": price_ranges,
+        "breadcrumbs": [
+            {"label": "Home", "url": "/"},
+            {"label": "Products", "url": ""}
+        ]   
         
     })
 
@@ -235,6 +241,11 @@ def product_details(request, uuid):
         'main_image': main_image,
         'message': message,
         "error" : error,
+        "breadcrumbs": [
+            {"label": "Home", "url": "/"},
+            {"label": "Products", "url": reverse("userproduct_list")},
+            {"label": product.name, "url": ""}
+        ]
     }
     
     return render(request, 'userproduct_details.html', context)

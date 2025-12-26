@@ -354,7 +354,7 @@
     <div class="flex gap-5 items-center">
         <!-- Welcome Message for Logged-in User -->
         <div class="flex items-center gap-2 text-sm">
-            <span class="text-amber-300 font-semibold">Welcome, {{request.user.first_name|default:"Guest"}}!</span>
+            <span class="text-amber-300 font-semibold">Welcome, {{request.user.fullname|default:"Guest"}}!</span>
         </div>
         
         <a href="{% url 'cart_page' %}" class="hover:scale-110 transition-transform duration-300">
@@ -377,12 +377,31 @@
     </div>
 </header>
 
+
+
 <!-- 🔸 CONTENT BLOCK -->
 <main class="flex-grow">
-    {% if breadcrumbs %}
-        {% include "components/breadcrumbs.html" %}
-    {% endif %}
-    
+  {% if breadcrumbs %}
+<nav class="text-sm text-gray-600 mb-4">
+    <ol class="flex flex-wrap items-center space-x-1">
+        {% for crumb in breadcrumbs %}
+            {% if not forloop.last %}
+                <li>
+                    <a href="{{ crumb.url }}" class="text-blue-600 hover:underline">
+                        {{ crumb.label }}
+                    </a>
+                    <span class="mx-1">/</span>
+                </li>
+            {% else %}
+                <li class="font-medium text-gray-800">
+                    {{ crumb.label }}
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+{% endif %}
+  
     {% block content %}
     {% endblock %}
 </main>
