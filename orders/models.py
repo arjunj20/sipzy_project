@@ -35,7 +35,7 @@ class Order(models.Model):
 
 
 
-    from decimal import Decimal
+
 
     def recalculate_totals(self):
         active_items = self.items.exclude(
