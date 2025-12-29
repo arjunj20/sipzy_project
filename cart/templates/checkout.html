@@ -784,41 +784,58 @@
                         </div>
 
                         <!-- Price Breakdown -->
-                        <div class="price-breakdown">
-                            <div class="price-row">
-                                <span class="price-label">Subtotal</span>
-                                <span class="price-value">₹{{ subtotal }}</span>
-                            </div>
-                            
-                            <div class="price-row">
-                                <span class="price-label">Shipping</span>
-                                <span class="price-value">₹{{ shipping_fee }}</span>
-                            </div>
-                            
-                            {% if tax %}
-                            <div class="price-row">
-                                <span class="price-label">Tax (GST)</span>
-                                <span class="price-value">₹{{ tax }}</span>
-                            </div>
-                            {% endif %}
-                            
-                            {% if discount %}
-                            <div class="price-row discount">
-                                <span class="price-label">Discount</span>
-                                <span class="price-value">- ₹{{ discount }}</span>
-                            </div>
-                            {% endif %}
-                        </div>
+                        <!-- Price Breakdown -->
+<div class="price-breakdown">
 
-                        <!-- Total -->
-                        <div class="total-row">
-                            <span class="total-label">Total Amount</span>
-                            <span class="total-value">₹{{ total_price }}</span>
-                        </div>
-                        
-                        <div class="tax-note">
-                            * Inclusive of all taxes
-                        </div>
+    <div class="price-row">
+        <span class="price-label">Subtotal</span>
+        <span class="price-value">₹{{ cart.item_subtotal }}</span>
+    </div>
+
+    <div class="price-row">
+        <span class="price-label">Shipping</span>
+        <span class="price-value">
+            {% if cart.shipping_fee == 0 %}
+                Free
+            {% else %}
+                ₹{{ cart.shipping_fee }}
+            {% endif %}
+        </span>
+    </div>
+
+    <div class="price-row">
+        <span class="price-label">Tax (GST)</span>
+        <span class="price-value">₹{{ cart.tax }}</span>
+    </div>
+
+    {% if cart.applied_coupon %}
+    <div class="price-row discount">
+        <span class="price-label">
+            Coupon ({{ cart.applied_coupon.code }})
+            {% if cart.applied_coupon.discount_type == "percent" %}
+                – {{ cart.applied_coupon.discount_value }}% OFF
+            {% endif %}
+        </span>
+        <span class="price-value text-green-600">
+            - ₹{{ cart.coupon_discount }}
+        </span>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Total -->
+<div class="total-row">
+    <span class="total-label">Total Amount</span>
+    <span class="total-value">₹{{ cart.total_price }}</span>
+</div>
+
+<div class="tax-note">
+    * Inclusive of all taxes
+</div>
+
+
+                   
 
                         <!-- Place Order Button -->
                         <form action="{% url 'place_order' %}" method="POST" id="checkoutForm">

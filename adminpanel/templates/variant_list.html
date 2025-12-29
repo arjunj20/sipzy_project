@@ -175,6 +175,13 @@
                 <span class="text-sm text-gray-500">-</span>
               {% endif %}
             </td>
+            <td class="px-4 py-2">
+    <a href="{% url 'edit_variant' v.uuid %}"
+       class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">
+        Edit
+    </a>
+</td>
+
             <td class="py-3 px-4 text-center">
               <form method="post"
                     action="{% url 'variant_delete' v.uuid %}"

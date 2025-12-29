@@ -32,16 +32,22 @@ def recalculate_cart_totals(cart):
         else Decimal("0.00")
     )
 
+    cart.coupon_discount = Decimal("0.00")
+    if cart.applied_coupon:
+        cart.coupon_discount = cart.applied_coupon.calculate_discount(cart.item_subtotal)
+
     cart.total_price = (
         cart.item_subtotal +
         cart.tax +
-        cart.shipping_fee
+        cart.shipping_fee -
+        cart.coupon_discount
     )
 
     cart.save()
 
 
 def revalidate_cart_prices(cart):
+
     for item in cart.cart_items.select_related("variant", "variant__product"):
         offer = get_best_offer_for_product(item.variant.product)
 

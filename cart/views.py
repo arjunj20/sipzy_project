@@ -11,6 +11,10 @@ from orders.models import Order,OrderItem
 from django.contrib import messages
 from authenticate.models import Address
 from django.views.decorators.cache import never_cache
+from django.urls import reverse
+from coupons.models import Coupon
+from django.utils import timezone
+from django.db import transaction
 
 
 @never_cache
@@ -19,7 +23,15 @@ def cart_page(request):
         return redirect("user_login")
 
     cart = get_user_cart(request.user)
+    now = timezone.now()
+    available_coupons = Coupon.objects.filter(
+        is_active=True,
+        valid_from__lte=now,
+        valid_to__gte=now,
+        usage_limit__gt=0,
+        min_order_amount__lte=cart.item_subtotal
 
+    )
     revalidate_cart_prices(cart)
 
     recalculate_cart_totals(cart)
@@ -31,6 +43,11 @@ def cart_page(request):
         "tax": cart.tax,
         "shipping_fee": cart.shipping_fee,
         "total": cart.total_price,
+        "available_coupons": available_coupons,
+        "breadcrumbs": [
+            {"label": "Home", "url": "/"},
+            {"label": "Cart", "url": ""}
+        ]   
     }
 
     return render(request, "cart_page.html", context)
@@ -147,99 +164,132 @@ def ajax_delete_item(request):
     })
 
 
+from django.views.decorators.cache import never_cache
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from cart.models import Cart, CartItems
+
+
 @never_cache
 def checkout_page(request):
-
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
-    address=Address.objects.filter(user=request.user)
+
+    addresses = Address.objects.filter(user=request.user)
 
     cart = Cart.objects.get(user=request.user)
     cart_items = CartItems.objects.filter(cart=cart)
-    subtotal = sum(i.total_price for i in cart_items)
-    shipping_fee = 50 if subtotal<1000 else 0
-    total_price = subtotal + shipping_fee 
+
     context = {
-        "addresses": address,
+        "addresses": addresses,
         "cart_items": cart_items,
-        "subtotal": subtotal,
-        "shipping_fee": shipping_fee,
-        "total_price": total_price,
+
+        # 🔥 READ DIRECTLY FROM CART
+        "subtotal": cart.item_subtotal,
+        "tax": cart.tax,
+        "shipping_fee": cart.shipping_fee,
+        "coupon": cart.applied_coupon,
+        "coupon_discount": cart.coupon_discount,
+        "total_price": cart.total_price,
+        "cart": cart,
+
+        "breadcrumbs": [
+            {"label": "Home", "url": "/"},
+            {"label": "Cart", "url": reverse("cart_page")},
+            {"label": "Checkout", "url": ""},
+        ],
     }
-    return render(request, "checkout.html" , context)
+
+    return render(request, "checkout.html", context)
 
 @never_cache
+@transaction.atomic
 def place_order(request):
 
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
 
-    if request.method == 'POST':
-        user = request.user
-        selected_address_id = request.POST.get("selected_address")
-        payment_method = request.POST.get("payment_method")
+    if request.method != "POST":
+        return redirect("checkout_page")
 
-        if not selected_address_id:
-            messages.error(request, "Please select a delivery address")
-            return redirect("checkout_page")
+    user = request.user
+    selected_address_id = request.POST.get("selected_address")
+    payment_method = request.POST.get("payment_method")
 
-        try:
-            address = Address.objects.get(id=selected_address_id, user=user)
-        except Address.DoesNotExist:
-            messages.error(request, "Invalid address selected")
-            return redirect("checkout_page")
+    if not selected_address_id:
+        messages.error(request, "Please select a delivery address")
+        return redirect("checkout_page")
 
-        cart_items = CartItems.objects.filter(cart__user=user)
+    try:
+        address = Address.objects.get(id=selected_address_id, user=user)
+    except Address.DoesNotExist:
+        messages.error(request, "Invalid address selected")
+        return redirect("checkout_page")
 
-        subtotal = sum(item.total_price for item in cart_items)
-        shipping_fee = 50 if subtotal < 1000 else 0
+    # 🔥 GET CART AS SINGLE SOURCE OF TRUTH
+    cart = Cart.objects.select_for_update().get(user=user)
+    cart_items = CartItems.objects.filter(cart=cart)
 
-        tax = Decimal("0")
-        for item in cart_items:
-            gst_rate = Decimal(item.variant.gst_rate)
-            item_tax_amount = item.total_price * (gst_rate / Decimal("100"))
-            tax += item_tax_amount
+    if not cart_items.exists():
+        messages.error(request, "Your cart is empty")
+        return redirect("cart_page")
 
-        tax = round(tax, 2)
-        discount = Decimal("0")
-        total_price = subtotal + shipping_fee + tax - discount
+    # ✅ CREATE ORDER USING CART VALUES (NO RECALCULATION)
+    order = Order.objects.create(
+        user=user,
+        address=address,
+        payment_method=payment_method,
 
-        order = Order.objects.create(
-            user=user,
-            address=address,
-            payment_method=payment_method,
-            subtotal=subtotal,
-            tax=tax,
-            shipping_fee=shipping_fee,
-            discount=discount,
-            total=total_price,
-            payment_status="not paid" if payment_method == "COD" else "pending",
+        subtotal=cart.item_subtotal,
+        tax=cart.tax,
+        shipping_fee=cart.shipping_fee,
+
+        coupon=cart.applied_coupon,
+        coupon_discount=cart.coupon_discount,
+
+        total=cart.total_price,
+
+        payment_status="not paid" if payment_method == "COD" else "pending",
+    )
+
+    # ✅ CREATE ORDER ITEMS
+    count = 1
+    for item in cart_items:
+        order_item = OrderItem.objects.create(
+            order=order,
+            product=item.variant.product,
+            variant=item.variant,
+            quantity=item.quantity,
+            price=item.total_price,
         )
 
-        count = 1
-        for i in cart_items:
-            order_item = OrderItem.objects.create(
-                order=order,
-                product=i.variant.product,
-                variant=i.variant,
-                quantity=i.quantity,
-                price=i.total_price,
-            )
+        order_item.sub_order_id = f"{order.order_number}-{count}"
+        order_item.save(update_fields=["sub_order_id"])
 
-            order_item.sub_order_id = f"{order.order_number}-{count}"
-            order_item.save(update_fields=["sub_order_id"])
-            variant = i.variant
-            variant.stock -= i.quantity
-            variant.save(update_fields=["stock"])
+        # Reduce stock
+        variant = item.variant
+        variant.stock -= item.quantity
+        variant.save(update_fields=["stock"])
 
-            count += 1
+        count += 1
 
-        cart_items.delete()
+    # 🔥 INCREMENT COUPON USAGE ONLY AFTER ORDER IS CREATED
+    if order.coupon:
+        order.coupon.used_count += 1
+        order.coupon.save(update_fields=["used_count"])
 
-        return redirect("order_placed", order_id=order.id)
+    # ✅ CLEAR CART
+    cart_items.delete()
+    cart.applied_coupon = None
+    cart.coupon_discount = Decimal("0.00")
+    cart.item_subtotal = Decimal("0.00")
+    cart.tax = Decimal("0.00")
+    cart.shipping_fee = Decimal("0.00")
+    cart.total_price = Decimal("0.00")
+    cart.save()
 
+    return redirect("order_placed", order_id=order.id)
 
-    return redirect("checkout_page")
 
 @never_cache
 def order_placed(request, order_id):
@@ -293,3 +343,66 @@ def edit_address(request, uuid):
         return redirect("checkout_page")
 
     return render(request, "edit_address.html", {"address": address})
+
+def apply_coupon(request):
+    if not request.user.is_authenticated:
+        return redirect("user_login")
+
+    if request.method == "POST":
+        code = request.POST.get("coupon_code", "").strip().upper()
+
+        cart = get_user_cart(request.user)   # ✅ THIS WAS MISSING
+
+        try:
+            coupon = Coupon.objects.get(code=code)
+
+            if not coupon.is_valid():
+                raise Exception("Invalid or expired coupon")
+
+            if cart.item_subtotal < coupon.min_order_amount:
+                raise Exception("Minimum order amount not met")
+
+            # Apply coupon
+            cart.applied_coupon = coupon
+            cart.save()
+            coupon.used_count += 1
+
+
+            # 🔥 Recalculate totals (VERY IMPORTANT)
+            recalculate_cart_totals(cart)
+
+            messages.success(
+                request,
+                f"Coupon {coupon.code} applied successfully"
+            )
+
+        except Coupon.DoesNotExist:
+            messages.error(request, "Coupon not found")
+
+        except Exception as e:
+            messages.error(request, str(e))
+
+    return redirect("cart_page")
+
+@require_POST
+def remove_coupon(request):
+    if not request.user.is_authenticated:
+        return redirect("user_login")
+
+    cart = Cart.objects.filter(user=request.user).first()
+
+    if not cart or not cart.applied_coupon:
+        messages.warning(request, "No coupon applied to remove.")
+        return redirect("cart_page")
+
+    #  Remove coupon
+    cart.applied_coupon = None
+    cart.coupon_discount = 0
+    cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+    #  Recalculate totals
+    recalculate_cart_totals(cart)
+
+    messages.success(request, "Coupon removed successfully.")
+    return redirect("cart_page")
+

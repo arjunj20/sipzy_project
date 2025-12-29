@@ -1,0 +1,254 @@
+{% extends "admin_base.html" %}
+{% load static %}
+{% block title %}Edit Variant{% endblock %}
+
+{% block extra_css %}
+<link
+  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
+  rel="stylesheet"
+/>
+
+<style>
+  .thumb {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #E5E7EB;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.45s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex-1 p-6 md:p-8 overflow-y-auto animate-fade-in">
+
+  <!-- Header -->
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">
+        Edit Variant – {{ variant.variant }}
+      </h1>
+      <p class="text-gray-500 text-sm mt-1">
+        Update variant details
+      </p>
+    </div>
+
+    <a href="{% url 'variant_list' variant.product.uuid %}"
+       class="px-4 py-2 border rounded-lg hover:bg-gray-100">
+      Back
+    </a>
+  </div>
+
+  <!-- Error / Success -->
+  {% if success %}
+  <div class="mb-4 px-4 py-3 bg-green-100 text-green-700 rounded-lg border border-green-300">
+    {{ success }}
+  </div>
+  {% endif %}
+
+  <!-- Edit Variant Form -->
+  <div class="bg-white rounded-xl shadow-md p-6 max-w-3xl">
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- Variant Name -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Variant Name</label>
+          <input name="variant"
+                 value="{{ variant.variant }}"
+                 class="mt-1 px-3 py-2 border rounded-lg w-full {% if errors.variant %}border-red-500{% endif %}">
+          {% if errors.variant %}
+            <p class="text-sm text-red-600 mt-1">{{ errors.variant }}</p>
+          {% endif %}
+        </div>
+
+        <!-- Price -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Price</label>
+          <input name="price"
+                 type="number"
+                 step="0.01"
+                 value="{{ variant.price }}"
+                 class="mt-1 px-3 py-2 border rounded-lg w-full {% if errors.price %}border-red-500{% endif %}">
+          {% if errors.price %}
+            <p class="text-sm text-red-600 mt-1">{{ errors.price }}</p>
+          {% endif %}
+        </div>
+
+        <!-- Stock -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Stock</label>
+          <input name="stock"
+                 type="number"
+                 value="{{ variant.stock }}"
+                 class="mt-1 px-3 py-2 border rounded-lg w-full {% if errors.stock %}border-red-500{% endif %}">
+          {% if errors.stock %}
+            <p class="text-sm text-red-600 mt-1">{{ errors.stock }}</p>
+          {% endif %}
+        </div>
+
+        <!-- Primary Image -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Primary Image</label>
+
+          <!-- Raw input -->
+          <input id="rawVariantImage"
+                 type="file"
+                 accept="image/*"
+                 class="mt-1">
+
+          <!-- Hidden cropped file -->
+          <input type="file"
+                 id="hiddenVariantPrimary"
+                 name="primary_image"
+                 style="display:none;">
+
+          {% if errors.primary_image %}
+            <p class="text-sm text-red-600 mt-1">{{ errors.primary_image }}</p>
+          {% endif %}
+
+          <!-- Preview -->
+          <div id="variantPreview" class="mt-2">
+            {% if variant.primary_image %}
+              <img src="{{ variant.primary_image }}" class="thumb">
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mt-6 flex gap-3">
+        <button type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          Update Variant
+        </button>
+
+        <a href="{% url 'variant_list' variant.product.uuid %}"
+           class="px-4 py-2 border rounded-lg hover:bg-gray-100">
+          Cancel
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Crop Modal -->
+<div id="cropModal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-4">
+
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-lg font-semibold">Crop Image</h3>
+        <button type="button"
+                onclick="closeCropModal()"
+                class="px-3 py-1 border rounded-lg">
+          Cancel
+        </button>
+      </div>
+
+      <div style="height:60vh; background:#f0f0f0; border-radius:8px; overflow:hidden;">
+        <img id="cropImage" style="max-width:100%; display:block; margin:auto;">
+      </div>
+
+      <div class="mt-4 flex justify-between">
+        <div class="space-x-2">
+          <button type="button" id="zoomInBtn" class="px-3 py-1 border rounded-lg">Zoom +</button>
+          <button type="button" id="zoomOutBtn" class="px-3 py-1 border rounded-lg">Zoom −</button>
+          <button type="button" id="rotateBtn" class="px-3 py-1 border rounded-lg">Rotate</button>
+        </div>
+        <button type="button"
+                id="cropDoneBtn"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg">
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<script>
+let cropper = null;
+
+const rawInput = document.getElementById("rawVariantImage");
+const hiddenInput = document.getElementById("hiddenVariantPrimary");
+const preview = document.getElementById("variantPreview");
+
+const cropModal = document.getElementById("cropModal");
+const cropImage = document.getElementById("cropImage");
+
+rawInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    cropImage.src = ev.target.result;
+    cropModal.classList.remove("hidden");
+
+    cropImage.onload = () => {
+      if (cropper) cropper.destroy();
+      cropper = new Cropper(cropImage, {
+        aspectRatio: 1,
+        viewMode: 1,
+        autoCropArea: 1,
+        background: false,
+      });
+    };
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById("zoomInBtn").onclick = () => cropper.zoom(0.1);
+document.getElementById("zoomOutBtn").onclick = () => cropper.zoom(-0.1);
+document.getElementById("rotateBtn").onclick = () => cropper.rotate(90);
+
+document.getElementById("cropDoneBtn").onclick = () => {
+  const canvas = cropper.getCroppedCanvas({
+    width: 1000,
+    height: 1000,
+    imageSmoothingQuality: "high",
+  });
+
+  canvas.toBlob((blob) => {
+    const file = new File([blob], "variant.jpg", { type: "image/jpeg" });
+
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    hiddenInput.files = dt.files;
+
+    preview.innerHTML = "";
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    img.className = "thumb";
+    preview.appendChild(img);
+
+    closeCropModal();
+  }, "image/jpeg", 0.9);
+};
+
+function closeCropModal() {
+  cropModal.classList.add("hidden");
+  if (cropper) {
+    cropper.destroy();
+    cropper = null;
+  }
+}
+</script>
+
+{% endblock %}

@@ -12,6 +12,7 @@
         th, td { border: 1px solid #888; padding: 8px; }
         th { background: #eee; }
         .right { text-align: right; }
+        .green { color: green; font-weight: bold; }
     </style>
 </head>
 
@@ -19,6 +20,7 @@
 
 <div class="container">
 
+    <!-- HEADER -->
     <div class="header">
         <div class="title">INVOICE</div>
         <p><strong>Item Order ID:</strong> {{ item.sub_order_id }}</p>
@@ -26,14 +28,16 @@
         <p>Date: {{ order.created_at|date:"d M Y, h:i A" }}</p>
     </div>
 
+    <!-- BILLING -->
     <h3>Billing Details</h3>
     <p>
-        {{ user.fullname }}<br>
+        {{ order.user.fullname }}<br>
         {{ order.address.address_line_1 }}<br>
         {{ order.address.city }}, {{ order.address.state }}<br>
         {{ order.address.pincode }}
     </p>
 
+    <!-- PRODUCT -->
     <h3>Product Details</h3>
 
     <table>
@@ -42,7 +46,7 @@
                 <th>Product</th>
                 <th>Variant</th>
                 <th>Quantity</th>
-                <th>Price</th>
+                <th>Unit Price</th>
                 <th>Line Total</th>
             </tr>
         </thead>
@@ -50,28 +54,67 @@
         <tbody>
             <tr>
                 <td>{{ item.product.name }}</td>
-                <td>{% if item.variant %}{{ item.variant.variant }}{% else %}-{% endif %}</td>
+                <td>
+                    {% if item.variant %}
+                        {{ item.variant.variant }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
                 <td>{{ item.quantity }}</td>
                 <td>₹{{ item.price }}</td>
-                <td><strong>₹{{ item.quantity|floatformat:0|add:item.price }}</strong></td>
+                <td>
+                    ₹{{ item.price|mul:item.quantity }}
+                </td>
             </tr>
         </tbody>
-
     </table>
 
-    <br><br>
+    <!-- SUMMARY -->
+    <h3>Order Summary</h3>
 
-    <h3>Total</h3>
     <table>
         <tr>
             <th class="right">Subtotal</th>
-            <td>₹{{ item.price }}</td>
+            <td>₹{{ order.subtotal }}</td>
         </tr>
+
         <tr>
-            <th class="right">Total</th>
-            <td><strong>₹{{ item.price }}</strong></td>
+            <th class="right">Shipping Fee</th>
+            <td>
+                {% if order.shipping_fee == 0 %}
+                    Free
+                {% else %}
+                    ₹{{ order.shipping_fee }}
+                {% endif %}
+            </td>
+        </tr>
+
+        <tr>
+            <th class="right">Tax (GST)</th>
+            <td>₹{{ order.tax }}</td>
+        </tr>
+
+        {% if order.coupon %}
+        <tr>
+            <th class="right green">
+                Coupon ({{ order.coupon.code }})
+            </th>
+            <td class="green">
+                - ₹{{ order.coupon_discount }}
+            </td>
+        </tr>
+        {% endif %}
+
+        <tr>
+            <th class="right"><strong>Total</strong></th>
+            <td><strong>₹{{ order.total }}</strong></td>
         </tr>
     </table>
+
+    <p style="font-size: 11px; margin-top: 10px;">
+        * Prices are inclusive of all applicable taxes.
+    </p>
 
 </div>
 

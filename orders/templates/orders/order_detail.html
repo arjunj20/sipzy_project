@@ -18,18 +18,48 @@
             <p><strong>Order Date:</strong> {{ order.created_at|date:"d M Y, h:i A" }}</p>
             <p><strong>Payment:</strong> {{ order.payment_method }} ({{ order.payment_status }})</p>
 
-            <p><strong>Subtotal:</strong> ₹{{ order.subtotal }}</p>
-            <p><strong>Shipping Fee:</strong> ₹{{ order.shipping_fee }}</p>
+           <p><strong>Subtotal:</strong> ₹{{ order.subtotal }}</p>
 
-            <!-- IMPORTANT: TAX REMOVED -->
-            <p class="sm:col-span-2 text-sm text-gray-500">
-                * Prices are inclusive of all applicable taxes
-            </p>
+<p>
+    <strong>Shipping Fee:</strong>
+    {% if order.shipping_fee == 0 %}
+        <span class="text-green-600 font-semibold">Free</span>
+    {% else %}
+        ₹{{ order.shipping_fee }}
+    {% endif %}
+</p>
 
-            <p class="sm:col-span-2">
-                <strong>Total Amount:</strong>
-                <span class="font-bold text-lg">₹{{ order.total }}</span>
-            </p>
+<!-- TAX (INFO ONLY) -->
+<p>
+    <strong>Tax (GST):</strong>
+    ₹{{ order.tax }}
+    <span class="text-xs text-gray-500">(included)</span>
+</p>
+
+<!-- COUPON -->
+{% if order.coupon %}
+<p class="text-green-600 font-semibold">
+    Coupon Applied:
+    {{ order.coupon.code }}
+    {% if order.coupon.discount_type == "percent" %}
+        ({{ order.coupon.discount_value }}% OFF)
+    {% endif %}
+    <br>
+    <span class="text-sm">
+        Discount: -₹{{ order.coupon_discount }}
+    </span>
+</p>
+{% endif %}
+
+<p class="sm:col-span-2">
+    <strong>Total Amount:</strong>
+    <span class="font-bold text-lg">₹{{ order.total }}</span>
+</p>
+
+<p class="sm:col-span-2 text-sm text-gray-500">
+    * Prices are inclusive of all applicable taxes
+</p>
+
         </div>
     </div>
 
@@ -38,6 +68,13 @@
        class="inline-block mb-6 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">
         Download Invoice
     </a>
+
+    {% if order.coupon %}
+<p class="text-sm text-green-700 mt-2">
+    Coupon <strong>{{ order.coupon.code }}</strong> applied
+</p>
+{% endif %}
+    
 
     <!-- Items -->
     <div class="bg-white shadow-sm rounded-xl border overflow-hidden mt-6">

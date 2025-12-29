@@ -14,6 +14,8 @@ from orders.models import OrderItem
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
+from decimal import Decimal
+
 
 
 @never_cache
@@ -819,6 +821,61 @@ def admin_variant_list(request, product_uuid):
         "errors": errors,
         "success": success
             })
+
+
+def admin_edit_variant(request, uuid):
+    variant = get_object_or_404(ProductVariants, uuid=uuid)
+    errors = {}
+    success = None
+
+    if request.method == "POST":
+        variant_name = request.POST.get("variant", "").strip()
+        price = request.POST.get("price", "").strip()
+        stock = request.POST.get("stock", "").strip()
+        primary_image = request.FILES.get("primary_image")
+
+        if not variant_name:
+            errors["variant"] = "Variant name is required."
+
+        if not price:
+            errors["price"] = "Price is required."
+        else:
+            try:
+                price_val = Decimal(price)
+                if price_val <= 0:
+                    errors["price"] = "Price must be greater than 0."
+            except:
+                errors["price"] = "Invalid price."
+
+        if not stock:
+            errors["stock"] = "Stock is required."
+        else:
+            try:
+                stock_val = int(stock)
+                if stock_val < 0:
+                    errors["stock"] = "Stock cannot be negative."
+            except:
+                errors["stock"] = "Invalid stock value."
+
+        if not errors:
+            variant.variant = variant_name
+            variant.price = price_val
+            variant.stock = stock_val
+
+            if primary_image:
+                upload = cloudinary_upload(primary_image)
+                variant.primary_image = upload.get("secure_url")
+
+            variant.save()
+            success = "Variant updated successfully"
+            return redirect("variant_list", product_uuid=variant.product.uuid)
+
+    return render(request, "edit_variant.html", {
+        "variant": variant,
+        "errors": errors,
+        "success": success
+    })
+
 
 @never_cache
 @transaction.atomic

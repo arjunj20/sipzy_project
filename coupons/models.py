@@ -1,25 +1,40 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from decimal import Decimal
 
 
 class Coupon(models.Model):
+
+    DISCOUNT_TYPE_CHOICES = (
+        ("flat", "Flat Amount"),
+        ("percent", "Percentage"),
+    )
+
     code = models.CharField(
         max_length=50,
         unique=True,
         help_text="Unique coupon code (stored in uppercase)"
     )
+    discount_type = models.CharField(max_length=10, choices=DISCOUNT_TYPE_CHOICES, default="flat")
 
-    discount_amount = models.DecimalField(
-        max_digits=10,
+    discount_value = models.DecimalField(
+        max_digits=5,
         decimal_places=2,
         help_text="Flat discount amount"
-    )
+        )
 
     min_order_amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         help_text="Minimum order amount required to apply this coupon"
+        )
+    max_discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Max discount for percentage coupons"
     )
 
     valid_from = models.DateTimeField()
@@ -42,44 +57,34 @@ class Coupon(models.Model):
         ordering = ["-created_at"]
 
     def clean(self):
-        """
-        Model-level validations
-        """
-        if self.discount_amount <= 0:
-            raise ValidationError("Discount amount must be greater than zero.")
+        if self.discount_value <= 0:
+            raise ValidationError("Discount value must be greater than zero.")
+
+        if self.discount_type == "percent":
+            if self.discount_value > 100:
+                raise ValidationError("Percentage discount cannot exceed 100%.")
+            if not self.max_discount_amount:
+                raise ValidationError("Max discount amount is required for percentage coupons.")
+        else:
+            self.max_discount_amount = None
 
         if self.min_order_amount <= 0:
             raise ValidationError("Minimum order amount must be greater than zero.")
 
-        if self.discount_amount > self.min_order_amount:
-            raise ValidationError(
-                "Discount amount cannot be greater than minimum order amount."
-            )
-
         if self.valid_from >= self.valid_to:
-            raise ValidationError(
-                "Valid To date must be greater than Valid From date."
-            )
+            raise ValidationError("Invalid validity dates.")
 
         if self.valid_to <= timezone.now():
-            raise ValidationError("Coupon expiry date must be in the future.")
+            raise ValidationError("Coupon expiry must be in the future.")
 
-        if self.usage_limit < 1:
-            raise ValidationError("Usage limit must be at least 1.")
+
 
     def save(self, *args, **kwargs):
-        # Normalize coupon code
         self.code = self.code.upper().strip()
-
-        # Run model validations
         self.full_clean()
-
         super().save(*args, **kwargs)
 
     def is_valid(self):
-        """
-        Check whether coupon can be applied
-        """
         now = timezone.now()
         return (
             self.is_active
@@ -89,3 +94,18 @@ class Coupon(models.Model):
 
     def __str__(self):
         return self.code
+    
+    def calculate_discount(self, order_total):
+
+        if order_total < self.min_order_amount:
+            return Decimal("0.00")
+        if self.discount_type == "flat":
+            return min(self.discount_value, order_total)
+        
+        discount = (self.discount_value / Decimal("100")) * order_total
+
+        if self.max_discount_amount:
+            discount = min(self.max_discount_amount, discount)
+
+        return discount
+        

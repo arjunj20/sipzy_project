@@ -7,9 +7,9 @@ import uuid
 class Order(models.Model):
     PAYMENT_CHOICES = (
         ("COD", "Cash on Delivery"),
-        ("Razorpay", "Razorpay")
-
+        ("Razorpay", "Razorpay"),
     )
+
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     user = models.ForeignKey(CustomUser, related_name="orders", on_delete=models.CASCADE)
@@ -21,7 +21,21 @@ class Order(models.Model):
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     shipping_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    # 🔥 ADD THESE
+    coupon = models.ForeignKey(
+        "coupons.Coupon",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    coupon_discount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
     total = models.DecimalField(max_digits=10, decimal_places=2)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -31,13 +45,13 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.id} - {self.user.fullname}"
-    
-
-
-
-    from decimal import Decimal
 
     def recalculate_totals(self):
+        """
+        ⚠️ ADMIN / RETURN USE ONLY
+        Do NOT call this for normal order display.
+        """
+
         active_items = self.items.exclude(
             status__in=["cancelled", "returned"]
         )
@@ -49,17 +63,22 @@ class Order(models.Model):
 
         TAX_RATE = Decimal("0.18")
 
-        # 🔹 Extract tax from inclusive price (INFO ONLY)
+        # Tax is INFO ONLY (price already inclusive)
         self.tax = (self.subtotal * TAX_RATE / (1 + TAX_RATE)).quantize(Decimal("0.01"))
 
-        # 🔹 DO NOT add tax again
+        # 🔥 USE coupon_discount (NOT discount)
         self.total = (
             self.subtotal
             + self.shipping_fee
-            - self.discount
+            - self.coupon_discount
         )
 
+        # Prevent negative totals
+        if self.total < 0:
+            self.total = Decimal("0.00")
+
         self.save(update_fields=["subtotal", "tax", "total"])
+
 
 
 

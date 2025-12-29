@@ -13,4 +13,7 @@ urlpatterns = [
     path("address/add/", views.add_address, name="add_address"),
     path("address/edit/<uuid:uuid>/", views.edit_address, name="edit_address"),
 
+    path("cart/apply-coupon/", views.apply_coupon, name="apply_coupon"),
+    path("remove-coupon/", views.remove_coupon, name="remove_coupon")
+
     ]
