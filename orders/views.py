@@ -40,18 +40,18 @@ def order_detail(request, uuid):
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
 
-    order = get_object_or_404(Order, uuid=uuid, user=request.user)
+    order = get_object_or_404(
+        Order,
+        uuid=uuid,
+        user=request.user
+    )
 
-    # 🔥 ADD THIS LINE (THIS IS THE FIX)
-    order.recalculate_totals()
-
-    items = order.items.all()  
+    items = order.items.all()
 
     return render(request, "orders/order_detail.html", {
         "order": order,
         "items": items,
     })
-
 
 def order_invoice(request, order_id):
     order = get_object_or_404(
@@ -60,7 +60,7 @@ def order_invoice(request, order_id):
         user=request.user
     )
 
-    items = order.items.all()  # related_name on OrderItem
+    items = order.items.all()
     user = request.user
 
     response = HttpResponse(content_type="application/pdf")
@@ -102,13 +102,12 @@ def order_invoice(request, order_id):
     p.drawString(30, y, "Product")
     p.drawString(230, y, "Variant")
     p.drawString(330, y, "Qty")
-    p.drawString(370, y, "Price")
-    p.drawString(450, y, "Total")
+    p.drawString(380, y, "Line Total")
 
     y -= 20
     p.setFont("Helvetica", 12)
 
-    # 🔹 Items
+    # 🔹 Items (NO MULTIPLICATION)
     for item in items:
         if y < 80:
             p.showPage()
@@ -117,13 +116,13 @@ def order_invoice(request, order_id):
         p.drawString(30, y, item.product.name)
         p.drawString(230, y, item.variant.variant if item.variant else "-")
         p.drawString(330, y, str(item.quantity))
-        p.drawString(370, y, f"₹{item.price}")
-        p.drawString(450, y, f"₹{item.price * item.quantity}")
+        p.drawString(380, y, f"₹{item.price}")  # ✅ LINE TOTAL
         y -= 20
 
     # 🔹 Totals
     y -= 30
     p.setFont("Helvetica-Bold", 12)
+
     p.drawString(330, y, "Subtotal:")
     p.drawString(450, y, f"₹{order.subtotal}")
 
@@ -135,7 +134,23 @@ def order_invoice(request, order_id):
     p.drawString(330, y, "Tax:")
     p.drawString(450, y, f"₹{order.tax}")
 
-    y -= 20
+    # 🔹 Coupon
+    if order.coupon:
+        y -= 20
+        p.setFillColorRGB(0, 0.6, 0)
+        p.drawString(
+            330,
+            y,
+            f"Coupon ({order.coupon.code}):"
+        )
+        p.drawString(
+            450,
+            y,
+            f"-₹{order.coupon_discount}"
+        )
+        p.setFillColorRGB(0, 0, 0)
+
+    y -= 30
     p.setFont("Helvetica-Bold", 14)
     p.drawString(330, y, "TOTAL:")
     p.drawString(450, y, f"₹{order.total}")
@@ -144,6 +159,7 @@ def order_invoice(request, order_id):
     p.save()
 
     return response
+
 
 @never_cache
 def cancel_item(request, uuid):

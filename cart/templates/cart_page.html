@@ -262,18 +262,31 @@
                         </div>
                         
                         <!-- Discount -->
-                        {% if discount > 0 %}
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Discount</span>
-                            <span class="font-medium text-green-500">-₹{{ discount }}</span>
-                        </div>
-                        {% endif %}
+                        {% if cart.applied_coupon %}
+<div class="flex justify-between text-green-600 font-medium">
+    <span>
+        Coupon ({{ cart.applied_coupon.code }})
+        {% if cart.applied_coupon.discount_type == "percent" %}
+            – {{ cart.applied_coupon.discount_value }}% OFF
+        {% endif %}
+    </span>
+    <span>-₹{{ cart.coupon_discount }}</span>
+</div>
+
+<form method="POST" action="{% url 'remove_coupon' %}">
+    {% csrf_token %}
+    <button class="text-red-600 text-xs mt-1 hover:underline">
+        Remove coupon
+    </button>
+</form>
+{% endif %}
+
                         
                         <!-- Divider -->
                         <div class="border-t border-gray-200 pt-4">
                             <div class="flex justify-between text-lg font-bold">
                                 <span>Total</span>
-                                <span class="total-value">₹{{ total }}</span>
+                                <span class="total-value">₹{{ cart.total_price }}</span>
 
                             </div>
                         </div>
@@ -304,16 +317,46 @@
                     </div>
                 </div>
                 
-                <!-- Promo Code Section -->
-                <div class="bg-white rounded-2xl shadow-lg p-6 mt-6">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4">Apply Promo Code</h3>
-                    <div class="flex">
-                        <input type="text" placeholder="Enter promo code" class="flex-grow border border-gray-300 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#A24E34] focus:border-transparent">
-                        <button class="bg-[#A24E34] text-white px-4 py-2 rounded-r-lg hover:bg-[#8D3A28] transition-colors font-medium">
-                            Apply
-                        </button>
-                    </div>
-                </div>
+                
+<div class="bg-white rounded-2xl shadow-lg p-6 mt-6">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Available Coupons</h3>
+
+    {% if available_coupons %}
+        {% for coupon in available_coupons %}
+        <div class="border rounded-lg p-4 mb-3 flex justify-between items-center">
+            <div>
+                <p class="font-semibold text-gray-800">{{ coupon.code }}</p>
+
+                {% if coupon.discount_type == "percent" %}
+                    <p class="text-sm text-gray-600">
+                        {{ coupon.discount_value }}% OFF
+                        (Max ₹{{ coupon.max_discount_amount }})
+                    </p>
+                {% else %}
+                    <p class="text-sm text-gray-600">
+                        Flat ₹{{ coupon.discount_value }} OFF
+                    </p>
+                {% endif %}
+
+                <p class="text-xs text-gray-500">
+                    Min order ₹{{ coupon.min_order_amount }}
+                </p>
+            </div>
+
+            <form method="POST" action="{% url 'apply_coupon' %}">
+                {% csrf_token %}
+                <input type="hidden" name="coupon_code" value="{{ coupon.code }}">
+                <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    Apply
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-sm text-gray-500">No coupons available</p>
+    {% endif %}
+</div>
+
             </div>
         </div>
     </div>
