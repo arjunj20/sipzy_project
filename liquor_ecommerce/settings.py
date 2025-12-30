@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'coupons',
     'profile_app',
     'wallet',
+    'payments',
     'cloudinary',
     'cloudinary_storage',
 

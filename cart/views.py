@@ -206,11 +206,20 @@ def checkout_page(request):
 
     return render(request, "checkout.html", context)
 from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+from django.db import transaction
+from django.views.decorators.cache import never_cache
+
 
 @never_cache
 @transaction.atomic
 def place_order(request):
 
+    # -----------------------------
+    # AUTH & METHOD CHECK
+    # -----------------------------
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
 
@@ -225,6 +234,9 @@ def place_order(request):
         messages.error(request, "Please select a delivery address")
         return redirect("checkout_page")
 
+    # -----------------------------
+    # FETCH ADDRESS & CART
+    # -----------------------------
     address = get_object_or_404(Address, id=selected_address_id, user=user)
 
     cart = Cart.objects.select_for_update().get(user=user)
@@ -234,26 +246,33 @@ def place_order(request):
         messages.error(request, "Your cart is empty")
         return redirect("cart_page")
 
+    # -----------------------------
+    # CREATE ORDER
+    # -----------------------------
     order = Order.objects.create(
         user=user,
         address=address,
-        payment_method=payment_method,
+        payment_method=payment_method.lower(),
         subtotal=cart.item_subtotal,
         tax=cart.tax,
         shipping_fee=cart.shipping_fee,
         coupon=cart.applied_coupon,
         coupon_discount=cart.coupon_discount,
         total=cart.total_price,
-        payment_status="not paid" if payment_method == "COD" else "pending",
+        payment_status="pending",
     )
 
+    # -----------------------------
+    # CREATE ORDER ITEMS (CRITICAL PART)
+    # -----------------------------
     order_base = cart.total_price + cart.coupon_discount
     coupon_discount = cart.coupon_discount or Decimal("0.00")
 
     count = 1
-    for item in cart_items:
-        item_price = item.total_price
+    for cart_item in cart_items:
+        item_price = cart_item.total_price
 
+        # Coupon share per item
         if coupon_discount > 0 and order_base > 0:
             coupon_share = (
                 (item_price / order_base) * coupon_discount
@@ -261,29 +280,48 @@ def place_order(request):
         else:
             coupon_share = Decimal("0.00")
 
+        # ✅ CALCULATE NET PAID AMOUNT FIRST (MANDATORY)
+        net_paid_amount = (
+            (item_price * cart_item.quantity) - coupon_share
+        ).quantize(Decimal("0.01"))
+
+        # ✅ PASS net_paid_amount DURING CREATE
         order_item = OrderItem.objects.create(
             order=order,
-            product=item.variant.product,
-            variant=item.variant,
-            quantity=item.quantity,
+            product=cart_item.variant.product,
+            variant=cart_item.variant,
+            quantity=cart_item.quantity,
             price=item_price,
             coupon_share=coupon_share,
+            net_paid_amount=net_paid_amount,
         )
 
         order_item.sub_order_id = f"{order.order_number}-{count}"
         order_item.save(update_fields=["sub_order_id"])
 
-        variant = item.variant
-        variant.stock -= item.quantity
+        # Reduce stock
+        variant = cart_item.variant
+        variant.stock -= cart_item.quantity
         variant.save(update_fields=["stock"])
 
         count += 1
 
+    # -----------------------------
+    # COUPON USAGE UPDATE
+    # -----------------------------
     if order.coupon:
         order.coupon.used_count += 1
         order.coupon.save(update_fields=["used_count"])
 
-    if payment_method == "WALLET":
+    # -----------------------------
+    # PAYMENT HANDLING
+    # -----------------------------
+    if payment_method == "COD":
+        order.payment_status = "paid"
+        order.payment_method = "cod"
+        order.save(update_fields=["payment_status", "payment_method"])
+
+    elif payment_method == "WALLET":
         debit_wallet(
             user=user,
             amount=order.total,
@@ -294,6 +332,13 @@ def place_order(request):
         order.payment_method = "wallet"
         order.save(update_fields=["payment_status", "payment_method"])
 
+    elif payment_method == "Razorpay":
+        order.payment_method = "razorpay"
+        order.save(update_fields=["payment_method"])
+
+    # -----------------------------
+    # CLEAR CART
+    # -----------------------------
     cart_items.delete()
     cart.applied_coupon = None
     cart.coupon_discount = Decimal("0.00")
@@ -303,14 +348,17 @@ def place_order(request):
     cart.total_price = Decimal("0.00")
     cart.save()
 
-    return redirect("order_placed", order_id=order.id)
+    if payment_method == "Razorpay":
+        return redirect("start_payment", uuid=order.uuid)
+
+    return redirect("order_placed", uuid=order.uuid)
 
 
 @never_cache
-def order_placed(request, order_id):
+def order_placed(request, uuid):
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
-    order = Order.objects.get(id=order_id, user=request.user)
+    order = Order.objects.get(uuid=uuid, user=request.user)
     return render(request, "order_placed.html", {"order": order})
 
 
@@ -366,7 +414,7 @@ def apply_coupon(request):
     if request.method == "POST":
         code = request.POST.get("coupon_code", "").strip().upper()
 
-        cart = get_user_cart(request.user)   # ✅ THIS WAS MISSING
+        cart = get_user_cart(request.user)   
 
         try:
             coupon = Coupon.objects.get(code=code)

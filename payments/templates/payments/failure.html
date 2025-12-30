@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Payment Failed{% endblock %}
+
+{% block content %}
+<div style="
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f9fafb;
+">
+    <div style="
+        background: #ffffff;
+        padding: 2.5rem;
+        border-radius: 16px;
+        max-width: 520px;
+        width: 100%;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        text-align: center;
+    ">
+        <!-- Failure Icon -->
+        <div style="
+            width: 90px;
+            height: 90px;
+            background: #fee2e2;
+            color: #dc2626;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 3rem;
+        ">
+            ✕
+        </div>
+
+        <!-- Heading -->
+        <h2 style="
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0.5rem;
+        ">
+            Payment Failed ❌
+        </h2>
+
+        <!-- Message -->
+        <p style="
+            color: #6b7280;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        ">
+            Unfortunately, your payment could not be completed.
+            You can retry the payment or view your order details.
+        </p>
+
+        <!-- Order Info -->
+        <div style="
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        ">
+            <p style="margin: 0; font-size: 0.95rem; color: #374151;">
+                <strong>Order ID:</strong> {{ order.order_number }}
+            </p>
+            <p style="margin: 0.4rem 0 0; font-size: 0.95rem; color: #374151;">
+                <strong>Amount:</strong> ₹{{ order.total }}
+            </p>
+        </div>
+
+        <!-- Actions -->
+        <div style="
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        ">
+            <!-- Retry Payment -->
+            <a href="{% url 'start_payment' order.uuid %}"
+               style="
+                   display: inline-block;
+                   padding: 0.9rem;
+                   background: #dc2626;
+                   color: #ffffff;
+                   border-radius: 10px;
+                   text-decoration: none;
+                   font-weight: 600;
+               ">
+                Retry Payment
+            </a>
+
+            <!-- View Order -->
+            <a href="{% url 'order_detail' order.uuid %}"
+               style="
+                   display: inline-block;
+                   padding: 0.9rem;
+                   background: #e5e7eb;
+                   color: #111827;
+                   border-radius: 10px;
+                   text-decoration: none;
+                   font-weight: 600;
+               ">
+                View Order Details
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

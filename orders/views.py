@@ -37,6 +37,7 @@ def order_list(request):
             {"label": "My Orders", "url": ""}
         ]
     })
+
 @never_cache
 def order_detail(request, uuid):
 
@@ -193,8 +194,13 @@ def cancel_item(request, uuid):
     if not reason:
         messages.error(request, "Cancellation reason is required.")
         return redirect("order_detail", uuid=item.order.uuid)
-    
     order = item.order
+    
+    if order.payment_status != "paid":
+        messages.error(request, "Action allowed only for paid orders")
+        return redirect("order_detail", uuid=order.uuid)
+
+    
     
     try:
 

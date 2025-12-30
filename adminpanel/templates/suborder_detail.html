@@ -9,7 +9,7 @@
             <p class="mb-2"><strong>Main Order:</strong> {{ item.order.order_number }}</p>
             <p class="mb-2"><strong>Product:</strong> {{ item.product.name }}</p>
             <p class="mb-2"><strong>Quantity:</strong> {{ item.quantity }}</p>
-            <p class="mb-2"><strong>Price:</strong> ₹{{ item.price }}</p>
+            <p class="mb-2"><strong>Price:</strong> ₹{{ item.net_paid_amount }}</p>
         </div>
         <div>
             <p class="mb-2"><strong>User:</strong> {{ item.order.user.fullname }}</p>

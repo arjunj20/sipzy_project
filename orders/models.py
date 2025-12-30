@@ -12,6 +12,16 @@ class Order(models.Model):
     )
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    razorpay_order_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    razorpay_payment_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
 
     user = models.ForeignKey(CustomUser, related_name="orders", on_delete=models.CASCADE)
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True)
@@ -63,8 +73,9 @@ class Order(models.Model):
         coupon_discount = Decimal("0.00")
 
         for item in active_items:
-            subtotal += item.price
+            subtotal += item.price * item.quantity
             coupon_discount += item.coupon_share
+
 
         self.subtotal = subtotal
         self.coupon_discount = coupon_discount
@@ -120,6 +131,13 @@ class OrderItem(models.Model):
         decimal_places=2,
         default=Decimal("0.00")
     )
+
+    net_paid_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Actual amount paid for this item after coupon"
+    )
+
 
     sub_order_id = models.CharField(max_length=50, blank=True, unique=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
