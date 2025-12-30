@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'offers',
     'coupons',
     'profile_app',
+    'wallet',
     'cloudinary',
     'cloudinary_storage',
 
@@ -216,7 +217,9 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
-
+# razorpaya
+RAZORPAY_KEY_ID = config("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = config("RAZORPAY_KEY_SECRET")
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

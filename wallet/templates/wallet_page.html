@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}My Wallet{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-5xl">
+
+    <!-- Page Heading -->
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">My Wallet</h2>
+        <p class="text-gray-500">View your wallet balance and transaction history</p>
+    </div>
+
+    <!-- Wallet Balance Card -->
+    <div class="bg-white rounded-lg shadow p-5 mb-8 flex items-center justify-between">
+        <div>
+            <p class="text-gray-500 text-sm">Available Balance</p>
+            <p class="text-3xl font-bold text-green-600">
+                ₹{{ wallet.balance }}
+            </p>
+        </div>
+        <div class="text-green-500 text-4xl">
+            💰
+        </div>
+    </div>
+
+    <!-- Transactions -->
+    <div class="bg-white rounded-lg shadow p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            Wallet Transactions
+        </h3>
+
+        {% if transactions %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="border-b text-left text-sm text-gray-600">
+                        <th class="py-3">Date</th>
+                        <th class="py-3">Type</th>
+                        <th class="py-3">Amount</th>
+                        <th class="py-3">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    <tr class="border-b hover:bg-gray-50 text-sm">
+                        <td class="py-3">
+                            {{ tx.created_at|date:"d M Y, H:i" }}
+                        </td>
+
+                        <td class="py-3">
+                            {% if tx.transaction_type == "credit" %}
+                                <span class="text-green-600 font-medium">Credit</span>
+                            {% else %}
+                                <span class="text-red-600 font-medium">Debit</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-3 font-medium">
+                            ₹{{ tx.amount }}
+                        </td>
+
+                        <td class="py-3 text-gray-600">
+                            {{ tx.description }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p class="text-gray-500 text-sm">
+                No wallet transactions available.
+            </p>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

@@ -747,6 +747,44 @@
                                     Select this method
                                 </label>
                             </div>
+
+                                {% if wallet %}
+<div class="payment-card"
+     onclick="selectPayment(this, 'WALLET')"
+     {% if wallet.balance < cart.total_price %}
+         style="opacity:0.5; pointer-events:none;"
+     {% endif %}
+>
+    <div class="payment-header">
+        <div class="payment-icon" style="background:#f3e5f5; color:#6a1b9a;">
+            <i class="bi bi-wallet2"></i>
+        </div>
+        <div>
+            <div class="payment-title">Wallet</div>
+        </div>
+    </div>
+
+    <p class="payment-description">
+        Available Balance:
+        <strong>₹{{ wallet.balance }}</strong>
+    </p>
+
+    {% if wallet.balance < cart.total_price %}
+        <p style="color:red; font-size:0.85rem;">
+            Insufficient wallet balance
+        </p>
+    {% else %}
+        <label class="radio-label" style="margin-top: 1rem;">
+            <input type="radio"
+                   name="payment_method"
+                   value="WALLET"
+                   onclick="event.stopPropagation()">
+            Pay using wallet
+        </label>
+    {% endif %}
+</div>
+{% endif %}
+
                         </div>
                     </div>
                 </div>
