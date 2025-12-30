@@ -13,6 +13,7 @@ from decimal import Decimal, InvalidOperation
 from orders.models import OrderItem
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from wallet.models import Wallet, WalletTransaction
 
 from decimal import Decimal
 
@@ -679,6 +680,16 @@ def admin_order_item_detail(request, uuid):
     return render(request, "suborder_detail.html", {"item": item})
 
 
+from decimal import Decimal
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.views.decorators.http import require_POST
+from django.views.decorators.cache import never_cache
+
+from orders.models import OrderItem
+from wallet.models import Wallet, WalletTransaction
+
+
 @never_cache
 @require_POST
 def update_suborder_status(request, item_id):
@@ -688,6 +699,9 @@ def update_suborder_status(request, item_id):
     item = get_object_or_404(OrderItem, id=item_id)
     action = request.POST.get("status")
 
+    # -------------------------------
+    # RETURN APPROVAL / REJECTION
+    # -------------------------------
     if action in ["approved", "rejected"]:
         if not hasattr(item, "return_request"):
             return JsonResponse({
@@ -708,6 +722,9 @@ def update_suborder_status(request, item_id):
             "message": f"Return {action} successfully"
         })
 
+    # -------------------------------
+    # MARK AS RETURNED + REFUND
+    # -------------------------------
     if action == "returned":
         if not hasattr(item, "return_request") or item.return_request.status != "approved":
             return JsonResponse({
@@ -715,17 +732,57 @@ def update_suborder_status(request, item_id):
                 "message": "Return must be approved first"
             })
 
+        # Prevent double refund
+        if item.return_request.status == "refunded":
+            return JsonResponse({
+                "success": False,
+                "message": "Refund already processed"
+            })
+
         item.status = "returned"
         item.save(update_fields=["status"])
+
         if item.variant:
             item.variant.stock += item.quantity
             item.variant.save(update_fields=["stock"])
-        item.order.recalculate_totals()
+
+        # ✅ USE STORED NET PAID AMOUNT
+        refund_amount = item.net_paid_amount
+
+        order = item.order
+
+        if order.payment_method.lower() in ["razorpay", "wallet"] and order.payment_status == "paid":
+
+            wallet, _ = Wallet.objects.get_or_create(
+                user=order.user,
+                defaults={"balance": Decimal("0.00")}
+            )
+
+            wallet.balance += refund_amount
+            wallet.save(update_fields=["balance"])
+
+            WalletTransaction.objects.create(
+                wallet=wallet,
+                transaction_type=WalletTransaction.CREDIT,
+                amount=refund_amount,
+                order=order,
+                status="completed",
+                description=f"Refund for returned item {item.sub_order_id}"
+            )
+
+            item.return_request.status = "refunded"
+            item.return_request.save(update_fields=["status"])
+
+        order.recalculate_totals()
 
         return JsonResponse({
             "success": True,
             "message": "Item marked as returned and order totals updated"
         })
+
+    # -------------------------------
+    # NORMAL STATUS TRANSITIONS
+    # -------------------------------
     VALID_STATUS_TRANSITIONS = {
         "pending": ["processing", "cancelled"],
         "processing": ["shipped", "cancelled"],
