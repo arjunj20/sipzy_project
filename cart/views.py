@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from .models import CartItems,Cart
 from .utils import get_user_cart
 from django.views.decorators.http import require_POST
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from authenticate.models import Address
 from orders.models import Order,OrderItem
 from django.contrib import messages
@@ -15,6 +15,8 @@ from django.urls import reverse
 from coupons.models import Coupon
 from django.utils import timezone
 from django.db import transaction
+from wallet.models import Wallet
+from wallet.services import debit_wallet
 
 
 @never_cache
@@ -179,6 +181,7 @@ def checkout_page(request):
 
     cart = Cart.objects.get(user=request.user)
     cart_items = CartItems.objects.filter(cart=cart)
+    wallet = Wallet.objects.filter(user=request.user).first()
 
     context = {
         "addresses": addresses,
@@ -192,6 +195,7 @@ def checkout_page(request):
         "coupon_discount": cart.coupon_discount,
         "total_price": cart.total_price,
         "cart": cart,
+        "wallet": wallet,
 
         "breadcrumbs": [
             {"label": "Home", "url": "/"},
@@ -201,6 +205,7 @@ def checkout_page(request):
     }
 
     return render(request, "checkout.html", context)
+from decimal import Decimal, ROUND_HALF_UP
 
 @never_cache
 @transaction.atomic
@@ -220,65 +225,75 @@ def place_order(request):
         messages.error(request, "Please select a delivery address")
         return redirect("checkout_page")
 
-    try:
-        address = Address.objects.get(id=selected_address_id, user=user)
-    except Address.DoesNotExist:
-        messages.error(request, "Invalid address selected")
-        return redirect("checkout_page")
+    address = get_object_or_404(Address, id=selected_address_id, user=user)
 
-    # 🔥 GET CART AS SINGLE SOURCE OF TRUTH
     cart = Cart.objects.select_for_update().get(user=user)
-    cart_items = CartItems.objects.filter(cart=cart)
+    cart_items = CartItems.objects.select_for_update().filter(cart=cart)
 
     if not cart_items.exists():
         messages.error(request, "Your cart is empty")
         return redirect("cart_page")
 
-    # ✅ CREATE ORDER USING CART VALUES (NO RECALCULATION)
     order = Order.objects.create(
         user=user,
         address=address,
         payment_method=payment_method,
-
         subtotal=cart.item_subtotal,
         tax=cart.tax,
         shipping_fee=cart.shipping_fee,
-
         coupon=cart.applied_coupon,
         coupon_discount=cart.coupon_discount,
-
         total=cart.total_price,
-
         payment_status="not paid" if payment_method == "COD" else "pending",
     )
 
-    # ✅ CREATE ORDER ITEMS
+    order_base = cart.total_price + cart.coupon_discount
+    coupon_discount = cart.coupon_discount or Decimal("0.00")
+
     count = 1
     for item in cart_items:
+        item_price = item.total_price
+
+        if coupon_discount > 0 and order_base > 0:
+            coupon_share = (
+                (item_price / order_base) * coupon_discount
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        else:
+            coupon_share = Decimal("0.00")
+
         order_item = OrderItem.objects.create(
             order=order,
             product=item.variant.product,
             variant=item.variant,
             quantity=item.quantity,
-            price=item.total_price,
+            price=item_price,
+            coupon_share=coupon_share,
         )
 
         order_item.sub_order_id = f"{order.order_number}-{count}"
         order_item.save(update_fields=["sub_order_id"])
 
-        # Reduce stock
         variant = item.variant
         variant.stock -= item.quantity
         variant.save(update_fields=["stock"])
 
         count += 1
 
-    # 🔥 INCREMENT COUPON USAGE ONLY AFTER ORDER IS CREATED
     if order.coupon:
         order.coupon.used_count += 1
         order.coupon.save(update_fields=["used_count"])
 
-    # ✅ CLEAR CART
+    if payment_method == "WALLET":
+        debit_wallet(
+            user=user,
+            amount=order.total,
+            order=order,
+            description="Order payment via wallet"
+        )
+        order.payment_status = "paid"
+        order.payment_method = "wallet"
+        order.save(update_fields=["payment_status", "payment_method"])
+
     cart_items.delete()
     cart.applied_coupon = None
     cart.coupon_discount = Decimal("0.00")

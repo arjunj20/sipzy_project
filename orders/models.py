@@ -8,6 +8,7 @@ class Order(models.Model):
     PAYMENT_CHOICES = (
         ("COD", "Cash on Delivery"),
         ("Razorpay", "Razorpay"),
+        ("Wallet", "Wallet")
     )
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -46,38 +47,37 @@ class Order(models.Model):
     def __str__(self):
         return f"Order {self.id} - {self.user.fullname}"
 
+    from decimal import Decimal
+
     def recalculate_totals(self):
         """
-        ⚠️ ADMIN / RETURN USE ONLY
-        Do NOT call this for normal order display.
+        Recalculate totals after item cancel / return.
+        Uses stored item prices and coupon shares.
         """
 
         active_items = self.items.exclude(
             status__in=["cancelled", "returned"]
         )
 
-        self.subtotal = sum(
-            item.price * item.quantity
-            for item in active_items
-        )
+        subtotal = Decimal("0.00")
+        coupon_discount = Decimal("0.00")
 
-        TAX_RATE = Decimal("0.18")
+        for item in active_items:
+            subtotal += item.price
+            coupon_discount += item.coupon_share
 
-        # Tax is INFO ONLY (price already inclusive)
-        self.tax = (self.subtotal * TAX_RATE / (1 + TAX_RATE)).quantize(Decimal("0.01"))
+        self.subtotal = subtotal
+        self.coupon_discount = coupon_discount
+        self.total = subtotal + self.shipping_fee - coupon_discount
 
-        # 🔥 USE coupon_discount (NOT discount)
-        self.total = (
-            self.subtotal
-            + self.shipping_fee
-            - self.coupon_discount
-        )
-
-        # Prevent negative totals
         if self.total < 0:
             self.total = Decimal("0.00")
 
-        self.save(update_fields=["subtotal", "tax", "total"])
+        self.save(update_fields=[
+            "subtotal",
+            "coupon_discount",
+            "total",
+        ])
 
 
 
@@ -115,6 +115,11 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=ITEM_STATUS_CHOICES, default="pending")
+    coupon_share = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00")
+    )
 
     sub_order_id = models.CharField(max_length=50, blank=True, unique=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

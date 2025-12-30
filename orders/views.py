@@ -10,6 +10,10 @@ import tempfile
 from django.urls import reverse
 
 from django.views.decorators.cache import never_cache
+from wallet.models import Wallet, WalletTransaction
+from wallet.services import refund_to_wallet
+from django.db import transaction
+from decimal import Decimal
 
 @never_cache
 def order_list(request):
@@ -33,7 +37,6 @@ def order_list(request):
             {"label": "My Orders", "url": ""}
         ]
     })
-
 @never_cache
 def order_detail(request, uuid):
 
@@ -48,10 +51,15 @@ def order_detail(request, uuid):
 
     items = order.items.all()
 
+    # 🔥 ADD THIS
+    for item in items:
+        item.net_paid = item.price - item.coupon_share
+
     return render(request, "orders/order_detail.html", {
         "order": order,
         "items": items,
     })
+
 
 def order_invoice(request, order_id):
     order = get_object_or_404(
@@ -162,6 +170,7 @@ def order_invoice(request, order_id):
 
 
 @never_cache
+@transaction.atomic
 def cancel_item(request, uuid):
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
@@ -184,7 +193,9 @@ def cancel_item(request, uuid):
     if not reason:
         messages.error(request, "Cancellation reason is required.")
         return redirect("order_detail", uuid=item.order.uuid)
-
+    
+    order = item.order
+    
     try:
 
         item.status = "cancelled"
@@ -194,6 +205,28 @@ def cancel_item(request, uuid):
             item.variant.stock += item.quantity
             item.variant.save(update_fields=["stock"])
 
+        if order.payment_method != "cod" and order.payment_status == "paid":
+            already_refunded = WalletTransaction.objects.filter(
+                order=order,
+                description__icontains=(str(item.sub_order_id))
+            ).exists()
+
+            if not already_refunded:
+
+                refund_amount = max(
+                    item.price - item.coupon_share,
+                    Decimal("0.00")
+                )
+
+                refund_to_wallet(
+                    user=order.user,
+                    amount=refund_amount,
+                    order=order,
+                    description=f"Refund for cancelled item {item.sub_order_id}"
+
+
+                )
+
         item.order.recalculate_totals()
 
         messages.success(request, "Item cancelled successfully.")
@@ -201,6 +234,7 @@ def cancel_item(request, uuid):
     except Exception as e:
         print("CANCEL ERROR:", e)
         messages.error(request, "Something went wrong while cancelling the item.")
+        raise
 
     return redirect("order_detail", uuid=item.order.uuid)
 

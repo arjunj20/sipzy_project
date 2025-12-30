@@ -116,8 +116,18 @@
 
                     <!-- Price is TAX-INCLUSIVE -->
                     <td class="px-6 py-4">
-                        ₹{{ item.price }}
-                    </td>
+    <div>₹{{ item.price }}</div>
+
+    {% if item.coupon_share > 0 %}
+        <div class="text-xs text-green-600">
+            Coupon: −₹{{ item.coupon_share }}
+        </div>
+        <div class="font-semibold text-gray-900">
+            Paid: ₹{{ item.net_paid }}
+        </div>
+    {% endif %}
+</td>
+
 
                     <!-- Status -->
                     <td class="px-6 py-4">
