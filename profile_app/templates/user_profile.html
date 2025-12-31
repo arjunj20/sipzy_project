@@ -611,11 +611,17 @@
 </a>
 
                 
-                <div class="quick-action-card">
-                    <div class="quick-action-icon">💳</div>
-                    <div class="quick-action-title">Payment Methods</div>
-                    <div class="quick-action-desc">Manage your payments</div>
-                </div>
+                <button
+    type="button"
+    onclick="window.location.href='{% url 'wallet_page' %}'"
+    class="text-left w-full focus:outline-none"
+>
+    <div class="quick-action-card">
+        <div class="quick-action-icon">💳</div>
+        <div class="quick-action-title">My Wallet</div>
+        <div class="quick-action-desc">Manage your payments</div>
+    </div>
+</button>
                 
                 <div class="quick-action-card">
                     <div class="quick-action-icon">🏷️</div>

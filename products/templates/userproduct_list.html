@@ -281,27 +281,26 @@
             <div class="filter-section p-6 mb-8">
                 
                 <!-- SEARCH BAR -->
-                <div class="flex flex-col md:flex-row gap-4 mb-6">
-                    <div class="flex-1 relative">
-                        <input 
-                            type="text"
-                            id="search-input"
-                            name="search"
-                            value="{{ search }}"
-                            placeholder="Search whiskey, vodka, gin, rum..."
-                            class="w-full px-4 py-3 search-input rounded-lg focus:outline-none"
-                        >
-                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" id="search-btn" class="btn-primary px-8 py-3 rounded-lg font-semibold">
-                        Search
-                    </button>
-                </div>
+                <div class="flex-1 relative">
+    <input 
+        type="text"
+        id="search-input"
+        name="search"
+        value="{{ search }}"
+        placeholder="Search whiskey, vodka, gin, rum..."
+        class="w-full px-4 py-3 pr-12 search-input rounded-lg focus:outline-none"
+    >
+
+    <!-- CLEAR SEARCH BUTTON -->
+    {% if search %}
+    <button type="button"
+            id="clear-search"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#B7472A]">
+        ✕
+    </button>
+    {% endif %}
+</div>
+
 
                 <!-- SORT + FILTER TOGGLE -->
                 <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -534,6 +533,23 @@
 
 <!-- ENHANCED JAVASCRIPT -->
 <script>
+
+    const clearSearchBtn = document.getElementById("clear-search");
+
+if (clearSearchBtn) {
+    clearSearchBtn.addEventListener("click", function () {
+        const url = new URL(window.location.href);
+
+        // Remove only search param
+        url.searchParams.delete("search");
+
+        // Reset page if exists
+        url.searchParams.delete("page");
+
+        window.location.href = url.toString();
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById("filter-form");
     const loadingSpinner = document.getElementById("loading-spinner");
