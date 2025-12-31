@@ -1,0 +1,87 @@
+{% extends "admin_base.html" %}
+{% block title %}Sales Report{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+
+    <h2 class="text-2xl font-bold mb-4">Sales Report</h2>
+
+    <!-- Filters -->
+    <form method="get" class="flex gap-4 mb-6">
+        <select name="filter" class="border p-2">
+            <option value="today">Today</option>
+            <option value="week">Last 7 Days</option>
+            <option value="month">This Month</option>
+            <option value="year">This Year</option>
+            <option value="custom">Custom</option>
+        </select>
+
+        <input type="date" name="start_date" class="border p-2">
+        <input type="date" name="end_date" class="border p-2">
+
+        <button class="bg-black text-white px-4 py-2">Apply</button>
+    </form>
+
+    <!-- Summary -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="p-4 bg-gray-100 rounded">
+            <p>Total Orders</p>
+            <h3 class="text-xl font-bold">{{ summary.total_orders|default:0 }}</h3>
+        </div>
+
+        <div class="p-4 bg-gray-100 rounded">
+            <p>Total Sales</p>
+            <h3 class="text-xl font-bold">₹ {{ summary.total_sales|default:0 }}</h3>
+        </div>
+
+        <div class="p-4 bg-gray-100 rounded">
+            <p>Total Discount</p>
+            <h3 class="text-xl font-bold">₹ {{ summary.total_discount|default:0 }}</h3>
+        </div>
+    </div>
+    <!-- Download Buttons -->
+<div class="flex gap-4 mb-6">
+    <a
+        href="{% url 'sales_report_excel' %}?filter={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}"
+        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+    >
+        Download Excel
+    </a>
+
+    <a
+        href="{% url 'sales_report_pdf' %}?filter={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}"
+        class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+    >
+        Download PDF
+    </a>
+</div>
+
+
+    <!-- Table -->
+    <table class="w-full border">
+        <thead>
+            <tr class="bg-gray-200">
+                <th class="p-2">Order No</th>
+                <th class="p-2">Date</th>
+                <th class="p-2">Total</th>
+                <th class="p-2">Discount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr class="border-t">
+                <td class="p-2">{{ order.order_number }}</td>
+                <td class="p-2">{{ order.created_at|date:"Y-m-d" }}</td>
+                <td class="p-2">₹ {{ order.total }}</td>
+                <td class="p-2">₹ {{ order.coupon_discount }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center p-4">No sales found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}

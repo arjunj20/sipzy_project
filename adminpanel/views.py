@@ -950,3 +950,200 @@ def variant_delete(request, uuid):
     return redirect("variant_list", product_uuid=product_uuid)
 
 
+from django.shortcuts import render
+from django.utils import timezone
+from datetime import timedelta, date
+from django.db.models import Sum, Count
+from orders.models import Order
+
+def admin_sales_report(request):
+    filter_type = request.GET.get("filter", "today")
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    orders = Order.objects.filter(payment_status="paid", total__gt=0)
+    today = timezone.now().date()
+
+    # ---- FILTER LOGIC ----
+    if filter_type == "today":
+        orders = orders.filter(created_at__date=today)
+
+    elif filter_type == "week":
+        orders = orders.filter(
+            created_at__date__gte=today - timedelta(days=7)
+        )
+
+    elif filter_type == "month":
+        orders = orders.filter(
+            created_at__year=today.year,
+            created_at__month=today.month
+        )
+
+    elif filter_type == "year":
+        orders = orders.filter(created_at__year=today.year)
+
+    elif filter_type == "custom" and start_date and end_date:
+        orders = orders.filter(
+            created_at__date__range=[start_date, end_date]
+        )
+
+    # ---- AGGREGATES ----
+    summary = orders.aggregate(
+        total_orders=Count("id"),
+        total_sales=Sum("total"),
+        total_discount=Sum("coupon_discount"),
+    )
+
+    context = {
+        "orders": orders,
+        "summary": summary,
+        "filter_type": filter_type,
+        "start_date": start_date,
+        "end_date": end_date,
+    }
+
+    return render(request, "sales_report.html", context)
+
+
+import openpyxl
+from django.http import HttpResponse
+from django.utils import timezone
+from datetime import timedelta
+from orders.models import Order
+def sales_report_excel(request):
+    filter_type = request.GET.get("filter", "today")
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    orders = Order.objects.filter(payment_status="paid", total__gt=0)
+    today = timezone.now().date()
+
+    if filter_type == "today":
+        orders = orders.filter(created_at__date=today)
+
+    elif filter_type == "week":
+        orders = orders.filter(created_at__date__gte=today - timedelta(days=7))
+
+    elif filter_type == "month":
+        orders = orders.filter(
+            created_at__year=today.year,
+            created_at__month=today.month
+        )
+
+    elif filter_type == "year":
+        orders = orders.filter(created_at__year=today.year)
+
+    elif filter_type == "custom" and start_date and end_date:
+        orders = orders.filter(created_at__date__range=[start_date, end_date])
+
+    # -------- SUMMARY --------
+    total_orders = orders.count()
+    total_sales = orders.aggregate(Sum("total"))["total__sum"] or 0
+    total_discount = orders.aggregate(Sum("coupon_discount"))["coupon_discount__sum"] or 0
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Sales Report"
+
+    # -------- SUMMARY ROWS --------
+    ws.append(["Overall Sales Count", total_orders])
+    ws.append(["Overall Order Amount", float(total_sales)])
+    ws.append(["Overall Discount", float(total_discount)])
+    ws.append([])  # empty row
+
+    # -------- TABLE HEADER --------
+    ws.append(["Order No", "Date", "Total", "Discount"])
+
+    # -------- DATA ROWS --------
+    for order in orders:
+        ws.append([
+            order.order_number,
+            order.created_at.date(),
+            float(order.total),
+            float(order.coupon_discount),
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = "attachment; filename=sales_report.xlsx"
+    wb.save(response)
+    return response
+
+from reportlab.pdfgen import canvas
+from django.http import HttpResponse
+from django.utils import timezone
+from datetime import timedelta
+from orders.models import Order
+
+def sales_report_pdf(request):
+    filter_type = request.GET.get("filter", "today")
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    orders = Order.objects.filter(payment_status="paid", total__gt=0)
+    today = timezone.now().date()
+
+    if filter_type == "today":
+        orders = orders.filter(created_at__date=today)
+
+    elif filter_type == "week":
+        orders = orders.filter(created_at__date__gte=today - timedelta(days=7))
+
+    elif filter_type == "month":
+        orders = orders.filter(
+            created_at__year=today.year,
+            created_at__month=today.month
+        )
+
+    elif filter_type == "year":
+        orders = orders.filter(created_at__year=today.year)
+
+    elif filter_type == "custom" and start_date and end_date:
+        orders = orders.filter(created_at__date__range=[start_date, end_date])
+
+    # -------- SUMMARY --------
+    total_orders = orders.count()
+    total_sales = orders.aggregate(Sum("total"))["total__sum"] or 0
+    total_discount = orders.aggregate(Sum("coupon_discount"))["coupon_discount__sum"] or 0
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = "attachment; filename=sales_report.pdf"
+
+    p = canvas.Canvas(response)
+    y = 800
+
+    # -------- TITLE --------
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(50, y, "Sales Report")
+    y -= 30
+
+    # -------- SUMMARY --------
+    p.setFont("Helvetica", 11)
+    p.drawString(50, y, f"Overall Sales Count : {total_orders}")
+    y -= 20
+    p.drawString(50, y, f"Overall Order Amount : ₹{total_sales}")
+    y -= 20
+    p.drawString(50, y, f"Overall Discount : ₹{total_discount}")
+    y -= 30
+
+    # -------- ORDERS --------
+    p.setFont("Helvetica", 10)
+
+    for order in orders:
+        p.drawString(
+            50,
+            y,
+            f"{order.order_number} | {order.created_at.date()} | "
+            f"₹{order.total} | Discount ₹{order.coupon_discount}"
+        )
+        y -= 18
+
+        if y < 50:
+            p.showPage()
+            y = 800
+            p.setFont("Helvetica", 10)
+
+    p.showPage()
+    p.save()
+    return response

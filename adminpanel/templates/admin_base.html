@@ -91,9 +91,9 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center p-3 rounded-lg {% if request.resolver_match.url_name == 'analytics' %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
+                        <a href="{% url 'admin_sales_report' %}" class="flex items-center p-3 rounded-lg {% if request.resolver_match.url_name == 'analytics' %}bg-primary text-white{% else %}hover:bg-gray-700{% endif %}">
                             <i class="fas fa-chart-bar mr-3"></i>
-                            <span>Analytics</span>
+                            <span>admin_sales_report</span>
                         </a>
                     </li>
                     {% block sidebar_extra %}{% endblock %}
