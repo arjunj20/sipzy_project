@@ -418,6 +418,9 @@
                     <div class="featured-badge">
                         Featured
                     </div>
+
+
+
                     
                     <!-- HOVER OVERLAY -->
                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-center justify-center">
@@ -609,6 +612,35 @@ document.addEventListener("DOMContentLoaded", function () {
         
         updateCount();
     }
+});
+
+document.querySelectorAll(".wishlist-btn").forEach(btn => {
+    btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+
+        const productUUID = this.dataset.product;
+
+        fetch(`/wishlist/toggle/${productUUID}/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "added") {
+                this.querySelector("svg").classList.add("text-red-600");
+                this.querySelector("svg").setAttribute("fill", "currentColor");
+            } else if (data.status === "removed") {
+                this.querySelector("svg").classList.remove("text-red-600");
+                this.querySelector("svg").setAttribute("fill", "none");
+            }
+        })
+        .catch(() => {
+            alert("Please login to use wishlist");
+        });
+    });
 });
 </script>
 

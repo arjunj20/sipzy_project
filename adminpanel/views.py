@@ -699,9 +699,6 @@ def update_suborder_status(request, item_id):
     item = get_object_or_404(OrderItem, id=item_id)
     action = request.POST.get("status")
 
-    # -------------------------------
-    # RETURN APPROVAL / REJECTION
-    # -------------------------------
     if action in ["approved", "rejected"]:
         if not hasattr(item, "return_request"):
             return JsonResponse({
@@ -722,9 +719,6 @@ def update_suborder_status(request, item_id):
             "message": f"Return {action} successfully"
         })
 
-    # -------------------------------
-    # MARK AS RETURNED + REFUND
-    # -------------------------------
     if action == "returned":
         if not hasattr(item, "return_request") or item.return_request.status != "approved":
             return JsonResponse({
@@ -732,7 +726,6 @@ def update_suborder_status(request, item_id):
                 "message": "Return must be approved first"
             })
 
-        # Prevent double refund
         if item.return_request.status == "refunded":
             return JsonResponse({
                 "success": False,
@@ -746,7 +739,7 @@ def update_suborder_status(request, item_id):
             item.variant.stock += item.quantity
             item.variant.save(update_fields=["stock"])
 
-        # ✅ USE STORED NET PAID AMOUNT
+
         refund_amount = item.net_paid_amount
 
         order = item.order
@@ -780,9 +773,7 @@ def update_suborder_status(request, item_id):
             "message": "Item marked as returned and order totals updated"
         })
 
-    # -------------------------------
-    # NORMAL STATUS TRANSITIONS
-    # -------------------------------
+
     VALID_STATUS_TRANSITIONS = {
         "pending": ["processing", "cancelled"],
         "processing": ["shipped", "cancelled"],
@@ -963,8 +954,6 @@ def admin_sales_report(request):
 
     orders = Order.objects.filter(payment_status="paid", total__gt=0)
     today = timezone.now().date()
-
-    # ---- FILTER LOGIC ----
     if filter_type == "today":
         orders = orders.filter(created_at__date=today)
 
@@ -987,7 +976,6 @@ def admin_sales_report(request):
             created_at__date__range=[start_date, end_date]
         )
 
-    # ---- AGGREGATES ----
     summary = orders.aggregate(
         total_orders=Count("id"),
         total_sales=Sum("total"),
@@ -1036,7 +1024,6 @@ def sales_report_excel(request):
     elif filter_type == "custom" and start_date and end_date:
         orders = orders.filter(created_at__date__range=[start_date, end_date])
 
-    # -------- SUMMARY --------
     total_orders = orders.count()
     total_sales = orders.aggregate(Sum("total"))["total__sum"] or 0
     total_discount = orders.aggregate(Sum("coupon_discount"))["coupon_discount__sum"] or 0
@@ -1045,16 +1032,15 @@ def sales_report_excel(request):
     ws = wb.active
     ws.title = "Sales Report"
 
-    # -------- SUMMARY ROWS --------
     ws.append(["Overall Sales Count", total_orders])
     ws.append(["Overall Order Amount", float(total_sales)])
     ws.append(["Overall Discount", float(total_discount)])
-    ws.append([])  # empty row
+    ws.append([]) 
 
-    # -------- TABLE HEADER --------
+
     ws.append(["Order No", "Date", "Total", "Discount"])
 
-    # -------- DATA ROWS --------
+
     for order in orders:
         ws.append([
             order.order_number,
@@ -1102,7 +1088,6 @@ def sales_report_pdf(request):
     elif filter_type == "custom" and start_date and end_date:
         orders = orders.filter(created_at__date__range=[start_date, end_date])
 
-    # -------- SUMMARY --------
     total_orders = orders.count()
     total_sales = orders.aggregate(Sum("total"))["total__sum"] or 0
     total_discount = orders.aggregate(Sum("coupon_discount"))["coupon_discount__sum"] or 0
@@ -1113,12 +1098,10 @@ def sales_report_pdf(request):
     p = canvas.Canvas(response)
     y = 800
 
-    # -------- TITLE --------
     p.setFont("Helvetica-Bold", 14)
     p.drawString(50, y, "Sales Report")
     y -= 30
 
-    # -------- SUMMARY --------
     p.setFont("Helvetica", 11)
     p.drawString(50, y, f"Overall Sales Count : {total_orders}")
     y -= 20
@@ -1127,7 +1110,6 @@ def sales_report_pdf(request):
     p.drawString(50, y, f"Overall Discount : ₹{total_discount}")
     y -= 30
 
-    # -------- ORDERS --------
     p.setFont("Helvetica", 10)
 
     for order in orders:
