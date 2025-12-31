@@ -33,7 +33,6 @@ class Order(models.Model):
     tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     shipping_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
-    # 🔥 ADD THESE
     coupon = models.ForeignKey(
         "coupons.Coupon",
         on_delete=models.SET_NULL,
