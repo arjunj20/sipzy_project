@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'payments',
     'cloudinary',
     'cloudinary_storage',
+    'wishlist',
 
     # allauth requirements
     'django.contrib.sites',

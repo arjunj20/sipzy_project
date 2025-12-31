@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}My Wishlist{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-6">
+    <h2 class="text-2xl font-bold mb-6">My Wishlist</h2>
+
+    {% if wishlist_items %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+       {% for item in wishlist_items %}
+<div class="border rounded-lg p-4">
+
+    {% if item.default_variant %}
+        <img src="{{ item.default_variant.primary_image }}"
+             class="h-40 w-full object-contain mb-3">
+    {% endif %}
+
+    <h3 class="font-semibold">{{ item.product.name }}</h3>
+
+    {% if item.default_variant %}
+        <p class="text-gray-600">
+            ₹{{ item.default_variant.price }}
+        </p>
+    {% else %}
+        <p class="text-red-500 text-sm">Out of stock</p>
+    {% endif %}
+
+    <div class="mt-4 flex gap-2">
+        <form method="POST" action="{% url 'move_to_cart' item.product.uuid %}">
+            {% csrf_token %}
+            <button class="bg-green-600 text-white px-4 py-2 rounded">
+                Move to Cart
+            </button>
+        </form>
+
+        <form method="POST" action="{% url 'remove_from_wishlist' item.product.uuid %}">
+            {% csrf_token %}
+            <button class="bg-red-600 text-white px-4 py-2 rounded">
+                Remove
+            </button>
+        </form>
+    </div>
+</div>
+{% endfor %}
+
+    </div>
+    {% else %}
+        <p>Your wishlist is empty.</p>
+    {% endif %}
+</div>
+
+<script>
+function removeWishlist(productId) {
+    fetch(`/wishlist/remove/${productId}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}"
+        }
+    }).then(() => location.reload());
+}
+
+function moveToCart(productId) {
+    fetch(`/wishlist/move-to-cart/${productId}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}"
+        }
+    }).then(() => location.reload());
+}
+</script>
+{% endblock %}
