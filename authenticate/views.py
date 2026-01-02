@@ -244,9 +244,7 @@ def user_homepage(request):
             "featured_products": products,
             "trending_products": products,
             "handpicked_products": products,
-            "breadcrumbs": [
-                {"label": "Home", "url": ""}
-             ]
+            
         }
     )
 
