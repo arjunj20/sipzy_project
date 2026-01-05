@@ -31,4 +31,5 @@ urlpatterns = [
     path('wallet/', include('wallet.urls')),
     path("payments/", include("payments.urls")),
     path("wishlist/", include("wishlist.urls")),
+    path("dashboard/", include("dashboard.urls")),
 ]

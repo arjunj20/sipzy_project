@@ -260,7 +260,7 @@ def place_order(request):
             coupon_share = Decimal("0.00")
 
         net_paid_amount = (
-            (item_price * cart_item.quantity) - coupon_share
+            (item_price) - coupon_share
         ).quantize(Decimal("0.01"))
 
         order_item = OrderItem.objects.create(

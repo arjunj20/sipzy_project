@@ -17,17 +17,6 @@ from wallet.models import Wallet, WalletTransaction
 
 from decimal import Decimal
 
-
-
-@never_cache
-def admin_dashboard(request):
-
-    if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('admin_login')
-    
-    return render(request, "admin_dashboard.html")
-
-
 @never_cache
 def admin_login(request):
 
