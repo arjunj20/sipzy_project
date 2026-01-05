@@ -82,7 +82,6 @@ def update_cart_item(request):
     except CartItems.DoesNotExist:
         return JsonResponse({"error": "Item not found"}, status=404)
 
-    # ---------------- Quantity ----------------
     try:
         quantity = int(quantity)
     except (TypeError, ValueError):
@@ -90,19 +89,16 @@ def update_cart_item(request):
 
     quantity = max(quantity, 1)
 
-    # ---------------- Variant change ----------------
     if variant_id:
-        # IMPORTANT: reload variant object
+       
         item.variant = ProductVariants.objects.get(id=variant_id)
 
-        # Recalculate unit price for new variant
+      
         offer = get_best_offer_for_product(item.variant.product)
         item.unit_price = (
             apply_offer(item.variant.price, offer)
             if offer else item.variant.price
         )
-
-    # ---------------- Stock limit ----------------
     max_limit = min(item.variant.stock, 5)
     if quantity > max_limit:
         quantity = max_limit
@@ -110,7 +106,6 @@ def update_cart_item(request):
 
     item.quantity = quantity
 
-    # ---------------- Tax (on unit_price) ----------------
     gst_rate = Decimal(str(getattr(item.variant, "gst_rate", 18)))
     unit_tax = (item.unit_price * gst_rate / Decimal("100")).quantize(
         Decimal("0.01")
@@ -120,8 +115,6 @@ def update_cart_item(request):
     item.total_price = (item.unit_price * quantity) + item.tax_amount
 
     item.save()
-
-    # ---------------- Cart totals ----------------
     recalculate_cart_totals(cart)
 
     
@@ -186,8 +179,6 @@ def checkout_page(request):
     context = {
         "addresses": addresses,
         "cart_items": cart_items,
-
-        # 🔥 READ DIRECTLY FROM CART
         "subtotal": cart.item_subtotal,
         "tax": cart.tax,
         "shipping_fee": cart.shipping_fee,
@@ -217,9 +208,6 @@ from django.views.decorators.cache import never_cache
 @transaction.atomic
 def place_order(request):
 
-    # -----------------------------
-    # AUTH & METHOD CHECK
-    # -----------------------------
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
 
@@ -234,9 +222,6 @@ def place_order(request):
         messages.error(request, "Please select a delivery address")
         return redirect("checkout_page")
 
-    # -----------------------------
-    # FETCH ADDRESS & CART
-    # -----------------------------
     address = get_object_or_404(Address, id=selected_address_id, user=user)
 
     cart = Cart.objects.select_for_update().get(user=user)
@@ -246,9 +231,6 @@ def place_order(request):
         messages.error(request, "Your cart is empty")
         return redirect("cart_page")
 
-    # -----------------------------
-    # CREATE ORDER
-    # -----------------------------
     order = Order.objects.create(
         user=user,
         address=address,
@@ -262,9 +244,7 @@ def place_order(request):
         payment_status="pending",
     )
 
-    # -----------------------------
-    # CREATE ORDER ITEMS (CRITICAL PART)
-    # -----------------------------
+  
     order_base = cart.total_price + cart.coupon_discount
     coupon_discount = cart.coupon_discount or Decimal("0.00")
 
@@ -272,7 +252,6 @@ def place_order(request):
     for cart_item in cart_items:
         item_price = cart_item.total_price
 
-        # Coupon share per item
         if coupon_discount > 0 and order_base > 0:
             coupon_share = (
                 (item_price / order_base) * coupon_discount
@@ -280,12 +259,10 @@ def place_order(request):
         else:
             coupon_share = Decimal("0.00")
 
-        # ✅ CALCULATE NET PAID AMOUNT FIRST (MANDATORY)
         net_paid_amount = (
-            (item_price * cart_item.quantity) - coupon_share
+            (item_price) - coupon_share
         ).quantize(Decimal("0.01"))
 
-        # ✅ PASS net_paid_amount DURING CREATE
         order_item = OrderItem.objects.create(
             order=order,
             product=cart_item.variant.product,
@@ -299,23 +276,16 @@ def place_order(request):
         order_item.sub_order_id = f"{order.order_number}-{count}"
         order_item.save(update_fields=["sub_order_id"])
 
-        # Reduce stock
         variant = cart_item.variant
         variant.stock -= cart_item.quantity
         variant.save(update_fields=["stock"])
 
         count += 1
 
-    # -----------------------------
-    # COUPON USAGE UPDATE
-    # -----------------------------
     if order.coupon:
         order.coupon.used_count += 1
         order.coupon.save(update_fields=["used_count"])
 
-    # -----------------------------
-    # PAYMENT HANDLING
-    # -----------------------------
     if payment_method == "COD":
         order.payment_status = "paid"
         order.payment_method = "cod"
@@ -336,9 +306,6 @@ def place_order(request):
         order.payment_method = "razorpay"
         order.save(update_fields=["payment_method"])
 
-    # -----------------------------
-    # CLEAR CART
-    # -----------------------------
     cart_items.delete()
     cart.applied_coupon = None
     cart.coupon_discount = Decimal("0.00")
@@ -425,13 +392,10 @@ def apply_coupon(request):
             if cart.item_subtotal < coupon.min_order_amount:
                 raise Exception("Minimum order amount not met")
 
-            # Apply coupon
             cart.applied_coupon = coupon
             cart.save()
             coupon.used_count += 1
 
-
-            # 🔥 Recalculate totals (VERY IMPORTANT)
             recalculate_cart_totals(cart)
 
             messages.success(
@@ -458,12 +422,10 @@ def remove_coupon(request):
         messages.warning(request, "No coupon applied to remove.")
         return redirect("cart_page")
 
-    #  Remove coupon
     cart.applied_coupon = None
     cart.coupon_discount = 0
     cart.save(update_fields=["applied_coupon", "coupon_discount"])
 
-    #  Recalculate totals
     recalculate_cart_totals(cart)
 
     messages.success(request, "Coupon removed successfully.")

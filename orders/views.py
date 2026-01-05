@@ -52,7 +52,7 @@ def order_detail(request, uuid):
 
     items = order.items.all()
 
-    # 🔥 ADD THIS
+
     for item in items:
         item.net_paid = item.price - item.coupon_share
 

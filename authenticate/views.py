@@ -71,9 +71,15 @@ def user_signup(request):
             send_mail(
                 subject="Sipzy - Email Verification OTP",
                 message=(
-                    f"Hello {fullname},\n\n"
-                    f"Your verification OTP is {otp}. "
-                    "It will expire in 5 minutes.\n\nThank you!"
+                f"Hello {fullname},\n\n"
+                "You are receiving this email to verify your email address "
+                "for creating a Sipzy account.\n\n"
+                f"Your One-Time Password (OTP) is: {otp}\n\n"
+                "⏰ This OTP is valid for 1.36 minutes only.\n\n"
+                "If you did NOT attempt to create an account on Sipzy, "
+                "please ignore this email.\n\n"
+                "Thank you,\n"
+                "Sipzy Team"
                 ),
                 from_email="sipzy505@gmail.com",
                 recipient_list=[email],
@@ -184,7 +190,16 @@ def resend_otp(request):
     send_mail(
         
         subject="Sipzy - New OTP Verification Code",
-        message=f"Hello {signup_data['fullname']},\n\nYour new OTP is {new_otp}.",
+        message=(
+        f"Hello {signup_data['fullname']},\n\n"
+        "You requested a new OTP to verify your email address "
+        "for creating your Sipzy account.\n\n"
+        f"Your new One-Time Password (OTP) is: {new_otp}\n\n"
+        "⏰ This OTP is valid for 1.36 minutes only.\n\n"
+        "If you did not request this OTP, please ignore this email.\n\n"
+        "Thank you,\n"
+        "Sipzy Team"
+        ),
         from_email="sipzy505@gmail.com",
         recipient_list=[signup_data["email"]],
         fail_silently=False,
@@ -229,9 +244,7 @@ def user_homepage(request):
             "featured_products": products,
             "trending_products": products,
             "handpicked_products": products,
-            "breadcrumbs": [
-                {"label": "Home", "url": ""}
-             ]
+            
         }
     )
 

@@ -22,7 +22,8 @@ def userproduct_list(request):
 
     products = (
         Products.objects
-        .annotate(variant_count=Count("variants"))
+        .annotate(variant_count=Count("variants"),
+                   min_price=Min("variants__price"))
         .filter(
             is_active=True,
             category__is_active=True,
@@ -52,15 +53,15 @@ def userproduct_list(request):
     price_filter = request.GET.get("price")
     if price_filter:
         if price_filter == "0-500":
-            products = products.filter(variants__price__lte=500)
+            products = products.filter(min_price__lte=500)
         elif price_filter == "500-1000":
-            products = products.filter(variants__price__gte=500, variants__price__lte=1000)
+            products = products.filter(min_price__gte=500, min_price__lte=1000)
         elif price_filter == "1000-2000":
-            products = products.filter(variants__price__gte=1000, variants__price__lte=2000)
+            products = products.filter(min_price__gte=1000, min_price__lte=2000)
         elif price_filter == "2000-5000":
-            products = products.filter(variants__price__gte=2000, variants__price__lte=5000)
+            products = products.filter(min_price__gte=2000, min_price__lte=5000)
         elif price_filter == "5000+":
-            products = products.filter(variants__price__gte=5000)
+            products = products.filter(min_price__gte=5000)
 
     products = products.distinct()
 

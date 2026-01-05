@@ -40,13 +40,27 @@
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>
                         {% endif %}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <a href="{% url 'delete_coupon' coupon.id %}"
-                           class="px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-200"
-                           onclick="return confirm('Are you sure?')">
-                            Delete
-                        </a>
-                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
+
+    <!-- Edit Button -->
+    <a href="{% url 'edit_coupon' coupon.id %}"
+       class="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-md
+              hover:bg-blue-700 focus:outline-none focus:ring-2
+              focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+        Edit
+    </a>
+
+    <!-- Delete Button -->
+    <a href="{% url 'delete_coupon' coupon.id %}"
+       class="px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-md
+              hover:bg-red-700 focus:outline-none focus:ring-2
+              focus:ring-red-500 focus:ring-offset-2 transition duration-200"
+       onclick="return confirm('Are you sure?')">
+        Delete
+    </a>
+
+</td>
+
                 </tr>
                 {% empty %}
                 <tr>
@@ -55,6 +69,42 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        {% if coupons.paginator.num_pages > 1 %}
+<div class="flex justify-center mt-6">
+    <nav class="flex items-center space-x-2">
+
+        {% if coupons.has_previous %}
+        <a href="?page={{ coupons.previous_page_number }}"
+           class="px-3 py-1 border rounded hover:bg-gray-100">
+            ← Previous
+        </a>
+        {% endif %}
+
+        {% for num in coupons.paginator.page_range %}
+            {% if coupons.number == num %}
+                <span class="px-3 py-1 bg-gray-800 text-white rounded">
+                    {{ num }}
+                </span>
+            {% elif num > coupons.number|add:'-2' and num < coupons.number|add:'2' %}
+                <a href="?page={{ num }}"
+                   class="px-3 py-1 border rounded hover:bg-gray-100">
+                    {{ num }}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if coupons.has_next %}
+        <a href="?page={{ coupons.next_page_number }}"
+           class="px-3 py-1 border rounded hover:bg-gray-100">
+            Next →
+        </a>
+        {% endif %}
+
+    </nav>
+</div>
+{% endif %}
+
     </div>
 </div>
 {% endblock %}
