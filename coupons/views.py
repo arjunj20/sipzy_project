@@ -38,6 +38,7 @@ def add_coupon(request):
             discount_value = Decimal(request.POST.get("discount_value"))
             min_order_amount = Decimal(request.POST.get("min_order_amount"))
             usage_limit = int(request.POST.get("usage_limit"))
+            max_uses_per_user = int(request.POST.get("max_uses_per_user", 1))
             is_active = request.POST.get("is_active") == "on"
 
             valid_from_raw = request.POST.get("valid_from")
@@ -51,6 +52,11 @@ def add_coupon(request):
             if discount_type == "percent":
                 max_discount_amount = Decimal(request.POST.get("max_discount_amount"))
 
+            if max_uses_per_user < 1:
+                raise ValidationError({
+                    "max_uses_per_user": "Max uses per user must be at least 1."
+                })
+
             if Coupon.objects.filter(code=code).exists():
                 raise ValidationError({"code": "Coupon code already exists."})
 
@@ -63,6 +69,7 @@ def add_coupon(request):
                 discount_value=discount_value,
                 min_order_amount=min_order_amount,
                 usage_limit=usage_limit,
+                max_uses_per_user=max_uses_per_user,
                 is_active=is_active,
                 valid_from=valid_from,
                 valid_to=valid_to,
@@ -100,6 +107,7 @@ def delete_coupon(request, coupon_id):
 
     return redirect("coupon_list")
 
+
 def edit_coupon(request, coupon_id):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect("admin_login")
@@ -114,6 +122,10 @@ def edit_coupon(request, coupon_id):
             discount_value = Decimal(request.POST.get("discount_value"))
             min_order_amount = Decimal(request.POST.get("min_order_amount"))
             usage_limit = int(request.POST.get("usage_limit"))
+            max_uses_per_user = int(
+                request.POST.get("max_uses_per_user", coupon.max_uses_per_user)
+            )
+
             is_active = request.POST.get("is_active") == "on"
 
             valid_from_raw = request.POST.get("valid_from")
@@ -121,6 +133,11 @@ def edit_coupon(request, coupon_id):
 
             if not valid_from_raw or not valid_to_raw:
                 raise ValidationError({"date": "Both Valid From and Valid To are required."})
+            if max_uses_per_user < 1:
+                raise ValidationError({
+                    "max_uses_per_user": "Max uses per user must be at least 1."
+                })
+
 
             valid_from = timezone.make_aware(
                 timezone.datetime.fromisoformat(valid_from_raw)
@@ -146,6 +163,7 @@ def edit_coupon(request, coupon_id):
             coupon.discount_value = discount_value
             coupon.min_order_amount = min_order_amount
             coupon.usage_limit = usage_limit
+            coupon.max_uses_per_user = max_uses_per_user
             coupon.is_active = is_active
             coupon.valid_from = valid_from
             coupon.valid_to = valid_to

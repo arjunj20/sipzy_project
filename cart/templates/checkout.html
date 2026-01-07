@@ -705,6 +705,7 @@
                     
                     <div class="section-content">
                         <div class="payment-grid">
+                            {% if total_price <= 1000 %}
                             <div class="payment-card selected" onclick="selectPayment(this, 'COD')">
                                 <div class="payment-header">
                                     <div class="payment-icon" style="background: #e8f5e9; color: #2e7d32;">
@@ -726,6 +727,7 @@
                                     Select this method
                                 </label>
                             </div>
+                            {% endif %}
 
                             <div class="payment-card" onclick="selectPayment(this, 'Razorpay')">
                                 <div class="payment-header">
@@ -747,6 +749,7 @@
                                     Select this method
                                 </label>
                             </div>
+                            
 
                                 {% if wallet %}
 <div class="payment-card"

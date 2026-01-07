@@ -2,6 +2,8 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from decimal import Decimal
+from django.conf import settings
+from django.db import transaction
 
 
 class Coupon(models.Model):
@@ -43,6 +45,11 @@ class Coupon(models.Model):
     usage_limit = models.PositiveIntegerField(
         help_text="Maximum number of times this coupon can be used"
     )
+    
+    max_uses_per_user = models.PositiveIntegerField(
+        default=1,
+        help_text="Maximum number of times a single user can use this coupon"
+    )
 
     used_count = models.PositiveIntegerField(
         default=0,
@@ -74,8 +81,7 @@ class Coupon(models.Model):
         if self.valid_from >= self.valid_to:
             raise ValidationError("Invalid validity dates.")
 
-        if self.valid_to <= timezone.now():
-            raise ValidationError("Coupon expiry must be in the future.")
+        
 
 
 
@@ -108,4 +114,17 @@ class Coupon(models.Model):
             discount = min(self.max_discount_amount, discount)
 
         return discount
-        
+    
+
+class CouponUsage(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE)
+    used_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('user', 'coupon')
+
+    def __str__(self):
+        return f"{self.user} - {self.coupon} ({self.used_count})"
+
+

@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.db import transaction
 from wallet.models import Wallet
 from wallet.services import debit_wallet
+from coupons.services import apply_coupon_for_user
 
 
 @never_cache
@@ -230,6 +231,19 @@ def place_order(request):
     if not cart_items.exists():
         messages.error(request, "Your cart is empty")
         return redirect("cart_page")
+    
+    out_of_stock = False
+    
+    for i in cart_items:
+        if i.quantity > i.variant.stock:
+            i.delete()
+            out_of_stock = True
+
+    if out_of_stock == True:
+        messages.error(request, "Some items were removed from your cart because they are out of stock. Please review your cart.")
+        return redirect("cart_page")
+            
+
 
     order = Order.objects.create(
         user=user,
@@ -281,10 +295,6 @@ def place_order(request):
         variant.save(update_fields=["stock"])
 
         count += 1
-
-    if order.coupon:
-        order.coupon.used_count += 1
-        order.coupon.save(update_fields=["used_count"])
 
     if payment_method == "COD":
         order.payment_status = "paid"
@@ -374,14 +384,14 @@ def edit_address(request, uuid):
 
     return render(request, "edit_address.html", {"address": address})
 
+
 def apply_coupon(request):
     if not request.user.is_authenticated:
         return redirect("user_login")
 
     if request.method == "POST":
         code = request.POST.get("coupon_code", "").strip().upper()
-
-        cart = get_user_cart(request.user)   
+        cart = get_user_cart(request.user)
 
         try:
             coupon = Coupon.objects.get(code=code)
@@ -392,9 +402,12 @@ def apply_coupon(request):
             if cart.item_subtotal < coupon.min_order_amount:
                 raise Exception("Minimum order amount not met")
 
+            success, message = apply_coupon_for_user(request.user, coupon)
+            if not success:
+                raise Exception(message)
+
             cart.applied_coupon = coupon
             cart.save()
-            coupon.used_count += 1
 
             recalculate_cart_totals(cart)
 
@@ -410,6 +423,7 @@ def apply_coupon(request):
             messages.error(request, str(e))
 
     return redirect("cart_page")
+
 
 @require_POST
 def remove_coupon(request):

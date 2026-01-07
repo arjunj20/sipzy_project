@@ -470,7 +470,85 @@
     </div>
 </footer>
 
+<!-- ================= SIPZY TOAST ================= -->
+{% if messages %}
+<div id="toast-container"
+     class="fixed top-28 right-8 z-[9999] space-y-4">
+    {% for message in messages %}
+    <div
+        class="
+        sipzy-toast
+        flex items-start gap-4
+        px-6 py-4 rounded-2xl
+        backdrop-blur-xl
+        border shadow-[0_20px_60px_rgba(0,0,0,0.35)]
+        text-sm font-medium
+        transform transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]
+        opacity-0 translate-y-6 scale-95
+        {% if message.tags == 'error' %}
+            bg-gradient-to-br from-[#3b1d15]/90 to-[#1f0e0a]/90
+            border-red-500/30 text-red-200
+        {% elif message.tags == 'success' %}
+            bg-gradient-to-br from-[#2f3b1f]/90 to-[#151f0e]/90
+            border-emerald-500/30 text-emerald-200
+        {% elif message.tags == 'warning' %}
+            bg-gradient-to-br from-[#3d2a10]/90 to-[#1f1407]/90
+            border-amber-500/40 text-amber-200
+        {% else %}
+            bg-gradient-to-br from-[#2d1810]/90 to-[#1a0f0a]/90
+            border-amber-500/30 text-amber-100
+        {% endif %}
+        "
+    >
+        <!-- Accent bar -->
+        <div class="w-1 h-full rounded-full bg-amber-400/70"></div>
+
+        <!-- Content -->
+        <div class="flex-1 leading-relaxed">
+            {{ message }}
+        </div>
+
+        <!-- Close -->
+        <button onclick="closeSipzyToast(this)"
+                class="text-amber-300/70 hover:text-amber-300 transition">
+            ✕
+        </button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+
 {% block extra_js %}{% endblock %}
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const toasts = document.querySelectorAll(".sipzy-toast");
+
+    toasts.forEach((toast, index) => {
+        // Elegant staggered entrance
+        setTimeout(() => {
+            toast.classList.remove("opacity-0", "translate-y-6", "scale-95");
+            toast.classList.add("opacity-100", "translate-y-0", "scale-100");
+        }, index * 180);
+
+        // Auto close after 5s (luxury pacing)
+        setTimeout(() => {
+            closeSipzyToast(toast);
+        }, 5200 + index * 200);
+    });
+});
+
+function closeSipzyToast(el) {
+    const toast = el.closest ? el.closest(".sipzy-toast") : el;
+
+    toast.classList.remove("opacity-100", "translate-y-0", "scale-100");
+    toast.classList.add("opacity-0", "translate-y-6", "scale-95");
+
+    setTimeout(() => toast.remove(), 700);
+}
+</script>
+
 
 </body>
 </html>
