@@ -1044,36 +1044,28 @@ def sales_report_excel(request):
     response["Content-Disposition"] = "attachment; filename=sales_report.xlsx"
     wb.save(response)
     return response
-
-from reportlab.pdfgen import canvas
-from django.http import HttpResponse
-from django.utils import timezone
-from datetime import timedelta
-from orders.models import Order
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 def sales_report_pdf(request):
     filter_type = request.GET.get("filter", "today")
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
 
-    orders = Order.objects.filter(payment_status="paid", total__gt=0)
+    orders = Order.objects.filter(payment_status="paid", total__gt=0).order_by('-created_at')
     today = timezone.now().date()
 
+    # --- Filtering Logic (Keep your existing logic) ---
     if filter_type == "today":
         orders = orders.filter(created_at__date=today)
-
     elif filter_type == "week":
         orders = orders.filter(created_at__date__gte=today - timedelta(days=7))
-
     elif filter_type == "month":
-        orders = orders.filter(
-            created_at__year=today.year,
-            created_at__month=today.month
-        )
-
+        orders = orders.filter(created_at__year=today.year, created_at__month=today.month)
     elif filter_type == "year":
         orders = orders.filter(created_at__year=today.year)
-
     elif filter_type == "custom" and start_date and end_date:
         orders = orders.filter(created_at__date__range=[start_date, end_date])
 
@@ -1081,40 +1073,71 @@ def sales_report_pdf(request):
     total_sales = orders.aggregate(Sum("total"))["total__sum"] or 0
     total_discount = orders.aggregate(Sum("coupon_discount"))["coupon_discount__sum"] or 0
 
+    # --- PDF Generation Setup ---
     response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = "attachment; filename=sales_report.pdf"
+    response["Content-Disposition"] = f"attachment; filename=Sales_Report_{today}.pdf"
 
-    p = canvas.Canvas(response)
-    y = 800
+    doc = SimpleDocTemplate(response, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    elements = []
+    styles = getSampleStyleSheet()
 
-    p.setFont("Helvetica-Bold", 14)
-    p.drawString(50, y, "Sales Report")
-    y -= 30
+    # Custom Styles
+    title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], textColor=colors.HexColor("#0f172a"), fontSize=18, spaceAfter=10)
+    subtitle_style = ParagraphStyle('SubtitleStyle', fontSize=10, textColor=colors.grey, spaceAfter=20)
 
-    p.setFont("Helvetica", 11)
-    p.drawString(50, y, f"Overall Sales Count : {total_orders}")
-    y -= 20
-    p.drawString(50, y, f"Overall Order Amount : ₹{total_sales}")
-    y -= 20
-    p.drawString(50, y, f"Overall Discount : ₹{total_discount}")
-    y -= 30
+    # 1. Header
+    elements.append(Paragraph("AdminHub - Sales Report", title_style))
+    elements.append(Paragraph(f"Generated on: {timezone.now().strftime('%Y-%m-%d %H:%M')}", subtitle_style))
+    elements.append(Spacer(1, 12))
 
-    p.setFont("Helvetica", 10)
+    # 2. Summary Table (Styled Box)
+    summary_data = [
+        ["Total Orders", "Total Revenue", "Total Discounts"],
+        [str(total_orders), f"Rs. {total_sales}", f"Rs. {total_discount}"]
+    ]
+    summary_table = Table(summary_data, colWidths=[170, 170, 170])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#6366f1")), # Indigo Header
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#f8fafc")),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor("#1e293b")),
+        ('FONTSIZE', (0, 1), (-1, -1), 14),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor("#e2e8f0")),
+        ('ROUNDEDCORNERS', [10, 10, 10, 10]),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 30))
 
+    # 3. Main Data Table
+    table_data = [["Order Number", "Date", "Discount", "Total Amount"]]
     for order in orders:
-        p.drawString(
-            50,
-            y,
-            f"{order.order_number} | {order.created_at.date()} | "
-            f"₹{order.total} | Discount ₹{order.coupon_discount}"
-        )
-        y -= 18
+        table_data.append([
+            f"#{order.order_number}",
+            order.created_at.strftime('%Y-%m-%d'),
+            f"Rs. {order.coupon_discount}",
+            f"Rs. {order.total}"
+        ])
 
-        if y < 50:
-            p.showPage()
-            y = 800
-            p.setFont("Helvetica", 10)
+    main_table = Table(table_data, colWidths=[140, 120, 120, 130])
+    main_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#0f172a")), # Slate Header
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('GRID', (0, 1), (-1, -1), 0.5, colors.grey),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f5f9")]) # Zebra Stripes
+    ]))
+    
+    elements.append(main_table)
 
-    p.showPage()
-    p.save()
+    # Build PDF
+    doc.build(elements)
     return response
