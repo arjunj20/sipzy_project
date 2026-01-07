@@ -64,7 +64,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Total Users</p>
-                    <h3 class="text-2xl font-bold text-gray-800">{{ user_count|default:"1,254" }}</h3>
+                    <h3 class="text-2xl font-bold text-gray-800">{{total_users}}</h3>
                 </div>
             </div>
         </div>
@@ -77,7 +77,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Total Orders</p>
-                    <h3 class="text-2xl font-bold text-gray-800">{{ order_count|default:"542" }}</h3>
+                    <h3 class="text-2xl font-bold text-gray-800">{{total_orders}}</h3>
                 </div>
             </div>
         </div>
@@ -126,6 +126,83 @@
             <canvas id="revenueChart"></canvas>
         </div>
     </div>
+
+    <div class="p-6 bg-gray-50 min-h-screen">
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <p class="text-sm text-gray-500 uppercase font-bold">Total Users</p>
+            <h2 class="text-3xl font-black text-blue-600">{{ total_users }}</h2>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <p class="text-sm text-gray-500 uppercase font-bold">Total Orders</p>
+            <h2 class="text-3xl font-black text-green-600">{{ total_orders }}</h2>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 bg-gray-50">
+                <h3 class="font-bold text-gray-700">🔥 Top 10 Products</h3>
+            </div>
+            <div class="p-4">
+                {% for item in top_selling_products %}
+                <div class="mb-4">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-sm font-medium text-gray-600">{{ item.product__name }}</span>
+                        <span class="text-sm font-bold text-blue-600">{{ item.total_sold }} sold</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                        <div class="bg-blue-500 h-1.5 rounded-full" style="width: 70%"></div> 
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 bg-gray-50">
+                <h3 class="font-bold text-gray-700">📁 Top 10 Categories</h3>
+            </div>
+            <ul class="divide-y divide-gray-100">
+                {% for item in top_selling_categories %}
+                <li class="p-4 flex justify-between items-center hover:bg-gray-50 transition">
+                    <span class="text-gray-600 italic">{{ item.product__category__name }}</span>
+                    <span class="bg-green-100 text-green-700 py-1 px-3 rounded-full text-xs font-bold">
+                        {{ item.total_sold }} units
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 bg-gray-50">
+                <h3 class="font-bold text-gray-700">🏷️ Top 10 Brands</h3>
+            </div>
+            <div class="p-4">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="text-gray-400 uppercase text-xs">
+                            <th class="pb-3">Brand</th>
+                            <th class="pb-3 text-right">Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-600">
+                        {% for item in top_selling_brands %}
+                        <tr class="border-b border-gray-50 last:border-0">
+                            <td class="py-3 font-medium">{{ item.product__brand__name }}</td>
+                            <td class="py-3 text-right font-bold text-gray-900">{{ item.total_sold }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
 
     <!-- Progress -->
     <div class="bg-white rounded-xl shadow-md p-6">
