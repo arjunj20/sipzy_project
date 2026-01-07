@@ -45,7 +45,7 @@
             <td class="px-4 py-3">{{ i.order.order_number }}</td>
             <td class="px-4 py-3">{{ i.product.name }}</td>
             <td class="px-4 py-3">{{ i.quantity }}</td>
-            <td class="px-4 py-3">₹{{ i.price }}</td>
+            <td class="px-4 py-3">₹{{ i.net_paid_amount }}</td>
             <td class="px-4 py-3">{{ i.order.user.fullname }}</td>
             <td class="px-4 py-3">{{ i.created_at|date:"Y-m-d H:i" }}</td>
             <td class="px-4 py-3">{{ i.status }}</td>
