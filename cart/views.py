@@ -230,6 +230,19 @@ def place_order(request):
     if not cart_items.exists():
         messages.error(request, "Your cart is empty")
         return redirect("cart_page")
+    
+    out_of_stock = False
+    
+    for i in cart_items:
+        if i.quantity > i.variant.stock:
+            i.delete()
+            out_of_stock = True
+
+    if out_of_stock == True:
+        messages.error(request, "Some items were removed from your cart because they are out of stock. Please review your cart.")
+        return redirect("cart_page")
+            
+
 
     order = Order.objects.create(
         user=user,
