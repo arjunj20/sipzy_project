@@ -49,23 +49,19 @@ def visualization_data(request):
 
     grouping_method = request.GET.get("grouping_method", "Daily")
 
-    # Base Query: Paid orders, excluding cancelled/returned
     query_set = OrderItem.objects.filter(
         order__payment_status="paid"
     ).exclude(
         status__in=["cancelled", "returned"]
     )
 
-    # Get the current time in the active timezone
     now = timezone.now()
 
     if grouping_method == "Daily":
-        # Requirement: "Current week days sales"
-        # Find the start of the current week (assuming Monday is start)
+       
         start_of_week = now - timedelta(days=now.weekday())
         start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
         
-        # Filter data from the start of the week
         query_set = query_set.filter(order__created_at__gte=start_of_week)
         
         grouping_data = (
@@ -75,14 +71,12 @@ def visualization_data(request):
             .annotate(total=Sum("net_paid_amount"))
             .order_by("period")
         )
-        date_format = "%Y-%m-%d" # Example: 2026-01-07
+        date_format = "%Y-%m-%d" 
 
     elif grouping_method == "Weekly":
-        # Requirement: "Current month week sales"
-        # Find the start of the current month
+ 
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        # Filter data from the start of the month
         query_set = query_set.filter(order__created_at__gte=start_of_month)
         
         grouping_data = (
@@ -92,14 +86,13 @@ def visualization_data(request):
             .annotate(total=Sum("net_paid_amount"))
             .order_by("period")
         )
-        date_format = "%Y-%m-%d" # Shows the start date of the week
+        date_format = "%Y-%m-%d" 
 
     elif grouping_method == "Monthly":
-        # Requirement: "Months in the current year performance"
-        # Find the start of the current year
+ 
         start_of_year = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        # Filter data from the start of the year
+ 
         query_set = query_set.filter(order__created_at__gte=start_of_year)
         
         grouping_data = (
@@ -109,11 +102,10 @@ def visualization_data(request):
             .annotate(total=Sum("net_paid_amount"))
             .order_by("period")
         )
-        date_format = "%Y-%m" # Example: 2026-01
+        date_format = "%Y-%m" 
 
     elif grouping_method == "Yearly":
-        # Requirement: "Yearly sales performance" (Usually implies all time history)
-        # No filter applied here, so it calculates sums for every year in the database
+
         
         grouping_data = (
             query_set
