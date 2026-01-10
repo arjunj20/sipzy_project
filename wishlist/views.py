@@ -74,6 +74,9 @@ def move_to_cart(request, product_uuid):
 
 login_required
 def wishlist_page(request):
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
     wishlist_items = (
         Wishlist.objects
         .filter(user=request.user)

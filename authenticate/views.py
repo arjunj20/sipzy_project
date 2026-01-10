@@ -253,8 +253,28 @@ def user_homepage(request):
 def landing_page(request):
     if request.user.is_authenticated and not request.user.is_superuser:
         return redirect("user_homepage")
-  
-    return render(request, "landing.html")
+    
+    products = (
+        Products.objects
+        .annotate(variant_count=Count("variants"))
+        .filter(
+            is_active=True,
+            category__is_active=True,
+            brand__is_active=True,
+            variant_count__gte=1
+        )
+        .select_related("brand", "category")
+    )
+    for product in products:
+        product.default_variant = product.variants.order_by("-price").first()
+        
+    return render(request, "landing.html",{
+
+            "featured_products": products,
+            "trending_products": products,
+            "handpicked_products": products,
+
+    })
 
 @never_cache
 def user_login(request):

@@ -15,7 +15,7 @@ from django.db.models import Count
 from orders.models import Order
 from authenticate.models import Address
 from django.conf import settings
-
+from wallet.models import Wallet
 
 
 @login_required
@@ -27,11 +27,12 @@ def user_profile(request):
     user = request.user
     addresses = user.addresses.all()
     counts = Order.objects.filter(user=user).count()
-
+    wallet = Wallet.objects.get(user=user)
     return render(request, "user_profile.html", {
         "user": user,
         "addresses": addresses,
         "counts": counts,
+        "wallet": wallet,
     })
 
 @login_required

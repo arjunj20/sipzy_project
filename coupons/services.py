@@ -3,7 +3,7 @@ from .models import Coupon, CouponUsage
 
 @transaction.atomic
 def apply_coupon_for_user(user, coupon):
-    # Lock coupon row
+    
     coupon = Coupon.objects.select_for_update().get(id=coupon.id)
 
     if not coupon.is_valid():
