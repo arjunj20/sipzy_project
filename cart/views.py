@@ -431,6 +431,7 @@ def remove_coupon(request):
         return redirect("user_login")
 
     cart = Cart.objects.filter(user=request.user).first()
+    coupon = Coupon.objects.filter()
 
     if not cart or not cart.applied_coupon:
         messages.warning(request, "No coupon applied to remove.")

@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     'cloudinary_storage',
     'wishlist',
     'dashboard',
+    'reviews',
+    'referal',
 
     # allauth requirements
     'django.contrib.sites',
@@ -127,6 +129,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'authenticate.context_processors.counter_processor'
             ],
         },
     },

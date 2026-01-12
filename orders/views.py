@@ -14,29 +14,36 @@ from wallet.models import Wallet, WalletTransaction
 from wallet.services import refund_to_wallet
 from django.db import transaction
 from decimal import Decimal
+from django.core.paginator import Paginator
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.views.decorators.cache import never_cache
 
 @never_cache
 def order_list(request):
-
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
         
-    
     q = request.GET.get('q', '')
-
     if q:
-        orders = Order.objects.filter(order_number__icontains=q, user=request.user)
+        order_qs = Order.objects.filter(order_number__icontains=q, user=request.user).order_by("-created_at")
     else:
-        orders = Order.objects.filter(user=request.user).order_by("-created_at")
+        order_qs = Order.objects.filter(user=request.user).order_by("-created_at")
+
+    paginator = Paginator(order_qs, 10) 
+    page_number = request.GET.get('page')
+    orders = paginator.get_page(page_number)
 
     return render(request, "orders/order_list.html", {
         "orders": orders,
+        "query": q,
         "breadcrumbs": [
             {"label": "Home", "url": "/"},
             {"label": "My Profile", "url": reverse("user_profile")},
             {"label": "My Orders", "url": ""}
         ]
     })
+
 
 @never_cache
 def order_detail(request, uuid):

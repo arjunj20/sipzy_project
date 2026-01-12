@@ -2,24 +2,18 @@
 {% load static %}
 
 {% block content %}
-<!-- ERROR MODAL -->
-
 <div id="globalModal"
     class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
     
     <div id="globalModalBox"
         class="bg-white/90 backdrop-blur-xl rounded-2xl p-6 w-80 shadow-xl transform scale-90 opacity-0 transition-all duration-300">
 
-        <!-- Icon -->
         <div id="modalIcon" class="text-4xl mb-3">⚠️</div>
 
-        <!-- Title -->
         <h2 id="modalTitle" class="text-xl font-bold text-gray-800 mb-2"></h2>
 
-        <!-- Message -->
         <p id="modalMessage" class="text-gray-600 mb-4 leading-relaxed"></p>
 
-        <!-- Close Button -->
         <button id="modalCloseBtn"
             class="px-4 py-2 bg-[#A24E34] text-white rounded-lg w-full hover:bg-[#8D3A28] transition">
             OK
@@ -30,184 +24,161 @@
 
 <div class="min-h-screen bg-gradient-to-br from-[#F4E9E2] via-[#FEFAF7] to-[#F4E9E2] py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
-        <!-- Page Header -->
         <div class="mb-8 fade-in-up">
             <h1 class="text-3xl md:text-4xl font-bold text-[#A24E34] mb-2">Your Shopping Cart</h1>
             <p class="text-gray-600">Review your items and proceed to checkout</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Cart Items Section -->
             <div class="lg:col-span-2">
                 {% if cart_items %}
                 <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
                     
-                    <!-- Cart Items List -->
-<div class="divide-y divide-gray-100">
-    {% for item in cart_items %}
+                    <div class="divide-y divide-gray-100">
+                        {% for item in cart_items %}
 
-<div class="cart-item p-6 relative {% if not item.variant.product.is_active or item.quantity > item.variant.stock %}opacity-60{% endif %}"
-     data-item-id="{{ item.id }}">
+                        <div class="cart-item p-6 relative {% if not item.variant.product.is_active or item.quantity > item.variant.stock %}opacity-60{% endif %}"
+                             data-item-id="{{ item.id }}">
 
-    {% if not item.variant.product.is_active or item.quantity > item.variant.stock %}
-        <div class="absolute inset-0 bg-gray-200 bg-opacity-50 z-10 rounded-lg"></div>
-    {% endif %}
+                            {% if not item.variant.product.is_active or item.quantity > item.variant.stock %}
+                                <div class="absolute inset-0 bg-gray-200 bg-opacity-50 z-10 rounded-lg"></div>
+                            {% endif %}
 
-    <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="flex flex-col sm:flex-row gap-4">
 
-        <!-- Product Image -->
-        <div class="flex-shrink-0">
-            <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
-                <img src="{{ item.variant.primary_image.url }}" 
-                     alt="{{ item.variant.product.name }}" 
-                     class="w-full h-full object-cover">
-            </div>
-        </div>
+                                <div class="flex-shrink-0">
+                                    <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
+                                        <img src="{{ item.variant.primary_image.url }}" 
+                                             alt="{{ item.variant.product.name }}" 
+                                             class="w-full h-full object-cover">
+                                    </div>
+                                </div>
 
-        <!-- Product Details -->
-        <div class="flex-grow">
+                                <div class="flex-grow">
 
-            <div class="flex justify-between">
-                <div>
-                    <h3 class="font-bold text-lg text-gray-800">
-                        {{ item.variant.product.name }}
-                    </h3>
-                    <p class="text-sm text-gray-500">{{ item.product.brand }}</p>
-                </div>
+                                    <div class="flex justify-between">
+                                        <div>
+                                            <h3 class="font-bold text-lg text-gray-800">
+                                                {{ item.variant.product.name }}
+                                            </h3>
+                                            <p class="text-sm text-gray-500">{{ item.product.brand }}</p>
+                                        </div>
 
-                  
+                                        <button class="remove-item" data-id="{{ item.id }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor">
+                                                <path fill-rule="evenodd" 
+                                                      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 
+                                                         002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 
+                                                         1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 
+                                                         0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
 
-                <button class="remove-item" data-id="{{ item.id }}">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor">
-        <path fill-rule="evenodd" 
-              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 
-                 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 
-                 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 
-                 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-    </svg>
-</button>
+                                    </div>
 
-            </div>
+                                    <div class="mt-2 flex flex-wrap gap-2 text-sm">
+                                        <span class="px-2 py-1 bg-gray-100 rounded-full">
+                                            {{ item.variant.product.category }}
+                                        </span>
+                                    </div>
 
-            <div class="mt-2 flex flex-wrap gap-2 text-sm">
-                <span class="px-2 py-1 bg-gray-100 rounded-full">
-                    {{ item.variant.product.category }}
-                </span>
-            </div>
+                                    <div class="mt-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Variant</label>
 
-            <!-- Variant Selection -->
-            <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Variant</label>
+                                        <select class="variant-select w-full max-w-xs border border-gray-300 
+                                                       rounded-lg px-3 py-2 text-sm focus:outline-none 
+                                                       focus:ring-2 focus:ring-[#A24E34] focus:border-transparent">
 
-                <select class="variant-select w-full max-w-xs border border-gray-300 
-                               rounded-lg px-3 py-2 text-sm focus:outline-none 
-                               focus:ring-2 focus:ring-[#A24E34] focus:border-transparent">
+                                            {% for variant in item.variant.product.variants.all %}
+                                            <option value="{{ variant.id }}"
+                                                {% if variant.id == item.variant.id %}selected{% endif %}
+                                                {% if variant.stock == 0 %}disabled{% endif %}>
 
-                    {% for variant in item.variant.product.variants.all %}
-<option value="{{ variant.id }}"
-    {% if variant.id == item.variant.id %}selected{% endif %}
-    {% if variant.stock == 0 %}disabled{% endif %}>
+                                                {{ variant.variant }} -
+                                                ₹{{ variant.price }} (Base Price)
 
-    {{ variant.variant }} -
-    ₹{{ variant.price }} (Base Price)
+                                                {% if variant.stock == 0 %}
+                                                    (Out of Stock)
+                                                {% else %}
+                                                    ({{ variant.stock }} available)
+                                                {% endif %}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
 
-    {% if variant.stock == 0 %}
-        (Out of Stock)
-    {% else %}
-        ({{ variant.stock }} available)
-    {% endif %}
-</option>
-{% endfor %}
+                                    <div class="mt-4 flex flex-wrap items-center justify-between">
 
+                                        <div class="flex flex-col gap-1 mb-2 sm:mb-0">
 
-                </select>
-            </div>
+                                            <div class="flex items-center gap-2">
+                                                {% if item.unit_price < item.variant.price %}
+                                                    <span class="text-sm text-gray-400 line-through">
+                                                        ₹{{ item.variant.price }}
+                                                    </span>
 
-            <!-- Price + Quantity -->
-            <div class="mt-4 flex flex-wrap items-center justify-between">
+                                                    <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                                        Offer
+                                                    </span>
+                                                {% endif %}
 
-                <!-- Unit Price -->
-<!-- Unit Price -->
-<div class="flex flex-col gap-1 mb-2 sm:mb-0">
+                                                <span class="unit-price-display font-bold text-[#A24E34] text-lg">
+                                                    ₹{{ item.unit_price }}
+                                                </span>
+                                            </div>
 
-    <div class="flex items-center gap-2">
-        {% if item.unit_price < item.variant.price %}
-            <span class="text-sm text-gray-400 line-through">
-                ₹{{ item.variant.price }}
-            </span>
+                                            {% if item.unit_price < item.variant.price %}
+                                                <span class="text-xs text-green-600">
+                                                    Offer price applied
+                                                </span>
+                                            {% endif %}
+                                        </div>
 
-            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                Offer
-            </span>
-        {% endif %}
+                                        <div class="flex items-center">
+                                            <button class="quantity-minus w-8 h-8 flex items-center justify-center 
+                                                           bg-gray-100 rounded-l-lg hover:bg-gray-200">-</button>
 
-        <span class="unit-price-display font-bold text-[#A24E34] text-lg">
-            ₹{{ item.unit_price }}
-        </span>
-    </div>
+                                            <input type="number"
+                                                   value="{{ item.quantity }}"
+                                                   min="1"
+                                                   max="{{ item.variant.stock }}"
+                                                   class="quantity-input w-12 h-8 text-center border-y border-gray-300">
 
-    {% if item.unit_price < item.variant.price %}
-        <span class="text-xs text-green-600">
-            Offer price applied
-        </span>
-    {% endif %}
-</div>
+                                            <button class="quantity-plus w-8 h-8 flex items-center justify-center 
+                                                           bg-gray-100 rounded-r-lg hover:bg-gray-200">+</button>
+                                        </div>
 
+                                        <div class="mt-2 sm:mt-0">
 
+                                            <span class="unit-price hidden">{{ item.unit_price }}</span>
 
-                <!-- Quantity Controls -->
-                <div class="flex items-center">
-                    <button class="quantity-minus w-8 h-8 flex items-center justify-center 
-                                   bg-gray-100 rounded-l-lg hover:bg-gray-200">-</button>
+                                            <span class="item-total text-lg font-bold">
+                                                ₹{{ item.total_price }}
+                                            </span>
+                                        </div>
 
-                    <input type="number"
-                           value="{{ item.quantity }}"
-                           min="1"
-                           max="{{ item.variant.stock }}"
-                           class="quantity-input w-12 h-8 text-center border-y border-gray-300">
+                                    </div>
 
-                    <button class="quantity-plus w-8 h-8 flex items-center justify-center 
-                                   bg-gray-100 rounded-r-lg hover:bg-gray-200">+</button>
-                </div>
+                                    <div class="mt-2">
+                                        {% if item.variant.stock == 0 %}
+                                            <span class="text-sm text-red-500 font-medium">Out of Stock</span>
+                                        {% elif item.quantity > item.variant.stock %}
+                                            <span class="text-sm text-red-500 font-medium">
+                                                Only {{ item.variant.stock }} available
+                                            </span>
+                                        {% else %}
+                                            <span class="text-sm text-green-500 font-medium">In Stock</span>
+                                        {% endif %}
+                                    </div>
 
-                <!-- Total Price -->
-                <div class="mt-2 sm:mt-0">
+                                </div>
+                            </div>
 
-                    <!-- Hidden Unit Price (needed for AJAX) -->
-                    <span class="unit-price hidden">{{ item.unit_price }}</span>
-
-
-                    <!-- Item Total Display -->
-                    <span class="item-total text-lg font-bold">
-    ₹{{ item.total_price }}
-</span>
-                </div>
-
-            </div>
-
-            <!-- Stock Status -->
-            <div class="mt-2">
-                {% if item.variant.stock == 0 %}
-                    <span class="text-sm text-red-500 font-medium">Out of Stock</span>
-                {% elif item.quantity > item.variant.stock %}
-                    <span class="text-sm text-red-500 font-medium">
-                        Only {{ item.variant.stock }} available
-                    </span>
-                {% else %}
-                    <span class="text-sm text-green-500 font-medium">In Stock</span>
-                {% endif %}
-            </div>
-
-        </div>
-    </div>
-
-</div>
-
-    {% endfor %}
-</div>
+                        </div>
+                        {% endfor %}
+                    </div>
 
                     
-                    <!-- Empty Cart State -->
                     {% else %}
                     <div class="p-12 text-center">
                         <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -229,20 +200,17 @@
                     
             </div>
             
-            <!-- Price Summary Section -->
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-6">Order Summary</h2>
                     
                     <div class="space-y-4">
-                        <!-- Subtotal -->
                         <div class="flex justify-between">
                             <span class="text-gray-600">Subtotal</span>
                             <span class="font-medium subtotal-value">₹{{ sub_total }}</span>
 
                         </div>
                         
-                        <!-- Shipping Fee -->
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shipping Fee</span>
                             <span class="shipping-value font-medium">
@@ -254,35 +222,32 @@
                             </span>
                         </div>
                         
-                        <!-- Tax -->
                         <div class="flex justify-between">
                             <span class="text-gray-600">Tax</span>
                             <span class="tax-value font-medium">₹{{ tax }}</span>
 
                         </div>
                         
-                        <!-- Discount -->
                         {% if cart.applied_coupon %}
-<div class="flex justify-between text-green-600 font-medium">
-    <span>
-        Coupon ({{ cart.applied_coupon.code }})
-        {% if cart.applied_coupon.discount_type == "percent" %}
-            – {{ cart.applied_coupon.discount_value }}% OFF
-        {% endif %}
-    </span>
-    <span>-₹{{ cart.coupon_discount }}</span>
-</div>
+                        <div class="flex justify-between text-green-600 font-medium">
+                            <span>
+                                Coupon ({{ cart.applied_coupon.code }})
+                                {% if cart.applied_coupon.discount_type == "percent" %}
+                                    – {{ cart.applied_coupon.discount_value }}% OFF
+                                {% endif %}
+                            </span>
+                            <span>-₹{{ cart.coupon_discount }}</span>
+                        </div>
 
-<form method="POST" action="{% url 'remove_coupon' %}">
-    {% csrf_token %}
-    <button class="text-red-600 text-xs mt-1 hover:underline">
-        Remove coupon
-    </button>
-</form>
-{% endif %}
+                        <form method="POST" action="{% url 'remove_coupon' %}">
+                            {% csrf_token %}
+                            <button class="text-red-600 text-xs mt-1 hover:underline">
+                                Remove coupon
+                            </button>
+                        </form>
+                        {% endif %}
 
                         
-                        <!-- Divider -->
                         <div class="border-t border-gray-200 pt-4">
                             <div class="flex justify-between text-lg font-bold">
                                 <span>Total</span>
@@ -292,7 +257,6 @@
                         </div>
                     </div>
                     
-                    <!-- Checkout Button -->
                     <div class="mt-8">
                         {% if cart_items %}
                             <a href="{% url 'checkout_page' %}" class="w-full py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] transition-all duration-300 font-semibold text-center block shadow-lg hover:shadow-xl">
@@ -306,7 +270,6 @@
                         {% endif %}
                     </div>
                     
-                    <!-- Continue Shopping Link -->
                     <div class="mt-4 text-center">
                         <a href="{% url 'userproduct_list' %}" class="text-[#A24E34] hover:text-[#8D3A28] transition-colors inline-flex items-center text-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -318,44 +281,44 @@
                 </div>
                 
                 
-<div class="bg-white rounded-2xl shadow-lg p-6 mt-6">
-    <h3 class="text-lg font-bold text-gray-800 mb-4">Available Coupons</h3>
+                <div class="bg-white rounded-2xl shadow-lg p-6 mt-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Available Coupons</h3>
 
-    {% if available_coupons %}
-        {% for coupon in available_coupons %}
-        <div class="border rounded-lg p-4 mb-3 flex justify-between items-center">
-            <div>
-                <p class="font-semibold text-gray-800">{{ coupon.code }}</p>
+                    {% if available_coupons %}
+                        {% for coupon in available_coupons %}
+                        <div class="border rounded-lg p-4 mb-3 flex justify-between items-center">
+                            <div>
+                                <p class="font-semibold text-gray-800">{{ coupon.code }}</p>
 
-                {% if coupon.discount_type == "percent" %}
-                    <p class="text-sm text-gray-600">
-                        {{ coupon.discount_value }}% OFF
-                        (Max ₹{{ coupon.max_discount_amount }})
-                    </p>
-                {% else %}
-                    <p class="text-sm text-gray-600">
-                        Flat ₹{{ coupon.discount_value }} OFF
-                    </p>
-                {% endif %}
+                                {% if coupon.discount_type == "percent" %}
+                                    <p class="text-sm text-gray-600">
+                                        {{ coupon.discount_value }}% OFF
+                                        (Max ₹{{ coupon.max_discount_amount }})
+                                    </p>
+                                {% else %}
+                                    <p class="text-sm text-gray-600">
+                                        Flat ₹{{ coupon.discount_value }} OFF
+                                    </p>
+                                {% endif %}
 
-                <p class="text-xs text-gray-500">
-                    Min order ₹{{ coupon.min_order_amount }}
-                </p>
-            </div>
+                                <p class="text-xs text-gray-500">
+                                    Min order ₹{{ coupon.min_order_amount }}
+                                </p>
+                            </div>
 
-            <form method="POST" action="{% url 'apply_coupon' %}">
-                {% csrf_token %}
-                <input type="hidden" name="coupon_code" value="{{ coupon.code }}">
-                <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                    Apply
-                </button>
-            </form>
-        </div>
-        {% endfor %}
-    {% else %}
-        <p class="text-sm text-gray-500">No coupons available</p>
-    {% endif %}
-</div>
+                            <form method="POST" action="{% url 'apply_coupon' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="coupon_code" value="{{ coupon.code }}">
+                                <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                    Apply
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-sm text-gray-500">No coupons available</p>
+                    {% endif %}
+                </div>
 
             </div>
         </div>
@@ -410,9 +373,6 @@ document.querySelectorAll(".cart-item").forEach(item => {
 
                 // ✅ UPDATE ITEM TOTAL
                 item.querySelector(".item-total").textContent = "₹" + data.item_total;
-                item.querySelector(".unit-price-display").textContent = "₹" + data.unit_price;
-item.querySelector(".item-total").textContent = "₹" + data.item_total;
-
 
                 // ✅ UPDATE CART SUMMARY
                 document.querySelector(".subtotal-value").textContent = "₹" + data.subtotal;
@@ -488,6 +448,9 @@ document.querySelectorAll(".remove-item").forEach(btn => {
                     document.querySelectorAll(".shipping-value").forEach(el => {
                         el.textContent = shippingValue === 0 ? "Free" : "₹" + data.shipping;
                     });
+                    
+                    // ✅ FIXED: Update Total Amount
+                    document.querySelector(".total-value").textContent = "₹" + data.total;
 
                     if (data.remaining_items === 0) {
                         window.location.reload();
@@ -529,8 +492,5 @@ document.getElementById("modalCloseBtn").addEventListener("click", () => {
     }, 200);
 });
 </script>
-
-
-
 
 {% endblock %}
