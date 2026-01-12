@@ -1141,3 +1141,12 @@ def sales_report_pdf(request):
     # Build PDF
     doc.build(elements)
     return response
+
+
+def admin_inventory(request):
+    products = Products.objects.prefetch_related('variants').all().order_by('-created_at')
+    
+    context = {
+        'products': products,
+    }
+    return render(request, 'admin_inventory.html', context)

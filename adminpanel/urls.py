@@ -6,6 +6,7 @@ urlpatterns = [
 
     path("", views.admin_login, name="admin_login"),
     path("admin-logout/", views.admin_logout, name="admin_logout"),
+    path("inventory/", views.admin_inventory, name="admin_inventory"),
     path("category-list/", views.category_list, name="category_list"),
     path("category-add/", views.category_add, name="category_add"),
     path("category-delete/<int:id>/", views.category_delete, name="category_delete"),
