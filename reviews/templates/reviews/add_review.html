@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Add Review{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-10 max-w-3xl">
+
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Write a Review</h2>
+        <p class="text-sm text-gray-500">
+            Review for <strong>{{ item.product.name }}</strong>
+        </p>
+    </div>
+
+    <div class="bg-white border rounded-xl shadow-sm p-6">
+
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Rating
+                </label>
+
+                <div class="flex gap-3" id="star-container">
+                    {% for i in "12345" %}
+                    <label class="cursor-pointer">
+                        <input type="radio" name="rating" value="{{ forloop.counter }}"
+                               class="hidden" 
+                               onchange="updateStars(this.value)" 
+                               required>
+                        <span id="star-{{ forloop.counter }}"
+                              class="text-3xl text-gray-300 transition hover:text-yellow-400">
+                            ★
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Your Review
+                </label>
+                <textarea
+                    name="comment"
+                    rows="4"
+                    placeholder="Share your experience..."
+                    class="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required></textarea>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <a href="{% url 'order_detail' item.order.uuid %}"
+                   class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </a>
+
+                <button type="submit"
+                        class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition">
+                    Submit Review
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+    function updateStars(value) {
+        // Loop through numbers 1 to 5
+        for (let i = 1; i <= 5; i++) {
+            const star = document.getElementById(`star-${i}`);
+            
+            if (i <= value) {
+                // If star index is less than or equal to selected value, make it yellow
+                star.classList.remove('text-gray-300');
+                star.classList.add('text-yellow-400');
+            } else {
+                // Otherwise make it gray
+                star.classList.remove('text-yellow-400');
+                star.classList.add('text-gray-300');
+            }
+        }
+    }
+</script>
+
+{% endblock %}

@@ -175,6 +175,26 @@
                     <!-- Actions -->
                     <td class="px-6 py-4 text-right">
     <div class="flex justify-end gap-2">
+        {% if order.payment_status == "paid" %}
+
+    {% if item.status == "delivered" %}
+
+        {% if not item.review %}
+            <a href="{% url 'add_review' item.id %}"
+               class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700
+                      text-white text-sm rounded-lg">
+                Add Review
+            </a>
+        {% else %}
+            <span class="text-green-600 text-sm font-semibold">
+                Reviewed ✔
+            </span>
+        {% endif %}
+
+    {% endif %}
+
+{% endif %}
+
 
         {% if order.payment_status == "paid" %}
 

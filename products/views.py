@@ -11,6 +11,7 @@ from django.views.decorators.cache import never_cache
 
 from offers.utils import get_best_offer_for_product, apply_offer
 from django.urls import reverse
+from reviews.models import ProductReview
 
 
 
@@ -166,7 +167,18 @@ def product_details(request, uuid):
         quantity = 1
     
     average_rating = 4.5  
-    review_count = 128    
+    review_count = 128   
+
+    reviews = ProductReview.objects.filter(product=product).order_by("-created_at")
+
+    review_stats = reviews.aggregate(
+        avg=Avg("rating"),
+        count=Count("id")
+    )
+    
+    average_rating = review_stats["avg"] if review_stats["avg"] else 0
+    review_count = review_stats["count"] if review_stats["count"] else 0
+
     
     related_products = Products.objects.filter(
         category=product.category,
@@ -226,6 +238,11 @@ def product_details(request, uuid):
     message = request.session.pop("message", None)
     error = request.session.pop("error", None)
 
+    avg_rating = ProductReview.objects.aggregate(
+        avg=Avg("rating"),
+        rating_count=Count("id") 
+    )
+
     context = {
         'product': product,
         "offer": offer,
@@ -234,14 +251,16 @@ def product_details(request, uuid):
         'selected_variant': selected_variant,
         'quantity': quantity,
         'total_price': total_price,
-        'average_rating': average_rating,
+        'average_rating': average_rating, 
         'review_count': review_count,
-        'related_products': related_products,
-        'reviews': [],  
+        'reviews': reviews,
+        'related_products': related_products, 
         'all_images': all_images,
         'main_image': main_image,
         'message': message,
         "error" : error,
+        "avg_rating": avg_rating["avg"] or 0,
+        "rating_count": avg_rating["rating_count"],
         "breadcrumbs": [
             {"label": "Home", "url": "/"},
             {"label": "Products", "url": reverse("userproduct_list")},
@@ -255,6 +274,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.db import transaction
 from django.shortcuts import redirect, get_object_or_404
 from django.views.decorators.cache import never_cache
+
 @never_cache
 def add_to_cart(request):
     if not request.user.is_authenticated or request.user.is_superuser:
@@ -268,15 +288,12 @@ def add_to_cart(request):
 
     variant = get_object_or_404(ProductVariants, id=variant_id, is_active=True)
 
-    # 🔐 Stock & limit checks
     ITEM_LIMIT = 5
     qty = min(qty, variant.stock, ITEM_LIMIT)
 
-    # ✅ APPLY OFFER HERE
     offer = get_best_offer_for_product(variant.product)
     unit_price = apply_offer(variant.price, offer) if offer else variant.price
 
-    # ✅ TAX ON DISCOUNTED PRICE
     gst_rate = getattr(variant, "gst_rate", 18)
     unit_tax = (unit_price * Decimal(gst_rate) / 100).quantize(Decimal("0.01"))
     tax_amount = unit_tax * qty

@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'cloudinary_storage',
     'wishlist',
     'dashboard',
+    'reviews',
 
     # allauth requirements
     'django.contrib.sites',
