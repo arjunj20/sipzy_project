@@ -20,6 +20,15 @@ from django.views.decorators.cache import never_cache
 from django.contrib import messages
 
 
+from django.shortcuts import render, redirect
+from django.views.decorators.cache import never_cache
+from django.utils import timezone
+from django.core.mail import send_mail
+import random
+
+from referal.models import Referral
+from authenticate.models import CustomUser   # adjust import if needed
+from coupons.models import Coupon
 
 
 @never_cache
@@ -27,14 +36,18 @@ def user_signup(request):
 
     if request.user.is_authenticated and not request.user.is_superuser:
         return redirect("user_homepage")
-    
+
     errors = {}
+    referral_token = request.GET.get("ref")
+    if referral_token:
+        request.session["referral_token"] = referral_token
 
     if request.method == 'POST':
         fullname = request.POST.get("fullname")
         email = request.POST.get("email")
         password = request.POST.get("password")
         confirmpassword = request.POST.get("confirm_password")
+
         if not fullname:
             errors["fullname"] = "Full name is required."
 
@@ -62,24 +75,26 @@ def user_signup(request):
             otp = random.randint(100000, 999999)
 
             request.session["signup_data"] = {
-                'fullname': fullname,
-                'email': email,
+                "fullname": fullname,
+                "email": email,
                 "password": password,
-                'otp': otp,
-                "otp_time": timezone.now().isoformat()
+                "otp": otp,
+                "otp_time": timezone.now().isoformat(),
+                "referral_token": request.session.get("referral_token")  #  NEW
             }
+
             send_mail(
                 subject="Sipzy - Email Verification OTP",
                 message=(
-                f"Hello {fullname},\n\n"
-                "You are receiving this email to verify your email address "
-                "for creating a Sipzy account.\n\n"
-                f"Your One-Time Password (OTP) is: {otp}\n\n"
-                "⏰ This OTP is valid for 1.36 minutes only.\n\n"
-                "If you did NOT attempt to create an account on Sipzy, "
-                "please ignore this email.\n\n"
-                "Thank you,\n"
-                "Sipzy Team"
+                    f"Hello {fullname},\n\n"
+                    "You are receiving this email to verify your email address "
+                    "for creating a Sipzy account.\n\n"
+                    f"Your One-Time Password (OTP) is: {otp}\n\n"
+                    "⏰ This OTP is valid for 1.36 minutes only.\n\n"
+                    "If you did NOT attempt to create an account on Sipzy, "
+                    "please ignore this email.\n\n"
+                    "Thank you,\n"
+                    "Sipzy Team"
                 ),
                 from_email="sipzy505@gmail.com",
                 recipient_list=[email],
@@ -94,6 +109,9 @@ def user_signup(request):
             return render(request, "user_signup.html", {"errors": errors})
 
     return render(request, "user_signup.html")
+
+import uuid
+from datetime import timedelta
 
 @never_cache
 def user_signupotp(request):
@@ -119,13 +137,11 @@ def user_signupotp(request):
 
     now = timezone.now()
     elapsed = (now - otp_time).total_seconds()
-    allowed_time = 100  
+    allowed_time = 100
     remaining_time = max(0, int(allowed_time - elapsed))
 
     if request.method == 'POST':
-        otp_digits = [
-            request.POST.get(f'otp{i}', '') for i in range(1, 7)
-        ]
+        otp_digits = [request.POST.get(f'otp{i}', '') for i in range(1, 7)]
 
         if any(d.strip() == "" for d in otp_digits):
             errors["otp_empty"] = "Please enter all 6 digits of the OTP."
@@ -142,18 +158,56 @@ def user_signupotp(request):
 
         if errors:
             return render(request, "user_signupotp.html", {
-                "error": errors, 
+                "error": errors,
                 "remaining_time": remaining_time
             })
 
         try:
+            # ✅ Create user (UNCHANGED)
             user = CustomUser.objects.create_user(
                 fullname=signup_data["fullname"],
                 email=signup_data["email"],
                 password=signup_data["password"]
             )
             user.save()
+
+            # 🔑 NEW: Referral handling
+            referral_token = signup_data.get("referral_token")
+
+            if referral_token:
+                try:
+                    referral = Referral.objects.get(
+                        token=referral_token,
+                        is_used=False
+                    )
+
+                    # Prevent self-referral
+                    if referral.referrer != user:
+                        referral.is_used = True
+                        referral.referred_user = user
+                        referral.save()
+
+                        # 🎁 Create referral coupon for referrer
+                        Coupon.objects.create(
+                            code="REF" + uuid.uuid4().hex[:8],
+                            coupon_source="referral",
+                            discount_type="percent",
+                            discount_value=10,
+                            min_order_amount=500,
+                            max_discount_amount=200,
+                            valid_from=timezone.now(),
+                            valid_to=timezone.now() + timedelta(days=30),
+                            usage_limit=1,
+                            max_uses_per_user=1,
+                            is_active=True
+                        )
+
+                except Referral.DoesNotExist:
+                    pass
+
+            # ✅ Clear session (UNCHANGED)
             del request.session["signup_data"]
+            request.session.pop("referral_token", None)
 
             messages.success(request, "Account created successfully!")
             return redirect("user_login")
@@ -166,8 +220,10 @@ def user_signupotp(request):
                 "remaining_time": remaining_time
             })
 
+    return render(request, "user_signupotp.html", {
+        "remaining_time": remaining_time
+    })
 
-    return render(request, "user_signupotp.html", {"remaining_time": remaining_time})
 
 @never_cache
 def resend_otp(request):

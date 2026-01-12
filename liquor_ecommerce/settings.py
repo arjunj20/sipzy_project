@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'wishlist',
     'dashboard',
     'reviews',
+    'referal',
 
     # allauth requirements
     'django.contrib.sites',

@@ -33,4 +33,5 @@ urlpatterns = [
     path("wishlist/", include("wishlist.urls")),
     path("dashboard/", include("dashboard.urls")),
     path("reviews/", include("reviews.urls")),
+    path("referal/", include("referal.urls")),
 ]

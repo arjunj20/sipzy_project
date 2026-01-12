@@ -16,6 +16,7 @@ from orders.models import Order
 from authenticate.models import Address
 from django.conf import settings
 from wallet.models import Wallet
+from referal.models import Referral
 
 
 @login_required
@@ -28,11 +29,22 @@ def user_profile(request):
     addresses = user.addresses.all()
     counts = Order.objects.filter(user=user).count()
     wallet = Wallet.objects.get(user=user)
+
+    referral, _ = Referral.objects.get_or_create(
+        referrer=user,
+        is_used=False
+    )
+
+    referral_link = request.build_absolute_uri(
+        f"/user-signup/?ref={referral.token}"
+    )
+
     return render(request, "user_profile.html", {
         "user": user,
         "addresses": addresses,
         "counts": counts,
         "wallet": wallet,
+        "referral_link": referral_link,
     })
 
 @login_required
