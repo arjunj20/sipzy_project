@@ -27,12 +27,22 @@ def add_to_wishlist(request, product_uuid):
 @login_required
 @require_POST
 def remove_from_wishlist(request, product_uuid):
-    Wishlist.objects.filter(
+    deleted, _ = Wishlist.objects.filter(
         user=request.user,
-        uuid=product_uuid
+        product__uuid=product_uuid   # ✅ important
     ).delete()
 
-    return JsonResponse({"status": "success", "message": "Removed from wishlist"})
+    if deleted == 0:
+        return JsonResponse({
+            "status": "error",
+            "message": "Item not found in wishlist"
+        }, status=404)
+
+    return JsonResponse({
+        "status": "success",
+        "message": "Removed from wishlist"
+    })
+
 
 
 @login_required

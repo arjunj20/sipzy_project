@@ -204,7 +204,6 @@ from django.contrib import messages
 from django.db import transaction
 from django.views.decorators.cache import never_cache
 
-
 @never_cache
 @transaction.atomic
 def place_order(request):
@@ -231,23 +230,35 @@ def place_order(request):
     if not cart_items.exists():
         messages.error(request, "Your cart is empty")
         return redirect("cart_page")
-    
+
     out_of_stock = False
-    
+
     for i in cart_items:
         if i.quantity > i.variant.stock:
             i.delete()
             out_of_stock = True
 
-    if out_of_stock == True:
-        messages.error(request, "Some items were removed from your cart because they are out of stock. Please review your cart.")
+    if out_of_stock:
+        messages.error(
+            request,
+            "Some items were removed from your cart because they are out of stock. Please review your cart."
+        )
         return redirect("cart_page")
-            
 
 
     order = Order.objects.create(
         user=user,
+
         address=address,
+        full_name=address.full_name,
+        phone=address.phone_number,
+        address_line1=address.address_line1,
+        address_line2=address.address_line2,
+        city=address.city,
+        state=address.state,
+        country=address.country,
+        pincode=address.pincode,
+
         payment_method=payment_method.lower(),
         subtotal=cart.item_subtotal,
         tax=cart.tax,
@@ -258,7 +269,6 @@ def place_order(request):
         payment_status="pending",
     )
 
-  
     order_base = cart.total_price + cart.coupon_discount
     coupon_discount = cart.coupon_discount or Decimal("0.00")
 
@@ -274,7 +284,7 @@ def place_order(request):
             coupon_share = Decimal("0.00")
 
         net_paid_amount = (
-            (item_price) - coupon_share
+            item_price - coupon_share
         ).quantize(Decimal("0.01"))
 
         order_item = OrderItem.objects.create(

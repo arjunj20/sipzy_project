@@ -8,6 +8,7 @@ from reportlab.lib.units import mm
 from django.contrib import messages
 import tempfile
 from django.urls import reverse
+from django.db.models import Sum
 
 from django.views.decorators.cache import never_cache
 from wallet.models import Wallet, WalletTransaction
@@ -68,17 +69,55 @@ def order_detail(request, uuid):
         "items": items,
     })
 
+from django.contrib import messages
 
 def order_invoice(request, order_id):
+    # -------------------------------------------------
+    # Fetch order (user-protected)
+    # -------------------------------------------------
     order = get_object_or_404(
         Order,
         id=order_id,
         user=request.user
     )
 
-    items = order.items.all()
-    user = request.user
+    # -------------------------------------------------
+    # OPTION 1: ONLY DELIVERED ITEMS
+    # -------------------------------------------------
+    items = order.items.filter(status="delivered")
 
+    if not items.exists():
+        messages.error(
+            request,
+            "Invoice is available only after delivery."
+        )
+        return redirect("order_detail", uuid=order.uuid)
+
+
+    # -------------------------------------------------
+    # Address Snapshot (Safe)
+    # -------------------------------------------------
+    full_name = order.full_name or ""
+    address_line1 = order.address_line1 or "Address not available"
+    city = order.city or ""
+    state = order.state or ""
+    pincode = order.pincode or ""
+
+    # -------------------------------------------------
+    # Calculate totals ONLY from delivered items
+    # -------------------------------------------------
+    subtotal = items.aggregate(
+        total=Sum("price")
+    )["total"] or Decimal("0.00")
+
+    GST_RATE = Decimal("0.18")
+    tax = (subtotal * GST_RATE).quantize(Decimal("0.01"))
+    shipping_fee = Decimal("0.00")
+    total = subtotal + tax + shipping_fee
+
+    # -------------------------------------------------
+    # PDF Response Setup
+    # -------------------------------------------------
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = (
         f'attachment; filename="Invoice_{order.order_number}.pdf"'
@@ -88,7 +127,9 @@ def order_invoice(request, order_id):
     width, height = A4
     y = height - 50
 
-    # 🔹 Header
+    # -------------------------------------------------
+    # Header
+    # -------------------------------------------------
     p.setFont("Helvetica-Bold", 20)
     p.drawString(30, y, "INVOICE")
 
@@ -96,86 +137,89 @@ def order_invoice(request, order_id):
     p.setFont("Helvetica", 12)
     p.drawString(30, y, f"Order Number : {order.order_number}")
     y -= 20
-    p.drawString(30, y, f"Order Date   : {order.created_at.strftime('%d-%m-%Y %H:%M')}")
+    p.drawString(
+        30,
+        y,
+        f"Order Date   : {order.created_at.strftime('%d-%m-%Y %H:%M')}"
+    )
 
-    # 🔹 Billing Address
+    # -------------------------------------------------
+    # Billing Address
+    # -------------------------------------------------
     y -= 40
     p.setFont("Helvetica-Bold", 12)
     p.drawString(30, y, "Billing Address:")
+
     y -= 20
     p.setFont("Helvetica", 12)
-    p.drawString(30, y, user.fullname)
+    p.drawString(30, y, full_name)
     y -= 20
-    p.drawString(30, y, order.address.address_line1)
+    p.drawString(30, y, address_line1)
     y -= 20
-    p.drawString(30, y, f"{order.address.city}, {order.address.state}")
+    p.drawString(30, y, f"{city}, {state}".strip(", "))
     y -= 20
-    p.drawString(30, y, order.address.pincode)
+    p.drawString(30, y, pincode)
 
-    # 🔹 Table Header
+    # -------------------------------------------------
+    # Table Header
+    # -------------------------------------------------
     y -= 40
     p.setFont("Helvetica-Bold", 12)
     p.drawString(30, y, "Product")
     p.drawString(230, y, "Variant")
     p.drawString(330, y, "Qty")
-    p.drawString(380, y, "Line Total")
+    p.drawString(400, y, "Line Total")
 
     y -= 20
     p.setFont("Helvetica", 12)
 
-    # 🔹 Items (NO MULTIPLICATION)
+    # -------------------------------------------------
+    # Items (Delivered Only)
+    # -------------------------------------------------
     for item in items:
         if y < 80:
             p.showPage()
             y = height - 50
+            p.setFont("Helvetica", 12)
 
         p.drawString(30, y, item.product.name)
-        p.drawString(230, y, item.variant.variant if item.variant else "-")
+        p.drawString(
+            230,
+            y,
+            item.variant.variant if item.variant else "-"
+        )
         p.drawString(330, y, str(item.quantity))
-        p.drawString(380, y, f"₹{item.price}")  # ✅ LINE TOTAL
+        p.drawString(400, y, f"₹{item.price}")
         y -= 20
 
-    # 🔹 Totals
+    # -------------------------------------------------
+    # Totals
+    # -------------------------------------------------
     y -= 30
     p.setFont("Helvetica-Bold", 12)
-
     p.drawString(330, y, "Subtotal:")
-    p.drawString(450, y, f"₹{order.subtotal}")
+    p.drawString(460, y, f"₹{subtotal}")
+
+    y -= 20
+    p.drawString(330, y, "Tax (GST 18%):")
+    p.drawString(460, y, f"₹{tax}")
 
     y -= 20
     p.drawString(330, y, "Shipping:")
-    p.drawString(450, y, f"₹{order.shipping_fee}")
-
-    y -= 20
-    p.drawString(330, y, "Tax:")
-    p.drawString(450, y, f"₹{order.tax}")
-
-    # 🔹 Coupon
-    if order.coupon:
-        y -= 20
-        p.setFillColorRGB(0, 0.6, 0)
-        p.drawString(
-            330,
-            y,
-            f"Coupon ({order.coupon.code}):"
-        )
-        p.drawString(
-            450,
-            y,
-            f"-₹{order.coupon_discount}"
-        )
-        p.setFillColorRGB(0, 0, 0)
+    p.drawString(460, y, f"₹{shipping_fee}")
 
     y -= 30
     p.setFont("Helvetica-Bold", 14)
     p.drawString(330, y, "TOTAL:")
-    p.drawString(450, y, f"₹{order.total}")
+    p.drawString(460, y, f"₹{total}")
 
+    # -------------------------------------------------
+    # Finish PDF
+    # -------------------------------------------------
     p.showPage()
     p.save()
 
     return response
-
 
 @never_cache
 @transaction.atomic

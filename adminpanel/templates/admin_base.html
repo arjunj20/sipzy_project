@@ -92,6 +92,12 @@
                         </a>
                     </li>
                     <li>
+    <a href="{% url 'admin_inventory' %}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group {% if 'inventory' in request.resolver_match.url_name %}nav-link-active{% else %}hover:bg-admin-hover hover:text-white{% endif %}">
+        <i class="fas fa-warehouse mr-3 w-5 text-center transition-transform"></i>
+        <span class="text-sm font-semibold">Inventory</span>
+    </a>
+</li>
+                    <li>
                         <a href="{% url 'brand_list' %}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 group {% if 'brand' in request.resolver_match.url_name %}nav-link-active{% else %}hover:bg-admin-hover hover:text-white{% endif %}">
                             <i class="fas fa-copyright mr-3 w-5 text-center transition-transform"></i>
                             <span class="text-sm font-semibold">Brands</span>

@@ -1,71 +1,211 @@
 {% extends "base.html" %}
-{% block title %}My Wishlist{% endblock %}
+{% block title %}My Wishlist | Sipzy{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto p-6">
-    <h2 class="text-2xl font-bold mb-6">My Wishlist</h2>
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        
+        <div class="flex justify-between items-end mb-8 border-b border-gray-200 pb-4">
+            <div>
+                <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">My Wishlist</h2>
+                <p class="text-gray-500 mt-2 text-sm">Save your favorite spirits for later</p>
+            </div>
+            <span id="wishlist-count" class="bg-[#B7472A] text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                {{ wishlist_items|length }} Items
+            </span>
+        </div>
 
-    {% if wishlist_items %}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-       {% for item in wishlist_items %}
-<div class="border rounded-lg p-4">
+        {% if wishlist_items %}
+        <div id="wishlist-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+           {% for item in wishlist_items %}
+            <div id="item-{{ item.product.uuid }}" 
+                 class="wishlist-item group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 overflow-hidden flex flex-col relative">
+                
+                <button onclick="removeItem('{{ item.product.uuid }}')" 
+                        class="absolute top-3 right-3 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm"
+                        title="Remove from wishlist">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
 
-    {% if item.default_variant %}
-        <img src="{{ item.default_variant.primary_image }}"
-             class="h-40 w-full object-contain mb-3">
-    {% endif %}
+                <div class="relative h-64 bg-gray-100 overflow-hidden">
+                    {% if item.default_variant %}
+                        <img src="{{ item.default_variant.primary_image.url }}" 
+                             alt="{{ item.product.name }}"
+                             class="w-full h-full object-contain p-6 transition-transform duration-500 group-hover:scale-110">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-gray-400">
+                            <span>No Image</span>
+                        </div>
+                    {% endif %}
+                </div>
 
-    <h3 class="font-semibold">{{ item.product.name }}</h3>
+                <div class="p-5 flex flex-col flex-grow">
+                    <div class="flex-grow">
+                        <h3 class="text-lg font-bold text-gray-900 line-clamp-1 mb-1">
+                            <a href="{% url 'product_details' item.product.uuid %}" class="hover:text-[#B7472A] transition-colors">
+                                {{ item.product.name }}
+                            </a>
+                        </h3>
+                        <p class="text-sm text-gray-500 mb-3">{{ item.product.category.name|default:"Spirit" }}</p>
+                        
+                        {% if item.default_variant %}
+                            <p class="text-xl font-bold text-[#B7472A]">
+                                ₹{{ item.default_variant.price }}
+                            </p>
+                        {% else %}
+                            <p class="text-sm text-gray-400 italic">Price unavailable</p>
+                        {% endif %}
+                    </div>
 
-    {% if item.default_variant %}
-        <p class="text-gray-600">
-            ₹{{ item.default_variant.price }}
-        </p>
-    {% else %}
-        <p class="text-red-500 text-sm">Out of stock</p>
-    {% endif %}
+                    <div class="mt-5 pt-4 border-t border-gray-100">
+                        <button onclick="moveToCart('{{ item.product.uuid }}')" 
+                                class="w-full flex items-center justify-center gap-2 bg-gray-900 hover:bg-[#B7472A] text-white py-2.5 rounded-lg font-medium transition-colors duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            Move to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div id="empty-state-dynamic" class="hidden flex flex-col items-center justify-center py-20 text-center">
+            <div class="bg-gray-100 p-6 rounded-full mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Your wishlist is empty</h3>
+            <p class="text-gray-500 mb-8 max-w-md">Looks like you haven't added any premium spirits to your wishlist yet.</p>
+            <a href="{% url 'userproduct_list' %}" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-[#B7472A] hover:bg-[#9a3b23] transition-colors md:text-lg">
+                Explore Collection
+            </a>
+        </div>
 
-    <div class="mt-4 flex gap-2">
-        <form method="POST" action="{% url 'move_to_cart' item.product.uuid %}">
-            {% csrf_token %}
-            <button class="bg-green-600 text-white px-4 py-2 rounded">
-                Move to Cart
-            </button>
-        </form>
-
-        <form method="POST" action="{% url 'remove_from_wishlist' item.product.uuid %}">
-            {% csrf_token %}
-            <button class="bg-red-600 text-white px-4 py-2 rounded">
-                Remove
-            </button>
-        </form>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-20 text-center">
+            <div class="bg-gray-100 p-6 rounded-full mb-6 animate-pulse">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Your wishlist is empty</h3>
+            <p class="text-gray-500 mb-8 max-w-md">Looks like you haven't added any premium spirits to your wishlist yet.</p>
+            <a href="{% url 'userproduct_list' %}" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-[#B7472A] hover:bg-[#9a3b23] transition-colors md:text-lg">
+                Explore Collection
+            </a>
+        </div>
+        {% endif %}
     </div>
 </div>
-{% endfor %}
 
-    </div>
-    {% else %}
-        <p>Your wishlist is empty.</p>
-    {% endif %}
-</div>
+<div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
 
 <script>
-function removeWishlist(productId) {
-    fetch(`/wishlist/remove/${productId}/`, {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": "{{ csrf_token }}"
-        }
-    }).then(() => location.reload());
-}
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        
+        const bgColor = type === 'success' ? 'bg-gray-900' : 'bg-red-500';
+        
+        toast.className = `${bgColor} text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 transform translate-y-10 opacity-0 transition-all duration-300 min-w-[300px]`;
+        toast.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'success' ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'}" />
+            </svg>
+            <span class="font-medium">${message}</span>
+        `;
+        
+        container.appendChild(toast);
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-y-10', 'opacity-0');
+        });
+        setTimeout(() => {
+            toast.classList.add('translate-y-10', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
 
-function moveToCart(productId) {
-    fetch(`/wishlist/move-to-cart/${productId}/`, {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": "{{ csrf_token }}"
+    function updateUIState() {
+        const grid = document.getElementById('wishlist-grid');
+        const items = grid.querySelectorAll('.wishlist-item');
+        const countBadge = document.getElementById('wishlist-count');
+        
+        countBadge.innerText = `${items.length} Items`;
+        
+        if (items.length === 0) {
+            grid.classList.add('hidden');
+            document.getElementById('empty-state-dynamic').classList.remove('hidden');
+            document.getElementById('empty-state-dynamic').classList.add('flex');
+            countBadge.classList.add('hidden');
         }
-    }).then(() => location.reload());
-}
+    }
+
+    function removeItem(uuid) {
+        const card = document.getElementById(`item-${uuid}`);
+        card.style.transition = 'all 0.4s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        
+        fetch(`/wishlist/remove/${uuid}/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/json"
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                setTimeout(() => {
+                    card.remove();
+                    updateUIState();
+                }, 400); 
+                showToast("Removed from wishlist", "error");
+            } else {
+                card.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+                showToast("Something went wrong", "error");
+            }
+        });
+    }
+
+    function moveToCart(uuid) {
+        const card = document.getElementById(`item-${uuid}`);
+        const btn = card.querySelector('button');
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+        btn.disabled = true;
+
+        fetch(`/wishlist/move-to-cart/${uuid}/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/json"
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                card.style.transition = 'all 0.5s ease';
+                card.style.transform = 'translateY(-20px) scale(0.95)';
+                card.style.opacity = '0';
+                
+                setTimeout(() => {
+                    card.remove();
+                    updateUIState();
+                }, 500);
+                
+                showToast("Moved to cart successfully!");
+            } else {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showToast("Failed to move to cart", "error");
+            }
+        });
+    }
 </script>
 {% endblock %}

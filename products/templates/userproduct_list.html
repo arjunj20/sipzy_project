@@ -353,9 +353,17 @@
                                         <span class="text-gray-400 text-sm">Unavailable</span>
                                     {% endif %}
                                 </div>
-                                <button class="wishlist-btn text-gray-300 hover:text-red-500 transition-colors" data-product="{{ product.uuid }}">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                                </button>
+                                
+                                <form action="{% url 'add_to_wishlist' product.uuid %}" method="POST" class="inline-block">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-300 transform active:scale-95" 
+                                            title="Add to Wishlist">
+                                        <svg class="w-6 h-6" fill="{% if product.is_wishlisted %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                        </svg>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -450,23 +458,8 @@ document.addEventListener("DOMContentLoaded", function () {
             sidebar.classList.toggle('z-50');
             sidebar.classList.toggle('bg-white');
             sidebar.classList.toggle('p-4');
-            // Logic to make it look like a drawer would go here, 
-            // simpler to just toggle visibility for this snippet.
         });
     }
-
-    // 5. WISHLIST AJAX (Keep existing logic)
-    document.querySelectorAll(".wishlist-btn").forEach(btn => {
-        btn.addEventListener("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const productUUID = this.dataset.product;
-            // Add your fetch logic here...
-            // Visual feedback demo:
-            this.querySelector("svg").classList.toggle("text-red-600");
-            this.querySelector("svg").classList.toggle("fill-current");
-        });
-    });
 });
 </script>
 
