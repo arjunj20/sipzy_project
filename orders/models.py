@@ -26,6 +26,16 @@ class Order(models.Model):
     user = models.ForeignKey(CustomUser, related_name="orders", on_delete=models.CASCADE)
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True)
 
+        # Address snapshot (temporary nullable)
+    full_name = models.CharField(max_length=100, null=True, blank=True)
+    phone = models.CharField(max_length=30, null=True, blank=True)
+    address_line1 = models.CharField(max_length=200, null=True, blank=True)
+    address_line2 = models.CharField(max_length=200, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    state = models.CharField(max_length=100, null=True, blank=True)
+    country = models.CharField(max_length=100, default="India", null=True, blank=True)
+    pincode = models.CharField(max_length=10, null=True, blank=True)
+
     payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES)
     payment_status = models.CharField(max_length=20, default="not paid")
 
