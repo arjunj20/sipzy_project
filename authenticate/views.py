@@ -30,6 +30,15 @@ from referal.models import Referral
 from authenticate.models import CustomUser   # adjust import if needed
 from coupons.models import Coupon
 
+import random
+import re
+from django.utils import timezone
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.views.decorators.cache import never_cache
+
+FULLNAME_REGEX = re.compile(r"^[A-Za-z][A-Za-z .]{1,48}[A-Za-z]$")
+PASSWORD_REGEX = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@#$!%*?&]{8,}$")
 
 @never_cache
 def user_signup(request):
@@ -42,31 +51,41 @@ def user_signup(request):
     if referral_token:
         request.session["referral_token"] = referral_token
 
-    if request.method == 'POST':
-        fullname = request.POST.get("fullname")
-        email = request.POST.get("email")
+    if request.method == "POST":
+        fullname = request.POST.get("fullname", "").strip()
+        email = request.POST.get("email", "").strip()
         password = request.POST.get("password")
         confirmpassword = request.POST.get("confirm_password")
 
         if not fullname:
             errors["fullname"] = "Full name is required."
+        elif not FULLNAME_REGEX.match(fullname):
+            errors["fullname"] = "Name can contain only letters, spaces, and dot (.)."
+        elif CustomUser.objects.filter(fullname=fullname).exists():
+            errors["fullname"] = "Full name already exists."
 
         if not email:
             errors["email"] = "Email is required."
+        else:
+            try:
+                validate_email(email)
+            except ValidationError:
+                errors["email"] = "Enter a valid email address."
 
+            if CustomUser.objects.filter(email=email).exists():
+                errors["email"] = "Email is already registered."
+
+  
         if not password:
             errors["password"] = "Password is required."
-        elif len(password) < 6:
-            errors["password_length"] = "Password must be at least 6 characters."
+        elif not PASSWORD_REGEX.match(password):
+            errors["password"] = (
+                "Password must be at least 8 characters long "
+                "and include letters and numbers."
+            )
 
         if password and confirmpassword and password != confirmpassword:
-            errors["password_match"] = "Passwords do not match."
-
-        if email and CustomUser.objects.filter(email=email).exists():
-            errors["email_exist"] = "Email is already registered."
-
-        if fullname and CustomUser.objects.filter(fullname=fullname).exists():
-            errors["fullname_exist"] = "Fullname already exists."
+            errors["confirm_password"] = "Passwords do not match."
 
         if errors:
             return render(request, "user_signup.html", {"errors": errors})
@@ -80,20 +99,15 @@ def user_signup(request):
                 "password": password,
                 "otp": otp,
                 "otp_time": timezone.now().isoformat(),
-                "referral_token": request.session.get("referral_token")  #  NEW
+                "referral_token": request.session.get("referral_token"),
             }
 
             send_mail(
                 subject="Sipzy - Email Verification OTP",
                 message=(
                     f"Hello {fullname},\n\n"
-                    "You are receiving this email to verify your email address "
-                    "for creating a Sipzy account.\n\n"
-                    f"Your One-Time Password (OTP) is: {otp}\n\n"
-                    "⏰ This OTP is valid for 1.36 minutes only.\n\n"
-                    "If you did NOT attempt to create an account on Sipzy, "
-                    "please ignore this email.\n\n"
-                    "Thank you,\n"
+                    f"Your OTP is {otp}.\n\n"
+                    "This OTP is valid for 1.40 minutes.\n\n"
                     "Sipzy Team"
                 ),
                 from_email="sipzy505@gmail.com",
@@ -103,12 +117,12 @@ def user_signup(request):
 
             return redirect("user_signupotp")
 
-        except Exception as e:
-            print("SIGNUP ERROR:", e)
+        except Exception:
             errors["general"] = "Something went wrong. Please try again."
             return render(request, "user_signup.html", {"errors": errors})
 
     return render(request, "user_signup.html")
+
 
 import uuid
 from datetime import timedelta
@@ -163,7 +177,6 @@ def user_signupotp(request):
             })
 
         try:
-            # ✅ Create user (UNCHANGED)
             user = CustomUser.objects.create_user(
                 fullname=signup_data["fullname"],
                 email=signup_data["email"],
@@ -171,7 +184,6 @@ def user_signupotp(request):
             )
             user.save()
 
-            # 🔑 NEW: Referral handling
             referral_token = signup_data.get("referral_token")
 
             if referral_token:
@@ -181,13 +193,11 @@ def user_signupotp(request):
                         is_used=False
                     )
 
-                    # Prevent self-referral
                     if referral.referrer != user:
                         referral.is_used = True
                         referral.referred_user = user
                         referral.save()
 
-                        # 🎁 Create referral coupon for referrer
                         Coupon.objects.create(
                             code="REF" + uuid.uuid4().hex[:8],
                             coupon_source="referral",
@@ -205,7 +215,6 @@ def user_signupotp(request):
                 except Referral.DoesNotExist:
                     pass
 
-            # ✅ Clear session (UNCHANGED)
             del request.session["signup_data"]
             request.session.pop("referral_token", None)
 
@@ -334,92 +343,67 @@ def landing_page(request):
 
 @never_cache
 def user_login(request):
-  
+
     if request.user.is_authenticated and not request.user.is_superuser:
         return redirect("user_homepage")
 
     errors = {}
 
-    MAX_ATTEMPTS = 5
-    LOCKOUT_SECONDS = 300 
-
-    attempts = request.session.get("login_attempts", 0)
-    lockout_time = request.session.get("login_lockout_time")  
-    if lockout_time:
-        try:
-            lockout_dt = timezone.datetime.fromisoformat(lockout_time)
-            lockout_dt = lockout_dt.replace(tzinfo=timezone.utc).astimezone(timezone.get_current_timezone())
-            if timezone.now() < lockout_dt:
-                remaining = int((lockout_dt - timezone.now()).total_seconds())
-                minutes = remaining // 60
-                seconds = remaining % 60
-                errors["locked"] = f"Too many failed attempts. Try again in {minutes}m {seconds}s."
-                return render(request, "user_login.html", {"errors": errors})
-            else:
-                request.session.pop("login_attempts", None)
-                request.session.pop("login_lockout_time", None)
-                attempts = 0
-        except Exception:
-            request.session.pop("login_attempts", None)
-            request.session.pop("login_lockout_time", None)
-            attempts = 0
-
-    if request.method == 'POST':
+    if request.method == "POST":
         email = (request.POST.get("email") or "").strip()
         password = request.POST.get("password") or ""
 
+        # ---------- EMAIL ----------
         if not email:
             errors["email"] = "Email is required."
-        elif "@" not in email or "." not in email:
-            errors["email_format"] = "Enter a valid email address."
+        else:
+            try:
+                validate_email(email)
+            except ValidationError:
+                errors["email"] = "Enter a valid email address."
 
+        # ---------- PASSWORD ----------
         if not password:
             errors["password"] = "Password is required."
+        elif len(password) > 128:
+            errors["password"] = "Invalid password."
 
         if errors:
             return render(request, "user_login.html", {"errors": errors})
+
+        # ---------- AUTH ----------
         try:
             user = authenticate(request, email=email, password=password)
-        except Exception as e:
-            print("AUTH ERROR:", e)
+        except Exception:
             errors["server"] = "Authentication service unavailable. Try again later."
             return render(request, "user_login.html", {"errors": errors})
 
         if user is None:
-            attempts += 1
-            request.session["login_attempts"] = attempts
-            if attempts >= MAX_ATTEMPTS:
-                lockout_dt = timezone.now() + timedelta(seconds=LOCKOUT_SECONDS)
-                request.session["login_lockout_time"] = lockout_dt.isoformat()
-                errors["locked"] = f"Too many failed attempts. Try again in {LOCKOUT_SECONDS//60} minutes."
-                return render(request, "user_login.html", {"errors": errors})
-
             errors["invalid"] = "Invalid email or password."
-            remaining = MAX_ATTEMPTS - attempts
-            errors["attempts_left"] = f"{remaining} attempt(s) left before lockout."
             return render(request, "user_login.html", {"errors": errors})
-        try:
-            if not user.is_active:
-                errors["inactive"] = "User account is inactive. Contact support."
-                return render(request, "user_login.html", {"errors": errors})
 
+        # ---------- ACTIVE CHECK ----------
+        if not user.is_active:
+            errors["inactive"] = "User account is inactive. Contact support."
+            return render(request, "user_login.html", {"errors": errors})
+
+        # ---------- LOGIN ----------
+        try:
             login(request, user)
             request.session["is_loggedin"] = True
 
             try:
                 user.is_loggedin = True
                 user.save(update_fields=["is_loggedin"])
-            except Exception as e:
-                print("USER FLAG SAVE ERROR:", e)
-            request.session.pop("login_attempts", None)
-            request.session.pop("login_lockout_time", None)
+            except Exception:
+                pass
 
             return redirect("user_homepage")
 
-        except Exception as e:
-            print("LOGIN PROCESS ERROR:", e)
+        except Exception:
             errors["server"] = "Unable to complete login. Try again later."
             return render(request, "user_login.html", {"errors": errors})
+
     return render(request, "user_login.html")
 
 @never_cache
@@ -430,6 +414,7 @@ def user_logout(request):
         user.save()
         logout(request)
     return redirect("user_homepage")
+    
 @never_cache
 def forgot_password(request):
 
@@ -531,7 +516,7 @@ def reset_password(request):
 
     if request.user.is_authenticated and not request.user.is_superuser:
         return redirect("user_homepage")
-    
+
     email = request.session.get("forgot_email")
     verified = request.session.get("forgot_verified")
 
@@ -545,17 +530,19 @@ def reset_password(request):
         confirm_password = request.POST.get("confirm_password")
 
         if not password:
-            errors["password"] = "Password is required"
+            errors["password"] = "Password is required."
+        elif not PASSWORD_REGEX.match(password):
+            errors["password"] = (
+                "Password must be at least 8 characters long "
+                "and include letters and numbers."
+            )
 
-        elif len(password) < 6:
-            errors["password"] = "Password must be at least 6 characters long"
-
-
-        if password != confirm_password:
-            errors["confirm_password"] = "Passwords do not match"
+        if password and confirm_password and password != confirm_password:
+            errors["confirm_password"] = "Passwords do not match."
 
         if not errors:
             user = CustomUser.objects.get(email=email)
+
             user.password = make_password(password)
             user.save()
 
@@ -565,6 +552,7 @@ def reset_password(request):
             request.session.pop("forgot_verified", None)
 
             return redirect("user_login")
+
     return render(request, "reset_password.html", {"errors": errors})
 
 @never_cache

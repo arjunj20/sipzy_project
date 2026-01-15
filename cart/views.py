@@ -18,6 +18,7 @@ from django.db import transaction
 from wallet.models import Wallet
 from wallet.services import debit_wallet
 from coupons.services import apply_coupon_for_user
+import re
 
 
 @never_cache
@@ -349,50 +350,175 @@ def order_placed(request, uuid):
     return render(request, "order_placed.html", {"order": order})
 
 
+import re
+
 @never_cache
 def add_address(request):
+
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
+
+    errors = {}
+
     if request.method == "POST":
+        # Regex defined INSIDE the view
+        FULLNAME_REGEX = re.compile(r'^[A-Za-z .]+$')
+        PHONE_REGEX = re.compile(r'^[6-9]\d{9}$')
+        CITY_STATE_REGEX = re.compile(r'^[A-Za-z ]+$')
+        PINCODE_REGEX = re.compile(r'^\d{6}$')
+
+        full_name = request.POST.get("full_name", "").strip()
+        phone = request.POST.get("phone_number", "").strip()
+        line1 = request.POST.get("address_line1", "").strip()
+        line2 = request.POST.get("address_line2", "").strip()
+        city = request.POST.get("city", "").strip()
+        state = request.POST.get("state", "").strip()
+        pincode = request.POST.get("pincode", "").strip()
+
+        # Full Name
+        if not full_name:
+            errors["full_name"] = "Full name is required."
+        elif len(full_name) < 3:
+            errors["full_name"] = "Full name must be at least 3 characters."
+        elif not FULLNAME_REGEX.match(full_name):
+            errors["full_name"] = "Name can contain only letters, spaces, and dot (.)."
+
+        # Phone
+        if not phone:
+            errors["phone_number"] = "Phone number is required."
+        elif not PHONE_REGEX.match(phone):
+            errors["phone_number"] = "Enter a valid 10-digit phone number."
+
+        # Address Line 1
+        if not line1:
+            errors["address_line1"] = "Address line is required."
+        elif len(line1) < 5:
+            errors["address_line1"] = "Address must be at least 5 characters."
+
+        # City
+        if not city:
+            errors["city"] = "City is required."
+        elif not CITY_STATE_REGEX.match(city):
+            errors["city"] = "City can contain only letters and spaces."
+
+        # State
+        if not state:
+            errors["state"] = "State is required."
+        elif not CITY_STATE_REGEX.match(state):
+            errors["state"] = "State can contain only letters and spaces."
+
+        # Pincode
+        if not pincode:
+            errors["pincode"] = "Pincode is required."
+        elif not PINCODE_REGEX.match(pincode):
+            errors["pincode"] = "Enter a valid 6-digit pincode."
+
+        if errors:
+            return render(request, "add_address.html", {"errors": errors})
+
         Address.objects.create(
             user=request.user,
-            full_name=request.POST.get("full_name"),
-            phone_number=request.POST.get("phone_number"),
-            address_line1=request.POST.get("address_line1"),
-            address_line2=request.POST.get("address_line2"),
-            city=request.POST.get("city"),
-            state=request.POST.get("state"),
+            full_name=full_name,
+            phone_number=phone,
+            address_line1=line1,
+            address_line2=line2,
+            city=city,
+            state=state,
             country="India",
-            pincode=request.POST.get("pincode"),
+            pincode=pincode,
         )
 
         messages.success(request, "Address added successfully.")
-        return redirect("checkout_page")  
+        return redirect("checkout_page")
 
     return render(request, "add_address.html")
+
+
+import re
 
 @never_cache
 def edit_address(request, uuid):
 
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
-    
+
     address = get_object_or_404(Address, uuid=uuid, user=request.user)
+    errors = {}
 
     if request.method == "POST":
-        address.full_name = request.POST.get("full_name")
-        address.phone_number = request.POST.get("phone_number")
-        address.address_line1 = request.POST.get("address_line1")
-        address.address_line2 = request.POST.get("address_line2")
-        address.city = request.POST.get("city")
-        address.state = request.POST.get("state")
-        address.pincode = request.POST.get("pincode")
+        # Regex defined INSIDE the view
+        FULLNAME_REGEX = re.compile(r'^[A-Za-z .]+$')
+        PHONE_REGEX = re.compile(r'^[6-9]\d{9}$')
+        CITY_STATE_REGEX = re.compile(r'^[A-Za-z ]+$')
+        PINCODE_REGEX = re.compile(r'^\d{6}$')
+
+        full_name = request.POST.get("full_name", "").strip()
+        phone = request.POST.get("phone_number", "").strip()
+        line1 = request.POST.get("address_line1", "").strip()
+        line2 = request.POST.get("address_line2", "").strip()
+        city = request.POST.get("city", "").strip()
+        state = request.POST.get("state", "").strip()
+        pincode = request.POST.get("pincode", "").strip()
+
+        # Full Name
+        if not full_name:
+            errors["full_name"] = "Full name is required."
+        elif len(full_name) < 3:
+            errors["full_name"] = "Full name must be at least 3 characters."
+        elif not FULLNAME_REGEX.match(full_name):
+            errors["full_name"] = "Name can contain only letters, spaces, and dot (.)."
+
+        # Phone
+        if not phone:
+            errors["phone_number"] = "Phone number is required."
+        elif not PHONE_REGEX.match(phone):
+            errors["phone_number"] = "Enter a valid 10-digit phone number."
+
+        # Address Line 1
+        if not line1:
+            errors["address_line1"] = "Address line is required."
+        elif len(line1) < 5:
+            errors["address_line1"] = "Address must be at least 5 characters."
+
+        # City
+        if not city:
+            errors["city"] = "City is required."
+        elif not CITY_STATE_REGEX.match(city):
+            errors["city"] = "City can contain only letters and spaces."
+
+        # State
+        if not state:
+            errors["state"] = "State is required."
+        elif not CITY_STATE_REGEX.match(state):
+            errors["state"] = "State can contain only letters and spaces."
+
+        # Pincode
+        if not pincode:
+            errors["pincode"] = "Pincode is required."
+        elif not PINCODE_REGEX.match(pincode):
+            errors["pincode"] = "Enter a valid 6-digit pincode."
+
+        if errors:
+            return render(
+                request,
+                "edit_address.html",
+                {"address": address, "errors": errors}
+            )
+
+        address.full_name = full_name
+        address.phone_number = phone
+        address.address_line1 = line1
+        address.address_line2 = line2
+        address.city = city
+        address.state = state
+        address.pincode = pincode
         address.save()
 
         messages.success(request, "Address updated successfully.")
         return redirect("checkout_page")
 
     return render(request, "edit_address.html", {"address": address})
+
 
 
 def apply_coupon(request):

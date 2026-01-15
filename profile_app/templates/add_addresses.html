@@ -1,639 +1,334 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Add Address - Sipzy{% endblock %}
+
 {% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
     :root {
-        --primary-400: #B7472A;
-        --primary-500: #A24E34;
-        --primary-600: #8F3F2A;
-        --accent-400: #FCD34D;
-        --success: #10B981;
-        --warning: #F59E0B;
-        --error: #EF4444;
-        --text-primary: #1F2937;
-        --text-secondary: #6B7280;
-        --bg-card: #FFFFFF;
-        --bg-surface: #F8FAFC;
-        --border-color: #E5E7EB;
-        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-        --shadow-lg: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        --primary: #B7472A;
+        --primary-dark: #8F3720;
+        --bg-surface: #F8F9FA;
     }
 
-    * {
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        line-height: 1.6;
-    }
-
+    /* Page Entrance Animation */
     @keyframes fadeInUp {
-        0% { opacity: 0; transform: translateY(30px); }
-        100% { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes pulse-glow {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(183, 71, 42, 0.4); }
-        50% { box-shadow: 0 0 0 20px rgba(183, 71, 42, 0); }
-    }
-
-    @keyframes slideInLeft {
-        0% { opacity: 0; transform: translateX(-20px); }
-        100% { opacity: 1; transform: translateX(0); }
-    }
-
-    .fade-in-up {
+    .animate-fade-in {
         animation: fadeInUp 0.8s ease-out forwards;
     }
 
-    .stagger-animation > * {
+    /* Staggered form elements */
+    .form-step {
         opacity: 0;
-        animation: slideInLeft 0.5s ease-out forwards;
+        animation: fadeInUp 0.6s ease-out forwards;
     }
 
-    .stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
-    .stagger-animation > *:nth-child(2) { animation-delay: 0.15s; }
-    .stagger-animation > *:nth-child(3) { animation-delay: 0.2s; }
-    .stagger-animation > *:nth-child(4) { animation-delay: 0.25s; }
-    .stagger-animation > *:nth-child(5) { animation-delay: 0.3s; }
-    .stagger-animation > *:nth-child(6) { animation-delay: 0.35s; }
-    .stagger-animation > *:nth-child(7) { animation-delay: 0.4s; }
-
-    .profile-container {
-        background: var(--bg-surface);
+    /* Main Container */
+    .profile-page-bg {
         min-height: 100vh;
-        padding: 2rem 0;
-        position: relative;
-    }
-
-    .profile-container::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle at 20% 80%, rgba(183, 71, 42, 0.08) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 20%, rgba(162, 78, 52, 0.08) 0%, transparent 50%);
-        pointer-events: none;
-        z-index: -1;
-    }
-
-    .container {
-        max-width: 650px;
-        margin: 0 auto;
-        padding: 0 1.5rem;
-    }
-
-    /* Add Address Card */
-    .add-address-card {
-        background: var(--bg-card);
-        border-radius: 32px;
-        padding: 3rem 2.5rem;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-color);
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 2rem;
-    }
-
-    .add-address-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 5px;
-        background: linear-gradient(90deg, var(--primary-400), var(--primary-500), var(--accent-400));
-        border-radius: 32px 32px 0 0;
-    }
-
-    .add-address-header {
-        text-align: center;
-        margin-bottom: 2.5rem;
-        padding-bottom: 2rem;
-        border-bottom: 2px solid rgba(162, 78, 52, 0.1);
-        position: relative;
-    }
-
-    .add-address-icon {
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, var(--primary-400), var(--primary-500));
-        border-radius: 50%;
+        background: var(--bg-surface);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        font-size: 2.25rem;
-        margin: 0 auto 1.75rem;
-        box-shadow: var(--shadow-lg);
-        animation: pulse-glow 3s infinite;
+        padding: 40px 20px;
+        position: relative;
+        overflow: hidden;
     }
 
-    .add-address-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin: 0 0 0.5rem 0;
-        letter-spacing: -0.025em;
+    /* Floating Background Glows */
+    .bg-glow {
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: rgba(183, 71, 42, 0.05);
+        filter: blur(100px);
+        border-radius: 50%;
+        z-index: 0;
     }
 
-    .add-address-subtitle {
-        color: var(--text-secondary);
-        font-size: 1.125rem;
-        margin: 0;
-        font-weight: 400;
+    /* Card Styling */
+    .edit-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid white;
+        border-radius: 40px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 700px;
+        padding: 50px 40px;
+        z-index: 10;
+    }
+
+    /* Header Icon */
+    .header-icon {
+        width: 70px;
+        height: 70px;
+        background: black;
+        color: var(--primary);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin: 0 auto 20px;
     }
 
     /* Form Grid */
     .form-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-        margin-bottom: 1.5rem;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
     }
 
-    .form-group {
-        margin-bottom: 0;
+    .full-width {
+        grid-column: span 2;
     }
 
-    .form-group.full-width {
-        grid-column: 1 / -1;
-    }
-
-    .form-label {
-        display: block;
-        font-size: 1.05rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.875rem;
-        letter-spacing: -0.01em;
-    }
-
-    .form-control {
+    /* Form Elements */
+    .custom-input {
         width: 100%;
-        padding: 1.375rem 1.75rem;
-        border: 2px solid var(--border-color);
-        border-radius: 24px;
-        font-size: 1.05rem;
+        background: #f3f4f6;
+        border: 2px solid transparent;
+        padding: 16px 20px;
+        border-radius: 18px;
         font-weight: 500;
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(12px);
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        color: var(--text-primary);
-        box-shadow: var(--shadow-sm);
-    }
-
-    .form-control:focus {
+        transition: all 0.3s;
         outline: none;
-        border-color: var(--primary-500);
-        box-shadow: 0 0 0 4px rgba(162, 78, 52, 0.12), var(--shadow-md);
+    }
+
+    .custom-input:focus {
         background: white;
-        transform: translateY(-2px);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(183, 71, 42, 0.1);
     }
 
-    .form-control::placeholder {
-        color: var(--text-secondary);
-        opacity: 0.7;
+    .custom-input[readonly] {
+        background: #eceef1;
+        cursor: not-allowed;
+        color: #6b7280;
     }
 
-    /* Input helpers */
-    .input-helper {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        margin-top: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    /* Error Messages */
-    .error-message {
+    .input-label {
         display: block;
-        color: var(--error);
-        font-size: 0.9rem;
-        margin-top: 0.75rem;
-        padding: 1rem 1.25rem;
-        background: rgba(239, 68, 68, 0.08);
-        border: 1px solid rgba(239, 68, 68, 0.15);
-        border-radius: 16px;
-        animation: fadeInUp 0.4s ease-out;
-        font-weight: 500;
-    }
-
-    /* Address Preview */
-    .address-preview {
-        background: rgba(248, 250, 252, 0.6);
-        border: 2px dashed rgba(162, 78, 52, 0.2);
-        border-radius: 20px;
-        padding: 2rem;
-        margin-top: 2rem;
-        text-align: center;
-        transition: all 0.3s ease;
-    }
-
-    .address-preview.active {
-        border-color: var(--primary-500);
-        background: rgba(183, 71, 42, 0.05);
-        box-shadow: var(--shadow-md);
-    }
-
-    .preview-icon {
-        font-size: 3rem;
-        color: var(--primary-500);
-        margin-bottom: 1rem;
-    }
-
-    /* Buttons */
-    .btn {
-        padding: 1.375rem 2.75rem;
-        border-radius: 28px;
+        font-size: 0.75rem;
         font-weight: 700;
-        font-size: 1.15rem;
-        transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.875rem;
-        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #9ca3af;
+        margin-bottom: 8px;
+        margin-left: 4px;
+    }
+
+    /* Error Styling */
+    .error-tag {
+        color: #ef4444;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-top: 4px;
+        margin-left: 4px;
+    }
+
+    /* Preview Box */
+    .preview-box {
+        background: black;
+        border-radius: 24px;
+        padding: 25px;
+        margin-top: 30px;
+        color: white;
         position: relative;
         overflow: hidden;
-        min-height: 60px;
-        cursor: pointer;
-        font-family: inherit;
     }
 
-    .btn-primary {
-        background: linear-gradient(135deg, var(--primary-400), var(--primary-500));
-        color: white;
-        box-shadow: var(--shadow-lg);
-        width: 100%;
-        position: relative;
+    .preview-box::after {
+        content: '\f3c5';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        right: -10px;
+        bottom: -10px;
+        font-size: 5rem;
+        opacity: 0.1;
+        color: var(--primary);
     }
 
-    .btn-primary:hover {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 30px 60px rgba(162, 78, 52, 0.45);
+    /* Loader */
+    .loader-spin {
+        animation: spin 1s linear infinite;
     }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    .btn-primary:active {
-        transform: translateY(-2px) scale(1);
-    }
-
-    .btn-secondary {
-        background: transparent;
-        color: var(--primary-500);
-        border: 2px solid var(--primary-500);
-        font-weight: 600;
-        padding: 1.125rem 2.25rem;
-        width: auto;
-        margin: 0 auto;
-        transition: all 0.3s ease;
-        border-radius: 24px;
-    }
-
-    .btn-secondary:hover {
-        background: var(--primary-500);
-        color: white;
-        transform: translateY(-3px);
-        box-shadow: 0 15px 35px rgba(162, 78, 52, 0.3);
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .container {
-            padding: 0 1rem;
-        }
-        
-        .add-address-card {
-            padding: 2.5rem 1.75rem;
-            margin: 1rem;
-            border-radius: 28px;
-        }
-        
-        .add-address-title {
-            font-size: 2rem;
-        }
-        
-        .add-address-icon {
-            width: 70px;
-            height: 70px;
-            font-size: 2rem;
-        }
-        
-        .form-grid {
-            grid-template-columns: 1fr;
-            gap: 1.25rem;
-        }
-        
-        .form-control {
-            padding: 1.25rem 1.5rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .add-address-card {
-            padding: 2rem 1.5rem;
-            margin: 0.5rem;
-        }
-        
-        .add-address-title {
-            font-size: 1.75rem;
-        }
-    }
-
-    /* Accessibility */
-    @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-        }
-    }
-
-    /* Focus styles */
-    .form-control:focus,
-    .btn:focus {
-        outline: 3px solid rgba(162, 78, 52, 0.5);
-        outline-offset: 2px;
-    }
-
-    .btn:disabled {
-        opacity: 0.8;
-        cursor: not-allowed;
-        transform: none !important;
+    @media (max-width: 640px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .full-width { grid-column: span 1; }
     }
 </style>
 
-<div class="profile-container">
-    <div class="container">
-        <div class="add-address-card fade-in-up">
-            <!-- Header -->
-            <div class="add-address-header">
-                <div class="add-address-icon">📍</div>
-                <h1 class="add-address-title">Add Address</h1>
-                <p class="add-address-subtitle">Save your delivery address for faster checkout</p>
+<div class="profile-page-bg">
+    <div class="bg-glow" style="top: -100px; left: -100px;"></div>
+    <div class="bg-glow" style="bottom: -100px; right: -100px;"></div>
+
+    <div class="edit-card animate-fade-in">
+        <div class="header-icon">
+            <i class="fa-solid fa-map-location-dot"></i>
+        </div>
+        
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight">Add Address</h1>
+            <p class="text-gray-500 font-medium">Create a new delivery destination</p>
+        </div>
+
+        <form method="POST" id="addAddressForm" class="form-grid">
+            {% csrf_token %}
+
+            <div class="form-step" style="animation-delay: 0.1s;">
+                <label class="input-label">Full Name</label>
+                <input type="text" name="full_name" id="full_name" class="custom-input" placeholder="Recipient Name" required>
+                {% if errors.full_name %}<span class="error-tag">{{ errors.full_name }}</span>{% endif %}
             </div>
 
-            <!-- Form -->
-            <form method="POST" id="addAddressForm">
-                {% csrf_token %}
+            <div class="form-step" style="animation-delay: 0.15s;">
+                <label class="input-label">Phone Number</label>
+                <input type="tel" name="phone_number" id="phone_number" class="custom-input" placeholder="10-digit mobile" required>
+                {% if errors.phone_number %}<span class="error-tag">{{ errors.phone_number }}</span>{% endif %}
+            </div>
 
-                <div class="form-grid stagger-animation">
-                    <!-- Full Name -->
-                    <div class="form-group">
-                        <label class="form-label" for="full_name">Full Name</label>
-                        <input 
-                            type="text" 
-                            id="full_name"
-                            name="full_name"
-                            class="form-control"
-                            placeholder="Full Name"
-                            
-                            autocomplete="name"
-                        >
-                        <div class="input-helper">
-                            <span>👤</span>
-                            <span>As it appears on your ID</span>
-                        </div>
-                    </div>
-                    {% if errors.full_name %}
-    <span class="error-message">
-        {{ errors.full_name }}
-    </span>
-{% endif %}
-
-                    <!-- Phone Number -->
-                    <div class="form-group">
-                        <label class="form-label" for="phone_number">Phone Number</label>
-                        <input 
-                            type="tel" 
-                            id="phone_number"
-                            name="phone_number"
-                            class="form-control"
-                            placeholder="+91 98765 43210"
-                            pattern="[0-9]{10,12}"
-                            
-                            autocomplete="tel"
-                        >
-                        <div class="input-helper">
-                            <span>📱</span>
-                            <span>10-12 digits only</span>
-                        </div>
-                    </div>
-                    {% if errors.phone_number %}
-    <span class="error-message">
-        {{ errors.phone_number }}
-    </span>
-{% endif %}
-                    <!-- Address Line 1 -->
-                    <div class="form-group full-width">
-                        <label class="form-label" for="address_line1">Address Line 1</label>
-                        <input 
-                            type="text" 
-                            id="address_line1"
-                            name="address_line1"
-                            class="form-control"
-                            placeholder="House number, street name, landmark"
-                            
-                            autocomplete="address-line1"
-                        >
-                    </div>
-                    {% if errors.address_line1 %}
-    <span class="error-message">
-        {{ errors.address_line1 }}
-    </span>
-{% endif %}
-
-                    <!-- Address Line 2 -->
-                    <div class="form-group full-width">
-                        <label class="form-label" for="address_line2">Address Line 2 (Optional)</label>
-                        <input 
-                            type="text" 
-                            id="address_line2"
-                            name="address_line2"
-                            class="form-control"
-                            placeholder="Apartment, suite, unit, building, floor, etc."
-                            autocomplete="address-line2"
-                        >
-                    </div>
-
-                    <!-- Pincode -->
-                    <div class="form-group">
-                        <label class="form-label" for="pincode">Pincode</label>
-                        <input 
-                            type="text" 
-                            id="pincode"
-                            name="pincode"
-                            class="form-control"
-                            placeholder="400001"
-                            pattern="[0-9]{6}"
-                            maxlength="6"
-                            
-                            autocomplete="postal-code"
-                        >
-                        <div class="input-helper">
-                            <span>📮</span>
-                            <span>6 digit PIN code</span>
-                        </div>
-                    </div>
-                    {% if errors.pincode %}
-    <span class="error-message">
-        {{ errors.pincode }}
-    </span>
-{% endif %}
-
-                    <!-- City -->
-                    <div class="form-group">
-                        <label class="form-label" for="city">City</label>
-                        <input 
-                            type="text" 
-                            id="city"
-                            name="city"
-                            class="form-control"
-                            placeholder="Mumbai"
-                            
-                            autocomplete="address-level2"
-                        >
-                    </div>
-                    {% if errors.city %}
-    <span class="error-message">
-        {{ errors.city }}
-    </span>
-{% endif %}
-
-                    <!-- State -->
-                    <div class="form-group full-width">
-                        <label class="form-label" for="state">State</label>
-                        <input 
-                            type="text" 
-                            id="state"
-                            name="state"
-                            class="form-control"
-                            placeholder="Maharashtra"
-                            
-                            autocomplete="address-level1"
-                        >
+            <div class="full-width form-step" style="animation-delay: 0.2s;">
+                <label class="input-label flex justify-between">
+                    Pincode 
+                    <span id="pincode-status" class="normal-case text-[10px] text-amber-600 font-bold">Auto-fills City & State</span>
+                </label>
+                <div class="relative">
+                    <input type="text" name="pincode" id="pincode" class="custom-input" placeholder="6-digit PIN" maxlength="6" required>
+                    <div id="api-loader" class="absolute right-4 top-1/2 -translate-y-1/2 hidden">
+                        <i class="fa-solid fa-circle-notch loader-spin text-primary"></i>
                     </div>
                 </div>
-                {% if errors.state %}
-    <span class="error-message">
-        {{ errors.state }}
-    </span>
-{% endif %}
+                {% if errors.pincode %}<span class="error-tag">{{ errors.pincode }}</span>{% endif %}
+            </div>
 
-                <!-- Address Preview -->
-                <div class="address-preview" id="addressPreview">
-                    <div class="preview-icon">📍</div>
-                    <div style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">
-                        Address Preview
-                    </div>
-                    <div id="previewContent" style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6;">
-                        Start typing to see your address preview
-                    </div>
+            <div class="full-width form-step" style="animation-delay: 0.25s;">
+                <label class="input-label">Address Line 1</label>
+                <input type="text" name="address_line1" id="address_line1" class="custom-input" placeholder="House / Flat No., Street, Landmark" required>
+                {% if errors.address_line1 %}<span class="error-tag">{{ errors.address_line1 }}</span>{% endif %}
+            </div>
+
+            <div class="full-width form-step" style="animation-delay: 0.3s;">
+                <label class="input-label">Address Line 2 (Optional)</label>
+                <input type="text" name="address_line2" id="address_line2" class="custom-input" placeholder="Apartment, Area, Sector">
+            </div>
+
+            <div class="form-step" style="animation-delay: 0.35s;">
+                <label class="input-label">City</label>
+                <input type="text" name="city" id="city" class="custom-input" placeholder="City" readonly required>
+                {% if errors.city %}<span class="error-tag">{{ errors.city }}</span>{% endif %}
+            </div>
+
+            <div class="form-step" style="animation-delay: 0.4s;">
+                <label class="input-label">State</label>
+                <input type="text" name="state" id="state" class="custom-input" placeholder="State" readonly required>
+                {% if errors.state %}<span class="error-tag">{{ errors.state }}</span>{% endif %}
+            </div>
+
+            <div class="full-width form-step preview-box shadow-2xl" style="animation-delay: 0.45s;">
+                <h4 class="text-[10px] font-bold text-[#B7472A] uppercase mb-2 tracking-widest">Address Preview</h4>
+                <div id="previewContent" class="text-sm font-medium leading-relaxed opacity-90 text-white">
+                    Start typing to see your delivery label...
                 </div>
+            </div>
 
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary" id="submitBtn">
-                    <span id="submitIcon">💾</span>
-                    Save Address
+            <div class="full-width flex flex-col sm:flex-row gap-4 mt-6 form-step" style="animation-delay: 0.5s;">
+                <button type="submit" id="submitBtn" class="flex-1 bg-black text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-gray-800 transform active:scale-95 transition-all">
+                    <span id="btnText">Save Address</span>
                 </button>
-            </form>
-
-            <!-- Secondary Actions -->
-            <div style="text-align: center; margin-top: 2.5rem; padding-top: 2.5rem; border-top: 2px solid var(--border-color);">
-                <a href="{% url 'user_profile' %}" class="btn btn-secondary">
-                    👤 Back to Profile
+                <a href="{% url 'user_profile' %}" class="flex-1 border-2 border-gray-200 py-4 rounded-2xl font-bold text-center text-gray-500 hover:bg-gray-50 transition-all">
+                    Cancel
                 </a>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Real-time address preview
-        setupAddressPreview();
-        
-        // Input validation & formatting
-        setupInputValidation();
-        
-        // Form submission
-        setupFormSubmission();
-    });
-
-    function setupAddressPreview() {
-        const inputs = {
-            full_name: document.getElementById('full_name'),
-            phone_number: document.getElementById('phone_number'),
-            address_line1: document.getElementById('address_line1'),
-            address_line2: document.getElementById('address_line2'),
-            city: document.getElementById('city'),
-            state: document.getElementById('state'),
-            pincode: document.getElementById('pincode')
-        };
-        
-        const preview = document.getElementById('addressPreview');
+    document.addEventListener("DOMContentLoaded", function() {
+        const pincodeInput = document.getElementById('pincode');
+        const cityInput = document.getElementById('city');
+        const stateInput = document.getElementById('state');
+        const statusText = document.getElementById('pincode-status');
+        const loader = document.getElementById('api-loader');
         const previewContent = document.getElementById('previewContent');
+        const form = document.getElementById('addAddressForm');
 
+        // Update the live black label preview
         function updatePreview() {
-            const values = Object.values(inputs).map(input => input.value.trim()).filter(Boolean);
-            
-            if (values.length >= 4) {
-                preview.classList.add('active');
-                previewContent.innerHTML = `
-                    <strong>${inputs.full_name.value || 'Name'}</strong><br>
-                    ${inputs.address_line1.value || ''}${inputs.address_line2.value ? ', ' + inputs.address_line2.value : ''}<br>
-                    ${inputs.pincode.value || ''} ${inputs.city.value || ''}, ${inputs.state.value || ''}
-                `;
-            } else {
-                preview.classList.remove('active');
-                previewContent.textContent = 'Start typing to see your address preview';
+            const name = document.getElementById('full_name').value || '';
+            const a1 = document.getElementById('address_line1').value || '';
+            const a2 = document.getElementById('address_line2').value;
+            const city = cityInput.value || '';
+            const state = stateInput.value || '';
+            const pin = pincodeInput.value || '';
+
+            if(!name && !a1 && !pin) {
+                previewContent.innerHTML = "Start typing to see your delivery label...";
+                return;
             }
+
+            previewContent.innerHTML = `<strong>${name || 'Recipient'}</strong><br>${a1 || 'Street'}${a2 ? ', ' + a2 : ''}<br>${city || 'City'}, ${state || 'State'} - ${pin || 'Pincode'}`;
         }
 
-        Object.values(inputs).forEach(input => {
-            input.addEventListener('input', updatePreview);
-        });
-    }
-
-    function setupInputValidation() {
-        // Phone number formatting
-        const phoneInput = document.getElementById('phone_number');
-        phoneInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-            if (this.value.length > 12) {
-                this.value = this.value.slice(0, 12);
-            }
+        // Add listeners to all fields for live preview
+        ['full_name', 'address_line1', 'address_line2', 'pincode', 'city', 'state'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('input', updatePreview);
         });
 
-        // Pincode formatting
-        const pincodeInput = document.getElementById('pincode');
+        // Pincode API Integration
         pincodeInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-            if (this.value.length > 6) {
-                this.value = this.value.slice(0, 6);
+            const pin = this.value.replace(/\D/g, ""); // Keep only numbers
+            this.value = pin;
+
+            if (pin.length === 6) {
+                loader.classList.remove('hidden');
+                statusText.textContent = "Fetching details...";
+
+                fetch(`https://api.postalpincode.in/pincode/${pin}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        loader.classList.add('hidden');
+                        if (data[0].Status === "Success") {
+                            const details = data[0].PostOffice[0];
+                            cityInput.value = details.District;
+                            stateInput.value = details.State;
+                            statusText.textContent = "✓ Verified";
+                            statusText.style.color = "#10b981";
+                            updatePreview();
+                        } else {
+                            statusText.textContent = "✕ Invalid Pincode";
+                            statusText.style.color = "#ef4444";
+                        }
+                    })
+                    .catch(() => {
+                        loader.classList.add('hidden');
+                        statusText.textContent = "✕ Connection Error";
+                    });
+            } else {
+                statusText.textContent = "6-digit code";
+                statusText.style.color = "#d97706";
             }
         });
-    }
 
-    function setupFormSubmission() {
-        document.getElementById('addAddressForm').addEventListener('submit', function() {
+        // Submit loading state
+        form.addEventListener('submit', function() {
+            const btnText = document.getElementById('btnText');
             const submitBtn = document.getElementById('submitBtn');
-            const submitIcon = document.getElementById('submitIcon');
-            
+            btnText.innerHTML = '<i class="fa-solid fa-circle-notch loader-spin mr-2"></i> Saving...';
             submitBtn.disabled = true;
-            submitIcon.textContent = '⏳';
-            submitBtn.innerHTML = 'Saving Address...';
         });
-    }
+    });
 </script>
-
 {% endblock %}
