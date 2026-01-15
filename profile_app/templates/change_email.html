@@ -1,528 +1,264 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Change Email - Sipzy{% endblock %}
+
 {% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
     :root {
-        --primary-400: #B7472A;
-        --primary-500: #A24E34;
-        --primary-600: #8F3F2A;
-        --accent-400: #FCD34D;
-        --success: #10B981;
-        --warning: #F59E0B;
-        --error: #EF4444;
-        --text-primary: #1F2937;
-        --text-secondary: #6B7280;
-        --bg-card: #FFFFFF;
-        --bg-surface: #F8FAFC;
-        --border-color: #E5E7EB;
-        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-        --shadow-lg: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        --primary: #B7472A;
+        --primary-dark: #8F3720;
+        --bg-surface: #F8F9FA;
     }
 
-    * {
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        line-height: 1.6;
-    }
-
+    /* Page Entrance Animation */
     @keyframes fadeInUp {
-        0% { opacity: 0; transform: translateY(30px); }
-        100% { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes pulse-glow {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(183, 71, 42, 0.4); }
-        50% { box-shadow: 0 0 0 20px rgba(183, 71, 42, 0); }
-    }
-
-    @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-    }
-
-    .fade-in-up {
+    .animate-fade-in {
         animation: fadeInUp 0.8s ease-out forwards;
     }
 
-    .profile-container {
-        background: var(--bg-surface);
+    /* Staggered form elements */
+    .form-step {
+        opacity: 0;
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    /* Main Container */
+    .profile-page-bg {
         min-height: 100vh;
-        padding: 2rem 0;
-        position: relative;
-    }
-
-    .profile-container::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle at 20% 80%, rgba(183, 71, 42, 0.08) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 20%, rgba(162, 78, 52, 0.08) 0%, transparent 50%);
-        pointer-events: none;
-        z-index: -1;
-    }
-
-    .container {
-        max-width: 500px;
-        margin: 0 auto;
-        padding: 0 1.5rem;
-    }
-
-    /* Change Email Card */
-    .change-email-card {
-        background: var(--bg-card);
-        border-radius: 32px;
-        padding: 3.5rem 2.5rem;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-color);
+        background: var(--bg-surface);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
         position: relative;
         overflow: hidden;
-        margin-bottom: 2rem;
-        text-align: center;
     }
 
-    .change-email-card::before {
-        content: '';
+    /* Floating Background Glows */
+    .bg-glow {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 6px;
-        background: linear-gradient(90deg, var(--primary-400), var(--accent-400), var(--primary-500));
-        border-radius: 32px 32px 0 0;
-    }
-
-    .change-email-card::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 120px;
-        height: 120px;
-        background: radial-gradient(circle, rgba(183, 71, 42, 0.08) 0%, transparent 70%);
+        width: 400px;
+        height: 400px;
+        background: rgba(183, 71, 42, 0.05);
+        filter: blur(100px);
         border-radius: 50%;
-        animation: float 6s ease-in-out infinite;
         z-index: 0;
     }
 
-    .change-email-content {
-        position: relative;
-        z-index: 1;
+    /* Card Styling */
+    .edit-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid white;
+        border-radius: 40px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 500px;
+        padding: 50px 40px;
+        z-index: 10;
+        text-align: center;
     }
 
-    .change-email-header {
-        margin-bottom: 2.5rem;
-        padding-bottom: 2rem;
-        border-bottom: 2px solid rgba(162, 78, 52, 0.1);
-    }
-
-    .change-email-icon {
-        width: 90px;
-        height: 90px;
-        background: linear-gradient(135deg, var(--primary-400), var(--primary-500));
-        border-radius: 50%;
+    /* Icon Header */
+    .header-icon {
+        width: 80px;
+        height: 80px;
+        background: black;
+        color: var(--primary);
+        border-radius: 24px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        font-size: 2.5rem;
-        margin: 0 auto 1.75rem;
-        box-shadow: var(--shadow-lg);
-        animation: pulse-glow 3s infinite;
+        font-size: 2rem;
+        margin: 0 auto 25px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
     }
 
-    .change-email-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin: 0 0 0.75rem 0;
-        letter-spacing: -0.025em;
-    }
-
-    .change-email-subtitle {
-        color: var(--text-secondary);
-        font-size: 1.125rem;
-        margin: 0;
-        font-weight: 400;
-        max-width: 320px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    /* Email Input */
-    .form-group {
-        margin-bottom: 2.25rem;
-        position: relative;
-    }
-
-    .form-label {
-        display: block;
-        font-size: 1.05rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.875rem;
-        letter-spacing: -0.01em;
-        text-align: left;
-    }
-
-    .email-input-wrapper {
-        position: relative;
-        max-width: 380px;
-        margin: 0 auto;
-    }
-
-    .form-control {
+    /* Form Elements */
+    .custom-input {
         width: 100%;
-        padding: 1.5rem 2rem 1.5rem 3rem;
-        border: 2px solid var(--border-color);
-        border-radius: 28px;
-        font-size: 1.1rem;
+        background: #f3f4f6;
+        border: 2px solid transparent;
+        padding: 18px 20px 18px 50px;
+        border-radius: 20px;
         font-weight: 500;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(16px);
-        transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        color: var(--text-primary);
-        box-shadow: var(--shadow-sm);
+        transition: all 0.3s;
+        outline: none;
         text-align: left;
     }
 
-    .form-control:focus {
-        outline: none;
-        border-color: var(--primary-500);
-        box-shadow: 0 0 0 4px rgba(162, 78, 52, 0.15), var(--shadow-lg);
+    .custom-input.is-invalid {
+        border-color: #ef4444;
+        background: #fef2f2;
+    }
+
+    .custom-input:focus {
         background: white;
-        transform: translateY(-3px);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(183, 71, 42, 0.1);
     }
 
-    .form-control::placeholder {
-        color: var(--text-secondary);
-        opacity: 0.6;
+    .input-wrapper {
+        position: relative;
     }
 
-    .email-icon {
+    .input-wrapper i {
         position: absolute;
-        left: 1.25rem;
+        left: 20px;
         top: 50%;
         transform: translateY(-50%);
-        font-size: 1.25rem;
-        color: var(--primary-500);
-        z-index: 2;
+        color: #9ca3af;
+        transition: color 0.3s;
     }
 
-    .email-validation {
-        margin-top: 1rem;
-        padding: 1rem 1.5rem;
-        border-radius: 20px;
-        font-size: 0.95rem;
-        font-weight: 500;
-        display: none;
-        align-items: center;
-        gap: 0.75rem;
-        max-width: 380px;
-        margin-left: auto;
-        margin-right: auto;
+    .input-wrapper:focus-within i {
+        color: var(--primary);
     }
 
-    .validation-success {
-        background: rgba(16, 185, 129, 0.1);
-        color: var(--success);
-        border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-
-    .validation-error {
-        background: rgba(239, 68, 68, 0.08);
-        color: var(--error);
-        border: 1px solid rgba(239, 68, 68, 0.15);
-    }
-
-    /* OTP Info */
-    .otp-info {
-        background: rgba(248, 250, 252, 0.8);
-        border: 2px dashed rgba(162, 78, 52, 0.2);
-        border-radius: 24px;
-        padding: 2rem;
-        margin: 2rem 0;
+    /* Info Note (Subtle Version) */
+    .info-note {
+        font-size: 0.85rem;
+        color: #6b7280;
+        background: #f9fafb;
+        padding: 15px;
+        border-radius: 15px;
+        margin: 25px 0;
+        border: 1px solid #f3f4f6;
+        display: flex;
+        gap: 12px;
         text-align: left;
     }
 
-    .otp-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 48px;
-        height: 48px;
-        background: linear-gradient(135deg, var(--primary-400), var(--primary-500));
-        color: white;
-        border-radius: 16px;
-        font-size: 1.25rem;
-        margin-right: 1rem;
-        flex-shrink: 0;
+    .info-note i {
+        color: var(--primary);
+        margin-top: 3px;
     }
 
-    .otp-content h5 {
-        color: var(--primary-500);
-        font-weight: 700;
-        margin: 0 0 0.5rem 0;
-        font-size: 1.1rem;
+    /* Error Shake Animation */
+    @keyframes shake {
+        10%, 90% { transform: translate3d(-1px, 0, 0); }
+        40%, 60% { transform: translate3d(2px, 0, 0); }
     }
+    .animate-shake { animation: shake 0.4s both; }
 
-    .otp-content p {
-        color: var(--text-secondary);
-        margin: 0;
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-
-    /* Buttons */
-    .btn {
-        padding: 1.5rem 3rem;
-        border-radius: 32px;
-        font-weight: 700;
-        font-size: 1.15rem;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        border: none;
+    /* Error Alert Styling */
+    .error-alert {
+        background: #fef2f2;
+        border: 1px solid #fee2e2;
+        color: #dc2626;
+        padding: 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 20px;
         display: flex;
         align-items: center;
+        gap: 10px;
         justify-content: center;
-        gap: 1rem;
-        text-decoration: none;
-        position: relative;
-        overflow: hidden;
-        min-height: 64px;
-        cursor: pointer;
-        font-family: inherit;
-        width: 100%;
-        max-width: 380px;
-        margin: 0 auto;
     }
 
-    .btn-primary {
-        background: linear-gradient(135deg, var(--primary-400), var(--primary-500));
-        color: white;
-        box-shadow: var(--shadow-lg);
-        position: relative;
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-6px) scale(1.03);
-        box-shadow: 0 35px 70px rgba(162, 78, 52, 0.5);
-    }
-
-    .btn-primary:active {
-        transform: translateY(-3px) scale(1.01);
-    }
-
-    .btn-secondary {
-        background: transparent;
-        color: var(--primary-500);
-        border: 2px solid var(--primary-500);
-        font-weight: 600;
-        padding: 1.25rem 2.5rem;
-        width: auto;
-        margin: 0;
-        transition: all 0.3s ease;
-        border-radius: 28px;
-        max-width: none;
-    }
-
-    .btn-secondary:hover {
-        background: var(--primary-500);
-        color: white;
-        transform: translateY(-3px);
-        box-shadow: 0 20px 40px rgba(162, 78, 52, 0.3);
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .container {
-            padding: 0 1rem;
-        }
-        
-        .change-email-card {
-            padding: 3rem 2rem;
-            margin: 1rem;
-            border-radius: 28px;
-        }
-        
-        .change-email-title {
-            font-size: 2rem;
-        }
-        
-        .change-email-icon {
-            width: 75px;
-            height: 75px;
-            font-size: 2.125rem;
-        }
-        
-        .form-control {
-            padding: 1.375rem 1.75rem 1.375rem 2.75rem;
-            font-size: 1rem;
-        }
-        
-        .otp-info {
-            padding: 1.75rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .change-email-card {
-            padding: 2.5rem 1.5rem;
-            margin: 0.5rem;
-        }
-        
-        .change-email-title {
-            font-size: 1.75rem;
-        }
-    }
-
-    /* Accessibility */
-    @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-        }
-    }
-
-    /* Focus styles */
-    .form-control:focus,
-    .btn:focus {
-        outline: 3px solid rgba(162, 78, 52, 0.5);
-        outline-offset: 2px;
-    }
-
-    .btn:disabled {
-        opacity: 0.8;
-        cursor: not-allowed;
-        transform: none !important;
-    }
 </style>
 
-<div class="profile-container">
-    <div class="container">
-        <div class="change-email-card fade-in-up">
-            <div class="change-email-content">
-                <!-- Header -->
-                <div class="change-email-header">
-                    <div class="change-email-icon">📧</div>
-                    <h1 class="change-email-title">Change Email</h1>
-                    <p class="change-email-subtitle">
-                        Enter your new email address. We'll send a verification OTP to confirm.
-                    </p>
+<div class="profile-page-bg">
+    <div class="bg-glow" style="top: -100px; left: -100px;"></div>
+    <div class="bg-glow" style="bottom: -100px; right: -100px;"></div>
+
+    <div class="edit-card animate-fade-in">
+        <div class="header-icon">
+            <i class="fa-solid fa-envelope-open-text"></i>
+        </div>
+        
+        <h1 class="text-3xl font-black text-gray-900 tracking-tight">Update Email</h1>
+        <p class="text-gray-500 font-medium mt-2 mb-8">Secure your Sipzy account</p>
+
+        {% if errors.invalid or errors.general %}
+        <div class="error-alert animate-shake">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {{ errors.invalid }}{{ errors.general }}
+        </div>
+        {% endif %}
+
+        <form method="POST" id="changeEmailForm" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="form-step" style="animation-delay: 0.1s;">
+                <label class="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 ml-1 text-left">New Email Address</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-at"></i>
+                    <input 
+                        type="email" 
+                        id="email"
+                        name="email"
+                        class="custom-input {% if errors.email or errors.email_exist %}is-invalid{% endif %}"
+                        placeholder="new.email@sipzy.com"
+                        value="{{ request.POST.email }}"
+                        required
+                    >
                 </div>
-
-                <!-- Form -->
-                <form method="POST" id="changeEmailForm">
-                    {% csrf_token %}
-
-                    <div class="form-group">
-                        <label class="form-label" for="email">New Email Address</label>
-                        <div class="email-input-wrapper">
-                            <span class="email-icon">✉️</span>
-                            <input 
-                                type="email" 
-                                id="email"
-                                name="email"
-                                class="form-control"
-                                placeholder="yourname@example.com"
-                                required
-                                autocomplete="email"
-                            >
-                        </div>
-                        <div id="emailValidation" class="email-validation"></div>
-                    </div>
-
-                    <!-- OTP Info -->
-                    <div class="otp-info">
-                        <div style="display: flex; align-items: flex-start; gap: 1rem;">
-                            <div class="otp-icon">📱</div>
-                            <div class="otp-content">
-                                <h5>How it works</h5>
-                                <p>
-                                    We'll send a 6-digit verification code to your new email. 
-                                    Enter it to confirm the change. Code expires in 10 minutes.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button type="submit" class="btn btn-primary" id="submitBtn">
-                        <span id="submitIcon">✨</span>
-                        Send OTP
-                    </button>
-                </form>
-
-                <!-- Secondary Action -->
-                <div style="margin-top: 2.5rem; padding-top: 2rem; border-top: 2px solid var(--border-color);">
-                    <a href="{% url 'user_profile' %}" class="btn btn-secondary">
-                        👤 Back to Profile
-                    </a>
-                </div>
+                
+                <p id="emailError" class="text-red-500 text-[11px] mt-2 ml-2 font-medium h-4 text-left">
+                    {% if errors.email %}{{ errors.email }}{% endif %}
+                    {% if errors.email_exist %}{{ errors.email_exist }}{% endif %}
+                </p>
             </div>
+
+            <div class="info-note form-step" style="animation-delay: 0.2s;">
+                <i class="fa-solid fa-circle-info"></i>
+                <p>We'll send a <strong>6-digit OTP</strong> to this email. Please verify it within 1.40 minutes to complete the update.</p>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-black text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-gray-900 transform active:scale-95 transition-all duration-300 form-step" style="animation-delay: 0.3s;">
+                <span id="btnText">Send Verification Code</span>
+            </button>
+        </form>
+
+        <div class="mt-8 pt-6 border-t border-gray-100 form-step" style="animation-delay: 0.4s;">
+            <a href="{% url 'user_profile' %}" class="inline-block text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-[#B7472A] transition">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Return to Profile
+            </a>
         </div>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Email validation
-        setupEmailValidation();
+    const form = document.getElementById('changeEmailForm');
+    const emailInput = document.getElementById('email');
+    const emailError = document.getElementById('emailError');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+
+    form.addEventListener('submit', function(e) {
+        const email = emailInput.value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         
-        // Form submission
-        setupFormSubmission();
+        // Frontend validation check
+        if (!emailRegex.test(email)) {
+            e.preventDefault();
+            emailError.textContent = "Please enter a valid email address.";
+            emailInput.classList.add('is-invalid');
+            submitBtn.classList.add('animate-shake');
+            setTimeout(() => submitBtn.classList.remove('animate-shake'), 400);
+            return;
+        }
+
+        // Loading state
+        submitBtn.disabled = true;
+        btnText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Sending OTP...';
+        submitBtn.style.opacity = "0.7";
     });
 
-    function setupEmailValidation() {
-        const emailInput = document.getElementById('email');
-        const validationDiv = document.getElementById('emailValidation');
-
-        emailInput.addEventListener('input', function() {
-            const email = this.value;
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            
-            if (email === '') {
-                validationDiv.style.display = 'none';
-                return;
-            }
-
-            if (emailRegex.test(email)) {
-                validationDiv.textContent = '✅ Valid email address';
-                validationDiv.className = 'email-validation validation-success';
-            } else {
-                validationDiv.textContent = '❌ Please enter a valid email address';
-                validationDiv.className = 'email-validation validation-error';
-            }
-            validationDiv.style.display = 'flex';
-        });
-
-        emailInput.addEventListener('blur', function() {
-            if (this.value === '') {
-                validationDiv.style.display = 'none';
-            }
-        });
-    }
-
-    function setupFormSubmission() {
-        document.getElementById('changeEmailForm').addEventListener('submit', function() {
-            const submitBtn = document.getElementById('submitBtn');
-            const submitIcon = document.getElementById('submitIcon');
-            
-            submitBtn.disabled = true;
-            submitIcon.textContent = '⏳';
-            submitBtn.innerHTML = 'Sending OTP...';
-        });
-    }
+    // Clear error style when user starts typing again
+    emailInput.addEventListener('input', () => {
+        emailError.textContent = "";
+        emailInput.classList.remove('is-invalid');
+    });
 </script>
 
 {% endblock %}

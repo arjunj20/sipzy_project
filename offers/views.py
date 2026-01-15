@@ -181,6 +181,10 @@ def category_offer_list(request):
 
     return render(request, "category_offer_list.html",{"offers": offers})
 
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.utils import timezone
+
 def category_add_offer(request):
 
     if not request.user.is_authenticated or not request.user.is_superuser:
@@ -189,66 +193,89 @@ def category_add_offer(request):
     errors = {}
     categories = Category.objects.filter(is_active=True)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         category_id = request.POST.get("category")
-        offer_name = request.POST.get("offer_name")
+        offer_name = request.POST.get("offer_name", "").strip()
         discount_percent_raw = request.POST.get("discount_percent")
-        start_date = request.POST.get("start_date")
-        end_date = request.POST.get("end_date")
+        start_date_raw = request.POST.get("start_date")
+        end_date_raw = request.POST.get("end_date")
         is_active = True if request.POST.get("is_active") else False
 
-        required_fields = {
-            "category": category_id,
-            "offer_name": offer_name,
-            "discount_percent": discount_percent_raw,
-            "start_date": start_date,
-            "end_date": end_date,
-        }
+        # -------- REQUIRED FIELDS --------
+        if not category_id:
+            errors["category"] = "Category is required."
 
-        for field, value in required_fields.items():
-            if not value:
-                errors[field] = "This field is required"
+        if not offer_name:
+            errors["offer_name"] = "Offer name is required."
+
+        if not discount_percent_raw:
+            errors["discount_percent"] = "Discount percentage is required."
+
+        if not start_date_raw:
+            errors["start_date"] = "Start date is required."
+
+        if not end_date_raw:
+            errors["end_date"] = "End date is required."
+
+        # -------- DISCOUNT PERCENT VALIDATION --------
+        if discount_percent_raw:
+            try:
+                discount_percent = int(discount_percent_raw)
+
+                if discount_percent < 1:
+                    errors["discount_percent"] = "Discount must be at least 1%."
+
+                elif discount_percent > 90:
+                    errors["discount_percent"] = "Discount cannot exceed 90%."
+
+            except ValueError:
+                errors["discount_percent"] = "Discount must be a valid number."
+
+        # -------- DATE VALIDATION --------
+        if start_date_raw and end_date_raw:
+            if start_date_raw >= end_date_raw:
+                errors["end_date"] = "End date must be after start date."
 
         if errors:
-            return render(request, "add_category_offer.html", {
-                "errors": errors,
-                "categories": categories
-            })
+            return render(
+                request,
+                "add_category_offer.html",
+                {
+                    "errors": errors,
+                    "categories": categories,
+                },
+            )
 
+        # -------- CREATE OFFER --------
         try:
             category = get_object_or_404(Category, id=category_id)
-            discount_percent = int(discount_percent_raw)
 
             offer = CategoryOffer(
                 category=category,
                 offer_name=offer_name,
                 discount_percent=discount_percent,
-                start_date=start_date,
-                end_date=end_date,
-                is_active=is_active
+                start_date=start_date_raw,
+                end_date=end_date_raw,
+                is_active=is_active,
             )
 
-            offer.full_clean()
             offer.save()
-
             return redirect("category_offer_list")
 
-        except ValueError:
-            errors["discount_percent"] = "Discount must be a valid number"
-
         except IntegrityError:
-            errors["category"] = "An active offer already exists for this category"
-
-        except ValidationError as e:
-            errors["validation"] = e.messages
+            errors["category"] = "An active offer already exists for this category."
 
         except Exception:
-            errors["error"] = "Something went wrong. Please try again."
+            errors["general"] = "Something went wrong. Please try again."
 
-    return render(request, "add_category_offer.html", {
-        "categories": categories,
-        "errors": errors
-    })
+    return render(
+        request,
+        "add_category_offer.html",
+        {
+            "categories": categories,
+            "errors": errors,
+        },
+    )
 
 
 def edit_category_offer(request, uuid):
@@ -259,61 +286,84 @@ def edit_category_offer(request, uuid):
     offer = get_object_or_404(CategoryOffer, uuid=uuid)
     errors = {}
 
+    # 🚫 Expired offer protection
     if offer.is_expired:
         errors["expired"] = "Expired offers cannot be edited."
 
     if request.method == "POST" and not offer.is_expired:
-        offer_name = request.POST.get("offer_name")
+        offer_name = request.POST.get("offer_name", "").strip()
         discount_percent_raw = request.POST.get("discount_percent")
-        start_date = request.POST.get("start_date")
-        end_date = request.POST.get("end_date")
+        start_date_raw = request.POST.get("start_date")
+        end_date_raw = request.POST.get("end_date")
         is_active = True if request.POST.get("is_active") else False
 
-        required_fields = {
-            "offer_name": offer_name,
-            "discount_percent": discount_percent_raw,
-            "start_date": start_date,
-            "end_date": end_date,
-        }
+        # -------- REQUIRED FIELDS --------
+        if not offer_name:
+            errors["offer_name"] = "Offer name is required."
 
-        for field, value in required_fields.items():
-            if not value:
-                errors[field] = "This field is required"
+        if not discount_percent_raw:
+            errors["discount_percent"] = "Discount percentage is required."
+
+        if not start_date_raw:
+            errors["start_date"] = "Start date is required."
+
+        if not end_date_raw:
+            errors["end_date"] = "End date is required."
+
+        # -------- DISCOUNT VALIDATION --------
+        if discount_percent_raw:
+            try:
+                discount_percent = int(discount_percent_raw)
+
+                if discount_percent < 1:
+                    errors["discount_percent"] = "Discount must be at least 1%."
+
+                elif discount_percent > 90:
+                    errors["discount_percent"] = "Discount cannot exceed 90%."
+
+            except ValueError:
+                errors["discount_percent"] = "Discount must be a valid number."
+
+        # -------- DATE VALIDATION --------
+        if start_date_raw and end_date_raw:
+            if start_date_raw >= end_date_raw:
+                errors["end_date"] = "End date must be after start date."
 
         if errors:
-            return render(request, "edit_category_offer.html", {
-                "offer": offer,
-                "errors": errors
-            })
+            return render(
+                request,
+                "edit_category_offer.html",
+                {
+                    "offer": offer,
+                    "errors": errors,
+                },
+            )
 
+        # -------- UPDATE OFFER --------
         try:
             offer.offer_name = offer_name
-            offer.discount_percent = int(discount_percent_raw)
-            offer.start_date = start_date
-            offer.end_date = end_date
+            offer.discount_percent = discount_percent
+            offer.start_date = start_date_raw
+            offer.end_date = end_date_raw
             offer.is_active = is_active
-
-            offer.full_clean()
             offer.save()
 
             return redirect("category_offer_list")
 
-        except ValueError:
-            errors["discount_percent"] = "Discount must be a valid number"
-
         except IntegrityError:
-            errors["category"] = "An active offer already exists for this category"
-
-        except ValidationError as e:
-            errors["validation"] = e.messages
+            errors["category"] = "An active offer already exists for this category."
 
         except Exception:
-            errors["error"] = "Something went wrong. Please try again."
+            errors["general"] = "Something went wrong. Please try again."
 
-    return render(request, "edit_category_offer.html", {
-        "offer": offer,
-        "errors": errors
-    })
+    return render(
+        request,
+        "edit_category_offer.html",
+        {
+            "offer": offer,
+            "errors": errors,
+        },
+    )
 
 def deactivate_category_offer(request, uuid):
     if not request.user.is_authenticated or not request.user.is_superuser:

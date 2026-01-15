@@ -4,59 +4,125 @@
 {% block title %}Sign Up - Sipzy{% endblock %}
 
 {% block content %}
-<section class="flex flex-col md:flex-row justify-center items-center py-12 px-6 bg-[#F8F9FA]">
-  <div class="bg-white rounded-2xl shadow-md flex flex-col md:flex-row w-full max-w-4xl overflow-hidden">
+<section class="min-h-screen flex items-center justify-center py-12 px-6 relative overflow-hidden bg-[#F8F9FA]">
+  <div class="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#B7472A]/10 blur-[120px] animate-pulse"></div>
+  <div class="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-black/5 blur-[120px]"></div>
 
-    <!-- Left image -->
-    <div class="bg-[#F8F9FA] flex justify-center items-center p-8 md:w-1/2">
-      <img src="{% static 'images/illu 1.png' %}" alt="Bottle Illustration" class="w-64 md:w-72 h-auto">
+  <div class="bg-white/80 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex flex-col md:flex-row-reverse w-full max-w-5xl overflow-hidden z-10 transition-all duration-500">
+    
+    <div class="hidden md:flex md:w-5/12 bg-black p-12 flex-col justify-between text-white relative overflow-hidden">
+        <div class="relative z-10">
+            <h2 class="text-2xl font-bold tracking-tighter text-[#B7472A]">SIPZY.</h2>
+        </div>
+        
+        <div class="relative z-10 space-y-6">
+            <div class="overflow-hidden">
+                <img src="{% static 'images/illu 1.png' %}" alt="Bottle" 
+                     class="w-72 h-auto drop-shadow-[0_35px_35px_rgba(255,255,255,0.1)] float-anim">
+            </div>
+            <div>
+                <h1 class="text-4xl font-extrabold leading-tight">Create your <br>Account.</h1>
+                <p class="text-gray-400 mt-4 font-light">Join the elite circle of beverage connoisseurs.</p>
+            </div>
+        </div>
+
+        <div class="absolute top-20 left-[-20px] w-40 h-40 border-4 border-[#B7472A]/20 rounded-full"></div>
     </div>
 
-    <!-- Right form -->
-    <div class="md:w-1/2 bg-[#F8F9FA] flex flex-col justify-center items-center p-10">
-      <h2 class="text-3xl font-semibold text-[#B7472A] mb-6">SIGN UP</h2>
+    <div class="w-full md:w-7/12 bg-white flex flex-col justify-center p-10 lg:p-16">
+      <div class="w-full max-w-md mx-auto">
+        <div class="mb-8">
+            <h2 class="text-4xl font-black text-gray-900 tracking-tight">Join Sipzy</h2>
+            <p class="text-gray-400 mt-2">Start your journey with us today.</p>
+        </div>
 
-<form method="POST" class="w-full max-w-sm space-y-4" onsubmit="return validateSignup()">
-    {% csrf_token %}
+        <form method="POST" class="space-y-4" id="signupForm" onsubmit="return validateSignup()">
+            {% csrf_token %}
 
-    <input type="text" id="fullname" name="fullname" placeholder="Full Name"
-        class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]">
-    <p id="fullname_error" class="text-red-600 text-sm mt-1"></p>
-    {% if errors.fullname %}<p class="text-red-600 text-sm">{{ errors.fullname }}</p>{% endif %}
-    {% if errors.fullname_exist %}<p class="text-red-600 text-sm">{{ errors.fullname_exist }}</p>{% endif %}
+            <div class="form-step">
+                <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1 ml-1">Full Name</label>
+                <input type="text" id="fullname" name="fullname" placeholder="John Doe"
+                    class="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-2 border-transparent focus:bg-white focus:border-[#B7472A] outline-none transition-all duration-300 shadow-sm">
+                <p id="fullname_error" class="text-red-500 text-[11px] mt-1 ml-2 font-medium h-4"></p>
+            </div>
 
-    <input type="email" id="email" name="email" placeholder="Email"
-        class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]">
-    <p id="email_error" class="text-red-600 text-sm mt-1"></p>
-    {% if errors.email %}<p class="text-red-600 text-sm">{{ errors.email }}</p>{% endif %}
-    {% if errors.email_exist %}<p class="text-red-600 text-sm">{{ errors.email_exist }}</p>{% endif %}
+            <div class="form-step">
+                <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1 ml-1">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="john@example.com"
+                    class="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-2 border-transparent focus:bg-white focus:border-[#B7472A] outline-none transition-all duration-300 shadow-sm">
+                <p id="email_error" class="text-red-500 text-[11px] mt-1 ml-2 font-medium h-4"></p>
+            </div>
 
-    <input type="password" id="password" name="password" placeholder="Password"
-        class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]">
-    <p id="password_error" class="text-red-600 text-sm mt-1"></p>
-    {% if errors.password_length %}<p class="text-red-600 text-sm">{{ errors.password_length }}</p>{% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-step">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1 ml-1">Password</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••"
+                        class="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-2 border-transparent focus:bg-white focus:border-[#B7472A] outline-none transition-all duration-300 shadow-sm">
+                    <p id="password_error" class="text-red-500 text-[11px] mt-1 ml-2 font-medium h-4"></p>
+                </div>
+                <div class="form-step">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1 ml-1">Confirm</label>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••"
+                        class="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-2 border-transparent focus:bg-white focus:border-[#B7472A] outline-none transition-all duration-300 shadow-sm">
+                    <p id="confirm_password_error" class="text-red-500 text-[11px] mt-1 ml-2 font-medium h-4"></p>
+                </div>
+            </div>
 
-    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password"
-        class="w-full p-3 rounded-md border border-gray-300 focus:ring-2 focus:ring-[#B7472A]">
-    <p id="confirm_password_error" class="text-red-600 text-sm mt-1"></p>
-    {% if errors.password_match %}<p class="text-red-600 text-sm">{{ errors.password_match }}</p>{% endif %}
+            {% if errors %}
+            <div class="p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs text-center animate-shake">
+                {% for key, value in errors.items %}{{ value }}<br>{% endfor %}
+            </div>
+            {% endif %}
 
-    <button type="submit" class="w-full bg-[#B7472A] text-white py-3 rounded-md hover:bg-[#a03d22] transition">
-        Submit
-    </button>
-</form>
+            <button type="submit"
+                class="w-full bg-[#B7472A] text-white py-4 rounded-2xl font-bold text-lg shadow-[0_10px_20px_rgba(183,71,42,0.3)] hover:shadow-[0_15px_30px_rgba(183,71,42,0.4)] hover:-translate-y-1 active:scale-95 transition-all duration-300 mt-2">
+                Create Account
+            </button>
+        </form>
 
-      <div class="mt-5 text-gray-500 text-sm">OR</div>
-
-      
-
-      <p class="mt-5 text-gray-600 text-sm">
-        Already have an account?
-        <a href="{% url 'user_login' %}" class="text-[#B7472A] font-medium hover:underline">Login</a>
-      </p>
+        <p class="mt-8 text-center text-gray-500 text-sm">
+          Already a member?
+          <a href="{% url 'user_login' %}" class="text-[#B7472A] font-black hover:underline underline-offset-4 decoration-2">Login here</a>
+        </p>
+      </div>
     </div>
   </div>
+</section>
 
+<style>
+/* Floating Animation */
+.float-anim {
+    animation: floating 5s ease-in-out infinite;
+}
+@keyframes floating {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(2deg); }
+}
+
+/* Staggered entrance for form fields */
+.form-step {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+}
+.form-step:nth-child(1) { animation-delay: 0.1s; }
+.form-step:nth-child(2) { animation-delay: 0.2s; }
+.form-step:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-shake {
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+</style>
 
 <script>
 function validateSignup() {
@@ -64,40 +130,40 @@ function validateSignup() {
     let email = document.getElementById("email").value.trim();
     let password = document.getElementById("password").value;
     let confirmPassword = document.getElementById("confirm_password").value;
-
-
-    document.getElementById("fullname_error").textContent = "";
-    document.getElementById("email_error").textContent = "";
-    document.getElementById("password_error").textContent = "";
-    document.getElementById("confirm_password_error").textContent = "";
-
     let isValid = true;
 
+    // Reset errors
+    ["fullname", "email", "password", "confirm_password"].forEach(id => {
+        document.getElementById(id + "_error").textContent = "";
+    });
+
     if (fullname === "") {
-        document.getElementById("fullname_error").textContent = "Full name is required.";
+        document.getElementById("fullname_error").textContent = "Name is required";
         isValid = false;
     }
 
-    if (email === "") {
-        document.getElementById("email_error").textContent = "Email is required.";
-        isValid = false;
-    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-        document.getElementById("email_error").textContent = "Enter a valid email address.";
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+        document.getElementById("email_error").textContent = "Enter a valid email";
         isValid = false;
     }
 
     if (password.length < 6) {
-        document.getElementById("password_error").textContent = "Password must be at least 6 characters.";
+        document.getElementById("password_error").textContent = "Min 6 characters required";
         isValid = false;
     }
 
     if (password !== confirmPassword) {
-        document.getElementById("confirm_password_error").textContent = "Passwords do not match.";
+        document.getElementById("confirm_password_error").textContent = "Passwords do not match";
         isValid = false;
     }
 
-    return isValid; 
+    if (!isValid) {
+        const btn = document.querySelector('button[type="submit"]');
+        btn.classList.add('animate-shake');
+        setTimeout(() => btn.classList.remove('animate-shake'), 500);
+    }
+
+    return isValid;
 }
 </script>
-</section>
 {% endblock %}

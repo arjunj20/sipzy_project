@@ -423,8 +423,6 @@ def product_list(request):
         "categories": categories,
     })
 
-
-
 @never_cache
 @transaction.atomic
 def product_create(request):
@@ -482,6 +480,7 @@ def product_create(request):
 
         return redirect("product_list")
     return redirect("product_list") 
+
 
 @never_cache
 @transaction.atomic

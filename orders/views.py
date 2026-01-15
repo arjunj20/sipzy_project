@@ -72,18 +72,13 @@ def order_detail(request, uuid):
 from django.contrib import messages
 
 def order_invoice(request, order_id):
-    # -------------------------------------------------
-    # Fetch order (user-protected)
-    # -------------------------------------------------
+
     order = get_object_or_404(
         Order,
         id=order_id,
         user=request.user
     )
 
-    # -------------------------------------------------
-    # OPTION 1: ONLY DELIVERED ITEMS
-    # -------------------------------------------------
     items = order.items.filter(status="delivered")
 
     if not items.exists():
@@ -94,18 +89,13 @@ def order_invoice(request, order_id):
         return redirect("order_detail", uuid=order.uuid)
 
 
-    # -------------------------------------------------
-    # Address Snapshot (Safe)
-    # -------------------------------------------------
+
     full_name = order.full_name or ""
     address_line1 = order.address_line1 or "Address not available"
     city = order.city or ""
     state = order.state or ""
     pincode = order.pincode or ""
 
-    # -------------------------------------------------
-    # Calculate totals ONLY from delivered items
-    # -------------------------------------------------
     subtotal = items.aggregate(
         total=Sum("price")
     )["total"] or Decimal("0.00")
@@ -115,9 +105,7 @@ def order_invoice(request, order_id):
     shipping_fee = Decimal("0.00")
     total = subtotal + tax + shipping_fee
 
-    # -------------------------------------------------
-    # PDF Response Setup
-    # -------------------------------------------------
+
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = (
         f'attachment; filename="Invoice_{order.order_number}.pdf"'
@@ -127,9 +115,7 @@ def order_invoice(request, order_id):
     width, height = A4
     y = height - 50
 
-    # -------------------------------------------------
-    # Header
-    # -------------------------------------------------
+
     p.setFont("Helvetica-Bold", 20)
     p.drawString(30, y, "INVOICE")
 
@@ -143,9 +129,6 @@ def order_invoice(request, order_id):
         f"Order Date   : {order.created_at.strftime('%d-%m-%Y %H:%M')}"
     )
 
-    # -------------------------------------------------
-    # Billing Address
-    # -------------------------------------------------
     y -= 40
     p.setFont("Helvetica-Bold", 12)
     p.drawString(30, y, "Billing Address:")
@@ -160,9 +143,6 @@ def order_invoice(request, order_id):
     y -= 20
     p.drawString(30, y, pincode)
 
-    # -------------------------------------------------
-    # Table Header
-    # -------------------------------------------------
     y -= 40
     p.setFont("Helvetica-Bold", 12)
     p.drawString(30, y, "Product")
@@ -173,9 +153,6 @@ def order_invoice(request, order_id):
     y -= 20
     p.setFont("Helvetica", 12)
 
-    # -------------------------------------------------
-    # Items (Delivered Only)
-    # -------------------------------------------------
     for item in items:
         if y < 80:
             p.showPage()
@@ -192,9 +169,6 @@ def order_invoice(request, order_id):
         p.drawString(400, y, f"₹{item.price}")
         y -= 20
 
-    # -------------------------------------------------
-    # Totals
-    # -------------------------------------------------
     y -= 30
     p.setFont("Helvetica-Bold", 12)
     p.drawString(330, y, "Subtotal:")
@@ -213,9 +187,6 @@ def order_invoice(request, order_id):
     p.drawString(330, y, "TOTAL:")
     p.drawString(460, y, f"₹{total}")
 
-    # -------------------------------------------------
-    # Finish PDF
-    # -------------------------------------------------
     p.showPage()
     p.save()
 

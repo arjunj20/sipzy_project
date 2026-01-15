@@ -3,6 +3,9 @@ from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 from cloudinary.uploader import upload as cloudinary_upload
 from authenticate.models import CustomUser
+import re
+import base64
+from django.core.files.base import ContentFile
 
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
@@ -19,6 +22,9 @@ from wallet.models import Wallet
 from referal.models import Referral
 
 
+PASSWORD_REGEX = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@#$!%*?&]{8,}$")
+
+
 @login_required
 @never_cache
 def user_profile(request):
@@ -28,7 +34,8 @@ def user_profile(request):
     user = request.user
     addresses = user.addresses.all()
     counts = Order.objects.filter(user=user).count()
-    wallet = Wallet.objects.get(user=user)
+    wallet, _ = Wallet.objects.get_or_create(user=user)
+
 
     referral, _ = Referral.objects.get_or_create(
         referrer=user,
@@ -49,44 +56,62 @@ def user_profile(request):
 
 @login_required
 def edit_profile(request):
-    if not request.user.is_authenticated or request.user.is_superuser:
+
+    if request.user.is_superuser:
         return redirect("user_login")
+
     user = request.user
     errors = {}
 
+    FULLNAME_REGEX = re.compile(r'^[A-Za-z .]+$')
+
     if request.method == "POST":
-        fullname = request.POST.get("fullname")
-        image = request.FILES.get("profile_image")
+        fullname = request.POST.get("fullname", "").strip()
+        cropped_image_data = request.POST.get("cropped_image")
 
         if not fullname:
-            errors["fullname"] = "Name is required"
-
-        if image and not errors:
-            upload = cloudinary_upload(
-                image,
-                folder="profile_images"
-            )
-            img_url = upload.get("secure_url")
-            public_id = upload.get("public_id")
+            errors["fullname"] = "Name is required."
+        elif len(fullname) < 3:
+            errors["fullname"] = "Name must be at least 3 characters."
+        elif not FULLNAME_REGEX.match(fullname):
+            errors["fullname"] = "Name can contain only letters, spaces, and dot (.)."
 
         if errors:
-            return render(request, "user/edit_profile.html", {
-                "user": user,
-                "errors": errors
-            })
+            return render(
+                request,
+                "edit_profile.html",
+                {"user": user, "errors": errors}
+            )
 
         user.fullname = fullname
 
-        if image:
-            user.profile_image = img_url
+        if cropped_image_data and cropped_image_data.startswith("data:image"):
+            try:
+                upload_result = cloudinary_upload(
+                    cropped_image_data,
+                    folder="profile_images",
+                    transformation=[
+                        {"width": 500, "height": 500, "crop": "fill"}
+                    ]
+                )
+                user.profile_image = upload_result.get("secure_url")
+            except Exception:
+                errors["profile_image"] = "Failed to upload image."
+                return render(
+                    request,
+                    "edit_profile.html",
+                    {"user": user, "errors": errors}
+                )
 
         user.save()
         return redirect("user_profile")
 
-    return render(request, "edit_profile.html", {
-        "user": user,
-        "errors": errors
-    })
+    return render(
+        request,
+        "edit_profile.html",
+        {"user": user, "errors": errors}
+    )
+
 
 @login_required
 @never_cache
@@ -95,18 +120,36 @@ def change_email(request):
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
     
+    errors = {}
+
     if request.method == "POST":
-        new_email = request.POST.get("email")
-        errors = {}
+        new_email = request.POST.get("email", "").strip().lower()
+        user = request.user
+
         if not new_email:
             errors["email"] = "Email is required"
+
+        elif len(new_email) > 254:
+            errors["email"] = "Email is too long"
+
+        elif new_email == user.email:
+            errors["email"] = "This is already your current email"
+
+        elif not re.match(
+            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+            new_email
+        ):
+            errors["email"] = "Enter a valid email address"
+
         elif CustomUser.objects.filter(email=new_email).exists():
             errors["email"] = "This email is already in use"
 
         if errors:
             return render(request, "change_email.html", {
-                "errors": errors
+                "errors": errors,
+                "email": new_email
             })
+
         otp = random.randint(100000, 999999)
 
         request.session["change_email"] = {
@@ -114,6 +157,7 @@ def change_email(request):
             "otp": otp,
             "otp_time": timezone.now().isoformat()
         }
+
         send_mail(
             subject="Email Change Verification OTP",
             message=f"Your OTP to change email is {otp}",
@@ -121,9 +165,11 @@ def change_email(request):
             recipient_list=[new_email],
             fail_silently=False,
         )
+
         return redirect("email_otp")
 
     return render(request, "change_email.html")
+
 
 
 from django.contrib.auth.decorators import login_required
@@ -236,6 +282,7 @@ def change_password(request):
 
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
+
     errors = {}
 
     if request.method == "POST":
@@ -245,33 +292,35 @@ def change_password(request):
 
         if not old_password:
             errors["old_password"] = "Old password is required."
+        elif not request.user.check_password(old_password):
+            errors["old_password"] = "Old password is incorrect."
 
         if not new_password:
             errors["new_password"] = "New password is required."
-
-        if not confirm_password:
-            errors["confirm_password"] = "Confirm password is required."
-
-        if not request.user.check_password(old_password):
-            errors["old_password"] = "Old password is incorrect."
+        elif not PASSWORD_REGEX.match(new_password):
+            errors["new_password"] = (
+                "Password must be at least 8 characters long "
+                "and include letters and numbers."
+            )
 
         if new_password and confirm_password and new_password != confirm_password:
             errors["confirm_password"] = "Passwords do not match."
 
         if errors:
-            return render(request, "change_password.html", {
-                "errors": errors
-            })
-
+            return render(request, "change_password.html", {"errors": errors})
 
         request.user.set_password(new_password)
         request.user.save()
 
         logout(request)
-        messages.success(request, "Password changed successfully. Please login again.")
+        messages.success(
+            request,
+            "Password changed successfully. Please login again."
+        )
         return redirect("user_login")
 
     return render(request, "change_password.html")
+
 
 
 
@@ -281,29 +330,60 @@ def add_addresses(request):
 
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
+
     errors = {}
 
-    if request.method == "POST":
-        full_name = request.POST.get("full_name")
-        phone = request.POST.get("phone_number")
-        line1 = request.POST.get("address_line1")
-        line2 = request.POST.get("address_line2")
-        city = request.POST.get("city")
-        state = request.POST.get("state")
-        pincode = request.POST.get("pincode")
+    FULLNAME_REGEX = re.compile(r'^[A-Za-z .]+$')
+    PHONE_REGEX = re.compile(r'^[6-9]\d{9}$')
+    CITY_STATE_REGEX = re.compile(r'^[A-Za-z ]+$')
+    PINCODE_REGEX = re.compile(r'^\d{6}$')
 
+    if request.method == "POST":
+        full_name = request.POST.get("full_name", "").strip()
+        phone = request.POST.get("phone_number", "").strip()
+        line1 = request.POST.get("address_line1", "").strip()
+        line2 = request.POST.get("address_line2", "").strip()
+        city = request.POST.get("city", "").strip()
+        state = request.POST.get("state", "").strip()
+        pincode = request.POST.get("pincode", "").strip()
+
+        # 1️⃣ Full Name
         if not full_name:
-            errors["full_name"] = "Full name is required"
+            errors["full_name"] = "Full name is required."
+        elif len(full_name) < 3:
+            errors["full_name"] = "Full name must be at least 3 characters."
+        elif not FULLNAME_REGEX.match(full_name):
+            errors["full_name"] = "Name can contain only letters, spaces, and dot (.)."
+
+        # 2️⃣ Phone Number
         if not phone:
-            errors["phone_number"] = "Phone number is required"
+            errors["phone_number"] = "Phone number is required."
+        elif not PHONE_REGEX.match(phone):
+            errors["phone_number"] = "Enter a valid 10-digit phone number."
+
+        # 3️⃣ Address Line 1
         if not line1:
-            errors["address_line1"] = "Address line is required"
+            errors["address_line1"] = "Address line is required."
+        elif len(line1) < 5:
+            errors["address_line1"] = "Address must be at least 5 characters."
+
+        # 4️⃣ City
         if not city:
-            errors["city"] = "City is required"
+            errors["city"] = "City is required."
+        elif not CITY_STATE_REGEX.match(city):
+            errors["city"] = "City can contain only letters and spaces."
+
+        # 5️⃣ State
         if not state:
-            errors["state"] = "State is required"
+            errors["state"] = "State is required."
+        elif not CITY_STATE_REGEX.match(state):
+            errors["state"] = "State can contain only letters and spaces."
+
+        # 6️⃣ Pincode
         if not pincode:
-            errors["pincode"] = "Pincode is required"
+            errors["pincode"] = "Pincode is required."
+        elif not PINCODE_REGEX.match(pincode):
+            errors["pincode"] = "Enter a valid 6-digit pincode."
 
         if errors:
             return render(request, "add_addresses.html", {"errors": errors})
@@ -323,44 +403,103 @@ def add_addresses(request):
 
     return render(request, "add_addresses.html")
 
+
+
 @login_required
 @never_cache
 def edit_addresses(request, uuid):
 
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
-    
+
     address = get_object_or_404(
         Address,
         uuid=uuid,
-        user=request.user 
+        user=request.user
     )
+
     errors = {}
 
-    if request.method == "POST":
-        address.full_name = request.POST.get("full_name")
-        address.phone_number = request.POST.get("phone_number")
-        address.address_line1 = request.POST.get("address_line1")
-        address.address_line2 = request.POST.get("address_line2")
-        address.city = request.POST.get("city")
-        address.state = request.POST.get("state")
-        address.pincode = request.POST.get("pincode")
+    # Same regex rules everywhere
+    FULLNAME_REGEX = re.compile(r'^[A-Za-z .]+$')
+    PHONE_REGEX = re.compile(r'^[6-9]\d{9}$')
+    CITY_STATE_REGEX = re.compile(r'^[A-Za-z ]+$')
+    PINCODE_REGEX = re.compile(r'^\d{6}$')
 
-        if not address.full_name:
-            errors["full_name"] = "Full name is required"
+    if request.method == "POST":
+        full_name = request.POST.get("full_name", "").strip()
+        phone = request.POST.get("phone_number", "").strip()
+        line1 = request.POST.get("address_line1", "").strip()
+        line2 = request.POST.get("address_line2", "").strip()
+        city = request.POST.get("city", "").strip()
+        state = request.POST.get("state", "").strip()
+        pincode = request.POST.get("pincode", "").strip()
+
+        # 1️⃣ Full Name
+        if not full_name:
+            errors["full_name"] = "Full name is required."
+        elif len(full_name) < 3:
+            errors["full_name"] = "Full name must be at least 3 characters."
+        elif not FULLNAME_REGEX.match(full_name):
+            errors["full_name"] = "Name can contain only letters, spaces, and dot (.)."
+
+        # 2️⃣ Phone
+        if not phone:
+            errors["phone_number"] = "Phone number is required."
+        elif not PHONE_REGEX.match(phone):
+            errors["phone_number"] = "Enter a valid 10-digit phone number."
+
+        # 3️⃣ Address Line 1
+        if not line1:
+            errors["address_line1"] = "Address line is required."
+        elif len(line1) < 5:
+            errors["address_line1"] = "Address must be at least 5 characters."
+
+        # 4️⃣ City
+        if not city:
+            errors["city"] = "City is required."
+        elif not CITY_STATE_REGEX.match(city):
+            errors["city"] = "City can contain only letters and spaces."
+
+        # 5️⃣ State
+        if not state:
+            errors["state"] = "State is required."
+        elif not CITY_STATE_REGEX.match(state):
+            errors["state"] = "State can contain only letters and spaces."
+
+        # 6️⃣ Pincode
+        if not pincode:
+            errors["pincode"] = "Pincode is required."
+        elif not PINCODE_REGEX.match(pincode):
+            errors["pincode"] = "Enter a valid 6-digit pincode."
 
         if errors:
-            return render(request, "edit_address.html", {
-                "address": address,
-                "errors": errors
-            })
+            return render(
+                request,
+                "edit_addresses.html",
+                {
+                    "address": address,
+                    "errors": errors
+                }
+            )
+
+        # Update fields only after validation
+        address.full_name = full_name
+        address.phone_number = phone
+        address.address_line1 = line1
+        address.address_line2 = line2
+        address.city = city
+        address.state = state
+        address.pincode = pincode
 
         address.save()
         return redirect("user_profile")
 
-    return render(request, "edit_addresses.html", {
-        "address": address
-    })
+    return render(
+        request,
+        "edit_addresses.html",
+        {"address": address}
+    )
 
 @never_cache
 def delete_address(request, uuid):

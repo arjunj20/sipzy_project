@@ -69,11 +69,7 @@ class Order(models.Model):
     from decimal import Decimal
 
     def recalculate_totals(self):
-        """
-        Recalculate totals after item cancel / return.
-        Uses stored item prices and coupon shares.
-        """
-
+        
         active_items = self.items.exclude(
             status__in=["cancelled", "returned"]
         )
@@ -82,22 +78,18 @@ class Order(models.Model):
         coupon_discount = Decimal("0.00")
 
         for item in active_items:
-            subtotal += item.price * item.quantity
+            subtotal += item.net_paid_amount
             coupon_discount += item.coupon_share
 
-
-        self.subtotal = subtotal
+        self.subtotal = subtotal + coupon_discount  # original value before coupon
         self.coupon_discount = coupon_discount
-        self.total = subtotal + self.shipping_fee - coupon_discount
+        self.total = subtotal + self.shipping_fee
 
         if self.total < 0:
             self.total = Decimal("0.00")
 
-        self.save(update_fields=[
-            "subtotal",
-            "coupon_discount",
-            "total",
-        ])
+        self.save(update_fields=["subtotal", "coupon_discount", "total"])
+
 
 
 
