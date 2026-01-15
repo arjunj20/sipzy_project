@@ -1,0 +1,44 @@
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+var options = {
+    key: "{{ razorpay_key }}",
+    amount: "{{ amount|floatformat:2 }}",
+    currency: "INR",
+    order_id: "{{ razorpay_order_id }}",
+
+    handler: function (response) {
+        fetch("{% url 'verify_payment' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                order_uuid: "{{ order.uuid }}"
+            })
+        })
+        .then(res => {
+            if (res.ok) {
+                window.location.href =
+                    "{% url 'payment_success' order.uuid %}";
+            } else {
+                window.location.href =
+                    "{% url 'payment_failure' order.uuid %}";
+            }
+        });
+    },
+
+    modal: {
+        ondismiss: function () {
+            window.location.href =
+                "{% url 'payment_failure' order.uuid %}";
+        }
+    }
+};
+
+new Razorpay(options).open();
+</script>

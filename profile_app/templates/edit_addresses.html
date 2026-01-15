@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Address - Sipzy{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --primary: #B7472A;
+        --primary-dark: #8F3720;
+        --bg-surface: #F8F9FA;
+    }
+
+    /* Page Entrance Animation */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade-in { animation: fadeInUp 0.8s ease-out forwards; }
+
+    .profile-page-bg {
+        min-height: 100vh;
+        background: var(--bg-surface);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .bg-glow {
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: rgba(183, 71, 42, 0.05);
+        filter: blur(100px);
+        border-radius: 50%;
+        z-index: 0;
+    }
+
+    .edit-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid white;
+        border-radius: 40px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 700px;
+        padding: 50px 40px;
+        z-index: 10;
+    }
+
+    .header-icon {
+        width: 70px;
+        height: 70px;
+        background: black;
+        color: var(--primary);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin: 0 auto 20px;
+    }
+
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+    .full-width { grid-column: span 2; }
+
+    .custom-input {
+        width: 100%;
+        background: #f3f4f6;
+        border: 2px solid transparent;
+        padding: 16px 20px;
+        border-radius: 18px;
+        font-weight: 500;
+        transition: all 0.3s;
+        outline: none;
+    }
+
+    .custom-input:focus {
+        background: white;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(183, 71, 42, 0.1);
+    }
+
+    .custom-input.is-invalid {
+        border-color: #ef4444;
+        background: #fffafa;
+    }
+
+    .custom-input[readonly] { background: #eceef1; cursor: not-allowed; color: #6b7280; }
+
+    .input-label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #9ca3af;
+        margin-bottom: 6px;
+        margin-left: 4px;
+    }
+
+    .error-tag {
+        color: #ef4444;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin-top: 4px;
+        margin-left: 4px;
+        display: block;
+    }
+
+    .preview-box {
+        background: black;
+        border-radius: 24px;
+        padding: 25px;
+        margin-top: 20px;
+        color: white;
+        position: relative;
+    }
+
+    .loader-spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    @media (max-width: 640px) {
+        .form-grid { grid-template-columns: 1fr; gap: 10px; }
+        .full-width { grid-column: span 1; }
+    }
+</style>
+
+<div class="profile-page-bg">
+    <div class="bg-glow" style="top: -100px; left: -100px;"></div>
+    <div class="bg-glow" style="bottom: -100px; right: -100px;"></div>
+
+    <div class="edit-card animate-fade-in">
+        <div class="header-icon">
+            <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+        
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight">Edit Address</h1>
+            <p class="text-gray-500 font-medium">Update your delivery information</p>
+        </div>
+
+        <form method="POST" id="editAddressForm" class="form-grid">
+            {% csrf_token %}
+
+            <div class="form-step" style="animation-delay: 0.1s;">
+                <label class="input-label">Full Name</label>
+                <input type="text" name="full_name" id="full_name" 
+                       class="custom-input {% if errors.full_name %}is-invalid{% endif %}" 
+                       value="{{ address.full_name }}" placeholder="Recipient Name" required>
+                {% if errors.full_name %}<span class="error-tag">{{ errors.full_name }}</span>{% endif %}
+            </div>
+
+            <div class="form-step" style="animation-delay: 0.15s;">
+                <label class="input-label">Phone Number</label>
+                <input type="tel" name="phone_number" id="phone_number" 
+                       class="custom-input {% if errors.phone_number %}is-invalid{% endif %}" 
+                       value="{{ address.phone_number }}" placeholder="10-digit number" required>
+                {% if errors.phone_number %}<span class="error-tag">{{ errors.phone_number }}</span>{% endif %}
+            </div>
+
+            <div class="full-width form-step" style="animation-delay: 0.2s;">
+                <label class="input-label flex justify-between">
+                    Pincode 
+                    <span id="pincode-status" class="normal-case text-[10px] text-amber-600 font-bold">Auto-fills City & State</span>
+                </label>
+                <div class="relative">
+                    <input type="text" name="pincode" id="pincode" 
+                           class="custom-input {% if errors.pincode %}is-invalid{% endif %}" 
+                           value="{{ address.pincode }}" placeholder="6-digit code" maxlength="6" required>
+                    <div id="api-loader" class="absolute right-4 top-1/2 -translate-y-1/2 hidden">
+                        <i class="fa-solid fa-circle-notch loader-spin text-primary"></i>
+                    </div>
+                </div>
+                {% if errors.pincode %}<span class="error-tag">{{ errors.pincode }}</span>{% endif %}
+            </div>
+
+            <div class="full-width form-step" style="animation-delay: 0.25s;">
+                <label class="input-label">Address Line 1</label>
+                <input type="text" name="address_line1" id="address_line1" 
+                       class="custom-input {% if errors.address_line1 %}is-invalid{% endif %}" 
+                       value="{{ address.address_line1 }}" placeholder="House / Flat No., Street, Landmark" required>
+                {% if errors.address_line1 %}<span class="error-tag">{{ errors.address_line1 }}</span>{% endif %}
+            </div>
+
+            <div class="full-width form-step" style="animation-delay: 0.3s;">
+                <label class="input-label">Address Line 2 (Optional)</label>
+                <input type="text" name="address_line2" id="address_line2" class="custom-input" 
+                       value="{{ address.address_line2|default:'' }}" placeholder="Apartment, Area, Sector">
+            </div>
+
+            <div class="form-step" style="animation-delay: 0.35s;">
+                <label class="input-label">City</label>
+                <input type="text" name="city" id="city" 
+                       class="custom-input {% if errors.city %}is-invalid{% endif %}" 
+                       value="{{ address.city }}" placeholder="City" readonly required>
+                {% if errors.city %}<span class="error-tag">{{ errors.city }}</span>{% endif %}
+            </div>
+
+            <div class="form-step" style="animation-delay: 0.4s;">
+                <label class="input-label">State</label>
+                <input type="text" name="state" id="state" 
+                       class="custom-input {% if errors.state %}is-invalid{% endif %}" 
+                       value="{{ address.state }}" placeholder="State" readonly required>
+                {% if errors.state %}<span class="error-tag">{{ errors.state }}</span>{% endif %}
+            </div>
+
+            <div class="full-width form-step preview-box shadow-2xl" style="animation-delay: 0.45s;">
+                <h4 class="text-[10px] font-bold text-[#B7472A] uppercase mb-2 tracking-widest">Live Shipping Label</h4>
+                <div id="previewContent" class="text-sm font-medium leading-relaxed opacity-90 text-white">
+                    <strong>{{ address.full_name }}</strong><br>
+                    {{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}<br>
+                    {{ address.city }}, {{ address.state }} - {{ address.pincode }}
+                </div>
+            </div>
+
+            <div class="full-width flex flex-col sm:flex-row gap-4 mt-6">
+                <button type="submit" id="submitBtn" class="flex-1 bg-black text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-gray-800 transform active:scale-95 transition-all">
+                    <span id="btnText">Update Address</span>
+                </button>
+                <a href="{% url 'user_profile' %}" class="flex-1 border-2 border-gray-200 py-4 rounded-2xl font-bold text-center text-gray-500 hover:bg-gray-50 transition-all">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const pincodeInput = document.getElementById('pincode');
+        const cityInput = document.getElementById('city');
+        const stateInput = document.getElementById('state');
+        const statusText = document.getElementById('pincode-status');
+        const loader = document.getElementById('api-loader');
+        const previewContent = document.getElementById('previewContent');
+        const form = document.getElementById('editAddressForm');
+
+        function updatePreview() {
+            const name = document.getElementById('full_name').value || 'Recipient';
+            const a1 = document.getElementById('address_line1').value || 'Street';
+            const a2 = document.getElementById('address_line2').value;
+            const city = cityInput.value || 'City';
+            const state = stateInput.value || 'State';
+            const pin = pincodeInput.value || 'Pincode';
+
+            previewContent.innerHTML = `<strong>${name}</strong><br>${a1}${a2 ? ', ' + a2 : ''}<br>${city}, ${state} - ${pin}`;
+        }
+
+        ['full_name', 'address_line1', 'address_line2', 'pincode', 'city', 'state'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('input', updatePreview);
+        });
+
+        pincodeInput.addEventListener('input', function() {
+            const pin = this.value.replace(/\D/g, "");
+            this.value = pin;
+
+            if (pin.length === 6) {
+                loader.classList.remove('hidden');
+                statusText.textContent = "Verifying...";
+
+                fetch(`https://api.postalpincode.in/pincode/${pin}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        loader.classList.add('hidden');
+                        if (data[0].Status === "Success") {
+                            const details = data[0].PostOffice[0];
+                            cityInput.value = details.District;
+                            stateInput.value = details.State;
+                            statusText.textContent = "✓ Verified";
+                            statusText.style.color = "#10b981";
+                            updatePreview();
+                        } else {
+                            statusText.textContent = "✕ Invalid PIN";
+                            statusText.style.color = "#ef4444";
+                        }
+                    })
+                    .catch(() => {
+                        loader.classList.add('hidden');
+                        statusText.textContent = "✕ API Error";
+                    });
+            }
+        });
+
+        form.addEventListener('submit', function() {
+            const btnText = document.getElementById('btnText');
+            btnText.innerHTML = '<i class="fa-solid fa-circle-notch loader-spin mr-2"></i> Updating...';
+            document.getElementById('submitBtn').disabled = true;
+        });
+    });
+</script>
+{% endblock %}

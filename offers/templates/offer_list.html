@@ -1,0 +1,235 @@
+{% extends "admin_base.html" %}
+{% load static %}
+{% block title %}Product Offers{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px);}
+        to { opacity:1; transform: translateY(0);}
+    }
+
+    .animate-fade-in { animation: fadeIn 0.45s ease-out; }
+    .table-row:hover {
+        background-color:#F9FAFB;
+        transform:translateY(-1px);
+        transition:all .15s;
+    }
+
+    .status-active {
+        background-color:#10B981;
+        color:#fff;
+        padding:0.375rem 0.75rem;
+        border-radius:9999px;
+        font-size:0.75rem;
+        font-weight:500;
+    }
+
+    .status-inactive {
+        background-color:#9CA3AF;
+        color:#fff;
+        padding:0.375rem 0.75rem;
+        border-radius:9999px;
+        font-size:0.75rem;
+        font-weight:500;
+    }
+
+    .status-expired {
+        background-color:#EF4444;
+        color:#fff;
+        padding:0.375rem 0.75rem;
+        border-radius:9999px;
+        font-size:0.75rem;
+        font-weight:500;
+    }
+
+    .discount-badge {
+        background: linear-gradient(135deg,#667eea,#764ba2);
+        color:white;
+        padding:0.375rem 0.75rem;
+        border-radius:0.5rem;
+        font-weight:600;
+    }
+
+    .price-range {
+        background:#F1F5F9;
+        color:#0F172A;
+        padding:0.4rem 0.75rem;
+        border-radius:0.5rem;
+        font-size:0.85rem;
+        font-weight:500;
+    }
+
+    .date-range {
+        background:#EFF6FF;
+        color:#1e40af;
+        padding:0.5rem 0.75rem;
+        border-radius:0.5rem;
+        font-size:0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex-1 p-6 md:p-8 overflow-y-auto">
+
+    <!-- Header -->
+    <div class="mb-6 flex items-center justify-between animate-fade-in">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Product Offers</h1>
+            <p class="text-gray-600 mt-1">Manage discount offers and promotions</p>
+        </div>
+        <a href="{% url 'add_product_offer' %}"
+           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow">
+            + Add Product Offer
+        </a>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden animate-fade-in">
+        <div class="px-6 py-4 border-b">
+            <h2 class="text-lg font-semibold text-gray-800">All Offers</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 text-sm font-medium">
+                        <th class="py-4 px-6 text-left">Offer Name</th>
+                        <th class="py-4 px-6 text-left">Product</th>
+                        <th class="py-4 px-6 text-left">Discount</th>
+                        <th class="py-4 px-6 text-left">Price Range</th>
+                        <th class="py-4 px-6 text-left">Validity</th>
+                        <th class="py-4 px-6 text-left">Status</th>
+                        <th class="py-4 px-6 text-center">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-200">
+                {% for offer in offers %}
+                    <tr class="table-row">
+                        <td class="py-4 px-6 font-medium text-gray-800">
+                            {{ offer.offer_name }}
+                        </td>
+
+                        <td class="py-4 px-6 text-gray-600">
+                            {{ offer.product.name }}
+                        </td>
+
+                        <td class="py-4 px-6">
+                            <span class="discount-badge">
+                                {{ offer.discount_percent }}% OFF
+                            </span>
+                        </td>
+
+                        <td class="py-4 px-6">
+                            <span class="price-range">
+                                ₹{{ offer.min_product_price }} – ₹{{ offer.max_product_price }}
+                            </span>
+                        </td>
+
+                        <td class="py-4 px-6">
+                            <span class="date-range">
+                                {{ offer.start_date|date:"M d, Y" }} – {{ offer.end_date|date:"M d, Y" }}
+                            </span>
+                        </td>
+
+                        <td class="py-4 px-6">
+                            {% if offer.is_expired %}
+                                <span class="status-expired">Expired</span>
+                            {% elif offer.is_active %}
+                                <span class="status-active">Active</span>
+                            {% else %}
+                                <span class="status-inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="py-4 px-6 text-center">
+                            <div class="flex justify-center gap-2">
+
+                                {% if not offer.is_expired %}
+                                    <a href="{% url 'edit_product_offer' offer.uuid %}"
+                                       class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+                                        Edit
+                                    </a>
+                                {% else %}
+                                    <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded text-sm">
+                                        Edit
+                                    </span>
+                                {% endif %}
+
+                                {% if offer.is_expired %}
+                                    <span class="px-3 py-1 bg-gray-100 text-gray-400 rounded text-sm">
+                                        Expired
+                                    </span>
+
+                                {% elif offer.is_active %}
+                                    <form method="POST"
+                                          action="{% url 'deactivate_product_offer' offer.uuid %}">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                onclick="return confirm('Deactivate this offer?')"
+                                                class="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">
+                                            Deactivate
+                                        </button>
+                                    </form>
+
+                                {% else %}
+                                    <form method="POST"
+                                          action="{% url 'activate_product_offer' offer.uuid %}">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                onclick="return confirm('Activate this offer?')"
+                                                class="px-3 py-1 bg-green-100 text-green-600 rounded hover:bg-green-200">
+                                            Activate
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-10 text-center text-gray-500">
+                            No product offers found.
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if offers.has_other_pages %}
+        <div class="flex justify-center py-4 bg-gray-50">
+            <nav class="inline-flex rounded-lg shadow overflow-hidden">
+
+                {% if offers.has_previous %}
+                    <a href="?page={{ offers.previous_page_number }}"
+                       class="px-4 py-2 bg-white border hover:bg-gray-100">Prev</a>
+                {% else %}
+                    <span class="px-4 py-2 bg-gray-100 text-gray-400">Prev</span>
+                {% endif %}
+
+                {% for num in offers.paginator.page_range %}
+                    {% if offers.number == num %}
+                        <span class="px-4 py-2 bg-blue-600 text-white">{{ num }}</span>
+                    {% else %}
+                        <a href="?page={{ num }}"
+                           class="px-4 py-2 bg-white border hover:bg-gray-100">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if offers.has_next %}
+                    <a href="?page={{ offers.next_page_number }}"
+                       class="px-4 py-2 bg-white border hover:bg-gray-100">Next</a>
+                {% else %}
+                    <span class="px-4 py-2 bg-gray-100 text-gray-400">Next</span>
+                {% endif %}
+
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

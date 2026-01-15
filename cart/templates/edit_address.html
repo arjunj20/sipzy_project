@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="min-h-screen bg-[#F8F9FA] py-10 px-4 overflow-hidden relative">
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-[#B7472A]/5 rounded-full blur-[100px] animate-pulse"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-black/5 rounded-full blur-[100px]"></div>
+    </div>
+
+    <div class="relative z-10 max-w-lg mx-auto">
+        <div class="text-center mb-10 animate-fade-in-down">
+            <div class="inline-block p-4 mb-4 bg-black rounded-[20px] shadow-xl transform transition-transform hover:scale-110">
+                <i class="fa-solid fa-map-location-dot text-2xl text-[#B7472A]"></i>
+            </div>
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight">Edit Address</h1>
+            <p class="text-gray-500 font-medium mt-1">Refine your delivery destination</p>
+        </div>
+
+        <div class="bg-white/80 backdrop-blur-xl border border-white rounded-[40px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] animate-slide-up">
+            <form method="POST" class="space-y-5">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <div class="md:col-span-2 group">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Full Name</label>
+                        <input 
+                            type="text" 
+                            name="full_name" 
+                            value="{{ address.full_name }}"
+                            required
+                            class="w-full px-5 py-3.5 bg-gray-50 border-2 {% if errors.full_name %}border-red-400{% else %}border-transparent{% endif %} rounded-2xl focus:bg-white focus:border-[#B7472A] outline-none transition-all duration-300 shadow-sm"
+                        >
+                        {% if errors.full_name %}<p class="text-red-500 text-[11px] mt-1 ml-2 font-bold">{{ errors.full_name }}</p>{% endif %}
+                    </div>
+
+                    <div class="md:col-span-2 group">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Phone Number</label>
+                        <input 
+                            type="text" 
+                            name="phone_number" 
+                            value="{{ address.phone_number }}"
+                            required
+                            class="w-full px-5 py-3.5 bg-gray-50 border-2 {% if errors.phone_number %}border-red-400{% else %}border-transparent{% endif %} rounded-2xl focus:bg-white focus:border-[#B7472A] outline-none transition-all duration-300 shadow-sm"
+                        >
+                        {% if errors.phone_number %}<p class="text-red-500 text-[11px] mt-1 ml-2 font-bold">{{ errors.phone_number }}</p>{% endif %}
+                    </div>
+
+                    <div class="md:col-span-2 group">
+                        <label class="flex justify-between text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">
+                            Pincode
+                            <span id="pin-status" class="text-[#B7472A] normal-case tracking-normal">Enter 6 digits</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="pincode" 
+                            value="{{ address.pincode }}"
+                            maxlength="6"
+                            required
+                            class="w-full px-5 py-3.5 bg-gray-50 border-2 {% if errors.pincode %}border-red-400{% else %}border-transparent{% endif %} rounded-2xl focus:bg-white focus:border-[#B7472A] outline-none transition-all duration-300 shadow-sm"
+                        >
+                        {% if errors.pincode %}<p class="text-red-500 text-[11px] mt-1 ml-2 font-bold">{{ errors.pincode }}</p>{% endif %}
+                    </div>
+
+                    <div class="md:col-span-2 group">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Address Line 1</label>
+                        <input 
+                            type="text" 
+                            name="address_line1" 
+                            value="{{ address.address_line1 }}"
+                            required
+                            class="w-full px-5 py-3.5 bg-gray-50 border-2 {% if errors.address_line1 %}border-red-400{% else %}border-transparent{% endif %} rounded-2xl focus:bg-white focus:border-[#B7472A] outline-none transition-all duration-300 shadow-sm"
+                        >
+                        {% if errors.address_line1 %}<p class="text-red-500 text-[11px] mt-1 ml-2 font-bold">{{ errors.address_line1 }}</p>{% endif %}
+                    </div>
+
+                    <div class="md:col-span-2 group">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Address Line 2 (Optional)</label>
+                        <input 
+                            type="text" 
+                            name="address_line2" 
+                            value="{{ address.address_line2|default:'' }}"
+                            class="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-[#B7472A] outline-none transition-all duration-300 shadow-sm"
+                        >
+                    </div>
+
+                    <div class="group">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">City</label>
+                        <input 
+                            type="text" 
+                            name="city" 
+                            value="{{ address.city }}"
+                            readonly
+                            required
+                            class="w-full px-5 py-3.5 bg-gray-100 border-2 border-transparent rounded-2xl text-gray-500 cursor-not-allowed outline-none transition-all"
+                        >
+                        {% if errors.city %}<p class="text-red-500 text-[11px] mt-1 ml-2 font-bold">{{ errors.city }}</p>{% endif %}
+                    </div>
+
+                    <div class="group">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">State</label>
+                        <input 
+                            type="text" 
+                            name="state" 
+                            value="{{ address.state }}"
+                            readonly
+                            required
+                            class="w-full px-5 py-3.5 bg-gray-100 border-2 border-transparent rounded-2xl text-gray-500 cursor-not-allowed outline-none transition-all"
+                        >
+                        {% if errors.state %}<p class="text-red-500 text-[11px] mt-1 ml-2 font-bold">{{ errors.state }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="pt-6">
+                    <button 
+                        type="submit"
+                        id="submitBtn"
+                        class="w-full bg-black text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-gray-800 transform active:scale-95 transition-all duration-300"
+                    >
+                        Update Address
+                    </button>
+                    
+                    <div class="text-center mt-6">
+                        <a href="{% url 'checkout_page' %}" class="text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-[#B7472A] transition-colors">
+                            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Checkout
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes slide-up {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-up { animation: slide-up 0.8s ease-out; }
+    
+    @keyframes fade-in-down {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-down { animation: fade-in-down 0.8s ease-out; }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const pincodeInput = document.querySelector('input[name="pincode"]');
+    const stateInput = document.querySelector('input[name="state"]');
+    const cityInput = document.querySelector('input[name="city"]');
+    const pinStatus = document.getElementById('pin-status');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Phone number auto-formatter
+    document.querySelector('input[name="phone_number"]').addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '').slice(0, 10);
+    });
+
+    // Pincode API Logic
+    pincodeInput.addEventListener("keyup", function () {
+        const pincode = pincodeInput.value.trim();
+        this.value = this.value.replace(/\D/g, '').slice(0, 6);
+
+        if (pincode.length === 6) {
+            pinStatus.textContent = "Fetching...";
+            pinStatus.className = "text-amber-500 animate-pulse font-bold";
+
+            fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data[0].Status === "Success") {
+                        const post = data[0].PostOffice[0];
+                        stateInput.value = post.State;
+                        cityInput.value = post.District;
+                        pinStatus.textContent = "✓ Verified";
+                        pinStatus.className = "text-green-500 font-bold";
+                    } else {
+                        pinStatus.textContent = "✕ Invalid PIN";
+                        pinStatus.className = "text-red-500 font-bold";
+                    }
+                })
+                .catch(() => {
+                    pinStatus.textContent = "✕ API Error";
+                });
+        }
+    });
+
+    // Loading effect on submit
+    document.querySelector('form').addEventListener('submit', () => {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Updating...';
+    });
+});
+</script>
+
+{% endblock %}

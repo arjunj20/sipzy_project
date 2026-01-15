@@ -1,0 +1,191 @@
+{% extends "admin_base.html" %}
+{% load static %}
+
+{% block title %}User Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+    .animate-slide-in { animation: slideIn 0.3s ease-out; }
+    .modal-overlay { backdrop-filter: blur(5px); }
+    .status-active { background-color: #10B981; color: white; }
+    .status-blocked { background-color: #EF4444; color: white; }
+    .table-row:hover {
+        background-color: #F9FAFB;
+        transform: translateY(-1px);
+        transition: all 0.2s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex-1 p-6 md:p-8 overflow-y-auto">
+
+    <!-- Header -->
+    <div class="mb-8 animate-fade-in">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">User Management</h1>
+                <p class="text-gray-600 mt-2">Manage registered users and access control</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <form method="GET" class="flex gap-2 mb-6">
+        <input type="text" name="search" value="{{ search_query }}" placeholder="Search users..."
+               class="px-4 py-2 border rounded-lg">
+
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Search</button>
+
+        <a href="{% url 'user_list' %}" class="px-4 py-2 bg-gray-300 rounded-lg">Clear</a>
+    </form>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-md p-6 animate-fade-in">
+            <p class="text-sm text-gray-500">Total Users</p>
+            <h3 class="text-2xl font-bold text-gray-800">{{ total_users }}</h3>
+        </div>
+        <div class="bg-white rounded-xl shadow-md p-6 animate-fade-in" style="animation-delay:.1s;">
+            <p class="text-sm text-gray-500">Active Users</p>
+            <h3 class="text-2xl font-bold text-gray-800">{{ active_users }}</h3>
+        </div>
+        <div class="bg-white rounded-xl shadow-md p-6 animate-fade-in" style="animation-delay:.2s;">
+            <p class="text-sm text-gray-500">Blocked Users</p>
+            <h3 class="text-2xl font-bold text-gray-800">{{ blocked_users }}</h3>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden animate-fade-in" style="animation-delay:0.3s;">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">All Users</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 text-sm font-medium">
+                        <th class="py-4 px-6 text-left">Full Name</th>
+                        <th class="py-4 px-6 text-left">Email</th>
+                        <th class="py-4 px-6 text-left">Joined</th>
+                        <th class="py-4 px-6 text-left">Status</th>
+                        <th class="py-4 px-6 text-center">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-200">
+                {% for user in users %}
+                <tr class="table-row">
+                    <td class="py-4 px-6 font-medium">{{ user.fullname }}</td>
+                    <td class="py-4 px-6 text-gray-600">{{ user.email }}</td>
+                    <td class="py-4 px-6 text-gray-500">{{ user.joined_date|date:"Y-m-d" }}</td>
+
+                    <td class="py-4 px-6">
+                        {% if user.is_active %}
+                            <span class="status-active px-3 py-1 rounded-full text-xs font-medium">Active</span>
+                            
+                        {% else %}
+                            <span class="status-blocked px-3 py-1 rounded-full text-xs font-medium">Blocked</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="py-4 px-6 text-center">
+                       {% if user.is_active %}
+    <!-- User is ACTIVE → show BLOCK button -->
+    <button onclick="openConfirmModal({{ user.id }}, 'block')" 
+            class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg">
+        Block
+    </button>
+{% else %}
+    <!-- User is BLOCKED → show UNBLOCK button -->
+    <button onclick="openConfirmModal({{ user.id }}, 'unblock')" 
+            class="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg">
+        Unblock
+    </button>  
+{% endif %}
+
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-6 py-4 flex justify-between">
+            <div class="text-sm text-gray-600">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+            </div>
+            <div class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-3 py-1 bg-gray-200 rounded-lg">Previous</a>
+                {% endif %}
+
+                <span class="px-3 py-1 bg-blue-600 text-white rounded-lg">{{ page_obj.number }}</span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-3 py-1 bg-gray-200 rounded-lg">Next</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CONFIRMATION MODAL -->
+<div id="confirmModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-in p-6 text-center">
+            <h3 class="text-xl font-semibold text-gray-800 mb-3">Are you sure?</h3>
+            <p class="text-gray-600 mb-6">
+                Do you want to <span id="actionTypeText"></span> this user?
+            </p>
+
+            <form method="POST" id="confirmForm">
+                {% csrf_token %}
+                <div class="flex justify-center gap-3">
+                    <button type="button"
+                            onclick="closeConfirmModal()"
+                            class="px-6 py-2 border rounded-lg">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2 bg-blue-600 text-white rounded-lg">
+                        Yes, proceed
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openConfirmModal(id, actionType) {
+        const modal = document.getElementById("confirmModal");
+        modal.classList.remove("hidden");
+
+        document.getElementById("actionTypeText").textContent =
+            actionType === "block" ? "block" : "unblock";
+
+        document.getElementById("confirmForm").action =
+            `/admin-panel/user-${actionType}/${id}/`;
+    }
+
+    function closeConfirmModal() {
+        document.getElementById("confirmModal").classList.add("hidden");
+    }
+</script>
+{% endblock %}

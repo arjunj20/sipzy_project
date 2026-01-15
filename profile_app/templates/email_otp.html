@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Verify OTP - Sipzy{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --primary: #B7472A;
+        --primary-dark: #8F3720;
+        --bg-surface: #F8F9FA;
+    }
+
+    /* Page Entrance Animation */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade-in {
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+
+    /* Main Container */
+    .profile-page-bg {
+        min-height: 100vh;
+        background: var(--bg-surface);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Floating Background Glows */
+    .bg-glow {
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: rgba(183, 71, 42, 0.05);
+        filter: blur(100px);
+        border-radius: 50%;
+        z-index: 0;
+    }
+
+    /* Card Styling */
+    .otp-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid white;
+        border-radius: 40px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 450px;
+        padding: 50px 30px;
+        z-index: 10;
+        text-align: center;
+    }
+
+    /* Icon Header */
+    .header-icon {
+        width: 80px;
+        height: 80px;
+        background: black;
+        color: var(--primary);
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 25px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    }
+
+    /* OTP Input Group */
+    .otp-inputs {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 30px 0;
+    }
+
+    .otp-field {
+        width: 50px;
+        height: 60px;
+        background: #f3f4f6;
+        border: 2px solid transparent;
+        border-radius: 15px;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: black;
+        transition: all 0.3s;
+        outline: none;
+    }
+
+    .otp-field:focus {
+        background: white;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(183, 71, 42, 0.1);
+        transform: translateY(-2px);
+    }
+
+    /* Countdown Timer Styling */
+    .timer-container {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #f9fafb;
+        padding: 8px 16px;
+        border-radius: 20px;
+        margin-bottom: 25px;
+        border: 1px solid #f3f4f6;
+    }
+
+    .timer-text {
+        font-weight: 700;
+        color: var(--primary);
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Error Alert */
+    .error-alert {
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: center;
+        animation: shake 0.4s both;
+    }
+
+    @keyframes shake {
+        10%, 90% { transform: translate3d(-1px, 0, 0); }
+        40%, 60% { transform: translate3d(2px, 0, 0); }
+    }
+
+    .resend-btn {
+        background: transparent;
+        color: var(--primary);
+        border: 2px dashed var(--primary);
+        padding: 12px 24px;
+        border-radius: 15px;
+        font-weight: 700;
+        transition: all 0.3s;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .resend-btn:hover {
+        background: rgba(183, 71, 42, 0.05);
+        border-style: solid;
+    }
+</style>
+
+<div class="profile-page-bg">
+    <div class="bg-glow" style="top: -100px; left: -100px;"></div>
+    <div class="bg-glow" style="bottom: -100px; right: -100px;"></div>
+
+    <div class="otp-card animate-fade-in">
+        <div class="header-icon">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <h1 class="text-3xl font-black text-gray-900 tracking-tight">Verify Identity</h1>
+        <p class="text-gray-500 font-medium mt-2">We sent a code to your email</p>
+
+        <form method="POST" id="otpForm" class="mt-8">
+            {% csrf_token %}
+
+            <div class="otp-inputs">
+                {% for i in "123456" %}
+                <input 
+                    type="text" 
+                    name="otp{{ forloop.counter }}" 
+                    class="otp-field" 
+                    maxlength="1" 
+                    inputmode="numeric" 
+                    required
+                >
+                {% endfor %}
+            </div>
+
+            {% if errors %}
+            <div class="error-alert">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                {{ errors|first }}
+            </div>
+            {% endif %}
+
+            {% if remaining_time %}
+            <div class="timer-container" id="timerSection">
+                <i class="fa-regular fa-clock text-gray-400"></i>
+                <span class="text-sm text-gray-500">Expires in: </span>
+                <span class="timer-text" id="countdown">{{ remaining_time }}s</span>
+            </div>
+            {% endif %}
+
+            <button type="submit" id="submitBtn" class="w-full bg-black text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-gray-900 transform active:scale-95 transition-all duration-300">
+                <span id="btnText">Verify & Update</span>
+            </button>
+
+            <div id="resendSection" style="display: none;" class="mt-6">
+                <p class="text-xs text-gray-400 uppercase tracking-widest font-bold mb-3">Didn't get it?</p>
+                <a href="{% url 'resend_email_otp' %}" class="resend-btn inline-block">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> Resend New Code
+                </a>
+            </div>
+        </form>
+
+        <div class="mt-8 pt-6 border-t border-gray-100">
+            <a href="{% url 'change_email' %}" class="text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-[#B7472A] transition">
+                <i class="fa-solid fa-chevron-left mr-1"></i> Use different email
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const inputs = document.querySelectorAll('.otp-field');
+    const form = document.getElementById('otpForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const resendSection = document.getElementById('resendSection');
+    const timerSection = document.getElementById('timerSection');
+
+    // Auto-focus first input
+    inputs[0].focus();
+
+    // Input behavior: Auto-jump to next
+    inputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            if (e.target.value.length === 1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                inputs[index - 1].focus();
+            }
+        });
+    });
+
+    // Countdown Logic
+    let timeLeft = parseInt("{{ remaining_time|default:0 }}");
+    if (timeLeft > 0) {
+        const timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('countdown').textContent = timeLeft + 's';
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerSection.style.display = 'none';
+                submitBtn.style.display = 'none';
+                resendSection.style.display = 'block';
+                resendSection.classList.add('animate-fade-in');
+            }
+        }, 1000);
+    } else if (timeLeft <= 0 && timerSection) {
+        // Handle case where it's already expired on load
+        timerSection.style.display = 'none';
+        submitBtn.style.display = 'none';
+        resendSection.style.display = 'block';
+    }
+
+    // Submit UX
+    form.addEventListener('submit', () => {
+        submitBtn.disabled = true;
+        btnText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Verifying...';
+        submitBtn.style.opacity = '0.7';
+    });
+});
+</script>
+{% endblock %}

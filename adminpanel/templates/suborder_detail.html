@@ -1,0 +1,203 @@
+{% extends "admin_base.html" %}
+{% block content %}
+
+<h2 class="text-2xl font-bold mb-4">SubOrder: {{ item.sub_order_id }}</h2>
+
+<div class="bg-white p-6 rounded shadow">
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <p class="mb-2"><strong>Main Order:</strong> {{ item.order.order_number }}</p>
+            <p class="mb-2"><strong>Product:</strong> {{ item.product.name }}</p>
+            <p class="mb-2"><strong>Quantity:</strong> {{ item.quantity }}</p>
+            <p class="mb-2"><strong>Price:</strong> ₹{{ item.net_paid_amount }}</p>
+        </div>
+        <div>
+            <p class="mb-2"><strong>User:</strong> {{ item.order.user.fullname }}</p>
+<p class="mb-2">
+    <strong>Item Status:</strong>
+    <span class="px-3 py-1 rounded text-sm font-semibold
+        {% if item.status == 'delivered' %}bg-green-100 text-green-800
+        {% elif item.status == 'cancelled' %}bg-red-100 text-red-800
+        {% elif item.status == 'shipped' %}bg-blue-100 text-blue-800
+        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+        {{ item.get_status_display }}
+    </span>
+</p>
+
+{% if item.return_request %}
+<p class="mb-2">
+    <strong>Return Status:</strong>
+    <span class="px-3 py-1 rounded text-sm font-semibold
+        {% if item.return_request.status == 'pending' %}bg-yellow-100 text-yellow-800
+        {% elif item.return_request.status == 'approved' %}bg-green-100 text-green-800
+        {% elif item.return_request.status == 'rejected' %}bg-red-100 text-red-800
+        {% elif item.return_request.status == 'refunded' %}bg-indigo-100 text-indigo-800{% endif %}">
+        {{ item.return_request.get_status_display }}
+    </span>
+</p>
+{% endif %}
+
+        </div>
+    </div>
+
+    <!-- Show reason for cancellation/return -->
+  {% if item.status == "cancelled" or item.status == "return_requested" %}
+<div class="mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded">
+
+    <p class="font-bold text-red-800 mb-2">
+        {% if item.status == "cancelled" %}
+            Cancellation Reason:
+        {% else %}
+            Return Request Reason:
+        {% endif %}
+    </p>
+
+    {% if item.status == "return_requested" and item.return_request %}
+        <p class="text-gray-700">
+            {{ item.return_request.reason }}
+        </p>
+        <p class="text-sm text-gray-500 mt-2">
+            Requested on:
+            {{ item.return_request.created_at|date:"d M Y, h:i A" }}
+        </p>
+    {% elif item.status == "cancelled" %}
+        <p class="text-gray-700">
+            {{ item.cancel_reason|default:"No reason provided" }}
+        </p>
+    {% endif %}
+
+</div>
+{% endif %}
+
+</div>
+
+<div class="mt-6 bg-white p-6 rounded shadow">
+    <h3 class="font-bold text-lg mb-4">Update Status</h3>
+    
+    <div class="flex items-center gap-4">
+        <div class="flex-1">
+            <label class="block font-semibold mb-2">Change Status:</label>
+        <select id="status" class="border p-2 rounded w-full">
+
+    <!-- Always show current item status -->
+    <option value="{{ item.status }}" selected>
+        {{ item.get_status_display }}
+    </option>
+
+    {% if item.status == "pending" %}
+        <option value="processing">Processing</option>
+        <option value="cancelled">Cancel</option>
+    {% endif %}
+
+    {% if item.status == "processing" %}
+        <option value="shipped">Shipped</option>
+        <option value="cancelled">Cancel</option>
+    {% endif %}
+
+    {% if item.status == "shipped" %}
+        <option value="delivered">Delivered</option>
+    {% endif %}
+
+    {% if item.status == "return_requested" %}
+        <!-- THESE ARE ADMIN ACTIONS, NOT ITEM STATUSES -->
+        <option value="approved">Approve Return</option>
+        <option value="rejected">Reject Return</option>
+    {% endif %}
+
+    {% if item.return_request and item.return_request.status == "approved" %}
+        <option value="returned">Mark as Returned</option>
+    {% endif %}
+
+</select>
+    
+        </div>
+
+        <div class="pt-7">
+            <button id="updateBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded transition-colors duration-200">
+                Update Status
+            </button>
+        </div>
+    </div>
+
+    <!-- Warning for return requests -->
+    <div id="return-warning" class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded hidden">
+        <p class="text-yellow-800">
+            <strong>⚠️ Note:</strong> Please review the return reason above before approving or rejecting this request.
+        </p>
+    </div>
+
+    <!-- Admin notes section (optional) -->
+    <div class="mt-4">
+        <label class="block font-semibold mb-2">Admin Notes (Optional):</label>
+        <textarea id="admin-notes" class="border p-2 rounded w-full focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                  rows="3" placeholder="Add any internal notes about this status change..."></textarea>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="#" class="text-blue-600 hover:text-blue-800 underline">
+        ← Back to Orders
+    </a>
+</div>
+
+<script>
+    const csrfToken = "{{ csrf_token }}";
+    const statusSelect = document.getElementById("status");
+    const updateBtn = document.getElementById("updateBtn");
+    const returnWarning = document.getElementById("return-warning");
+
+    // Show warning when return_requested status is selected
+    statusSelect.addEventListener("change", function() {
+        if (this.value === "return_requested") {
+            returnWarning.classList.remove("hidden");
+        } else {
+            returnWarning.classList.add("hidden");
+        }
+    });
+
+    // Show warning on page load if current status is return_requested
+    if (statusSelect.value === "return_requested") {
+        returnWarning.classList.remove("hidden");
+    }
+
+    updateBtn.onclick = function() {
+        const status = statusSelect.value;
+        const adminNotes = document.getElementById("admin-notes").value;
+
+        // Confirm before updating
+        if (!confirm(`Are you sure you want to change the status to "${statusSelect.options[statusSelect.selectedIndex].text}"?`)) {
+            return;
+        }
+
+        // Disable button to prevent double clicks
+        updateBtn.disabled = true;
+        updateBtn.textContent = "Updating...";
+
+        fetch("{% url 'update_suborder_status' item.id %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: "status=" + status + "&admin_notes=" + encodeURIComponent(adminNotes)
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message);
+            if (data.success) {
+                location.reload();
+            } else {
+                // Re-enable button if failed
+                updateBtn.disabled = false;
+                updateBtn.textContent = "Update Status";
+            }
+        })
+        .catch(error => {
+            alert("An error occurred while updating status.");
+            updateBtn.disabled = false;
+            updateBtn.textContent = "Update Status";
+        });
+    }
+</script>
+
+{% endblock %}

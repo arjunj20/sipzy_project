@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shop Spirits - Sipzy{% endblock %}
+
+{% block content %}
+
+{% block extra_css %}
+<style>
+    /* ================= THEME VARIABLES ================= */
+    :root {
+        --mouse-x: 50%;
+        --mouse-y: 50%;
+        --amber-dark: #2D1810;
+        --amber-main: #A24E34;
+        --amber-light: #F4E9E2;
+    }
+
+    /* ================= 1. CINEMATIC SHOP HERO ================= */
+    .shop-hero {
+        background: radial-gradient(
+            circle at var(--mouse-x) var(--mouse-y), 
+            rgba(162, 78, 52, 0.2) 0%, 
+            rgba(26, 15, 10, 0) 60%
+        ), linear-gradient(135deg, #1a0f0a 0%, #2d1810 100%);
+        position: relative;
+        overflow: hidden;
+        min-height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Animated background grain/noise */
+    .shop-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        opacity: 0.4;
+        pointer-events: none;
+    }
+
+    /* Floating Particles */
+    .dust-mote {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        animation: floatUp 15s infinite linear;
+    }
+    @keyframes floatUp {
+        0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+        50% { opacity: 0.6; }
+        100% { transform: translateY(-100px) translateX(20px); opacity: 0; }
+    }
+
+    /* ================= 2. BOUTIQUE CARD STYLE ================= */
+    .boutique-card {
+        background: #fff;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.04);
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .boutique-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 30px -10px rgba(162, 78, 52, 0.15);
+        border-color: rgba(162, 78, 52, 0.2);
+    }
+
+    /* Image Area */
+    .boutique-img-box {
+        height: 240px;
+        width: 100%;
+        background-color: #F9F7F5; /* Warm Gray Pedestal */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .boutique-img-box img {
+        height: 80%;
+        object-fit: contain;
+        transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1));
+    }
+
+    .boutique-card:hover .boutique-img-box img {
+        transform: scale(1.1) translateY(-5px);
+    }
+
+    /* Floating Action Button */
+    .card-action-btn {
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%) translateY(50px); /* Hidden */
+        background: #2D1810;
+        color: white;
+        padding: 8px 20px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        opacity: 0;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .boutique-card:hover .card-action-btn {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+
+    /* ================= 3. SIDEBAR & FILTERS ================= */
+    .sticky-sidebar {
+        position: sticky;
+        top: 100px; /* Adjust based on navbar height */
+        height: fit-content;
+    }
+
+    .custom-checkbox {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid #e5e7eb;
+        border-radius: 4px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+    }
+
+    .custom-checkbox:checked {
+        background-color: #A24E34;
+        border-color: #A24E34;
+    }
+
+    .custom-checkbox:checked::after {
+        content: '✓';
+        position: absolute;
+        color: white;
+        font-size: 12px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .filter-section-title {
+        font-family: serif;
+        color: #2D1810;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 0.5rem;
+    }
+
+    /* ================= 4. ANIMATIONS ================= */
+    .stagger-fade-in {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.6s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Search Input Styling */
+    .glass-input {
+        background: rgba(255,255,255,0.8);
+        border: 1px solid #e5e7eb;
+        backdrop-filter: blur(4px);
+        transition: all 0.3s;
+    }
+    .glass-input:focus {
+        border-color: #A24E34;
+        box-shadow: 0 0 0 3px rgba(162, 78, 52, 0.1);
+        background: white;
+    }
+
+</style>
+{% endblock %}
+
+<section id="shopHero" class="shop-hero">
+    <div class="dust-mote w-1 h-1" style="top: 20%; left: 10%; animation-duration: 12s;"></div>
+    <div class="dust-mote w-2 h-2" style="top: 60%; left: 80%; animation-duration: 18s;"></div>
+    <div class="dust-mote w-1 h-1" style="top: 80%; left: 30%; animation-duration: 10s;"></div>
+
+    <div class="relative z-10 text-center px-4">
+        <span class="inline-block py-1 px-3 rounded-full bg-amber-900/50 border border-amber-500/30 text-amber-200 text-xs font-bold tracking-widest uppercase mb-4 backdrop-blur-sm">
+            Est. 2024
+        </span>
+        <h1 class="text-4xl md:text-6xl font-bold text-white mb-4 font-serif tracking-tight">
+            The Collection
+        </h1>
+        <p class="text-amber-100/80 text-lg max-w-2xl mx-auto font-light">
+            Explore our curated catalogue of premium spirits, rare finds, and essentials.
+        </p>
+    </div>
+</section>
+
+<div class="bg-[#FAFAFA] min-h-screen pb-20">
+    <div class="container mx-auto px-4 md:px-8 py-12">
+        
+        <div class="md:hidden mb-6 flex gap-4">
+            <button id="mobile-filter-btn" class="flex-1 bg-white border border-gray-200 py-3 rounded-lg font-semibold text-[#2D1810] flex items-center justify-center gap-2 shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                Filters
+            </button>
+            <div class="flex-1">
+                <select onchange="this.form.submit()" form="filter-form" name="sort" class="w-full h-full bg-white border border-gray-200 rounded-lg px-4 text-sm focus:ring-amber-500 focus:border-amber-500">
+                    <option value="default">Sort: Featured</option>
+                    <option value="price_low_high">Price: Low to High</option>
+                    <option value="price_high_low">Price: High to Low</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-10">
+            
+            <aside id="sidebar-filters" class="w-full md:w-1/4 hidden md:block">
+                <div class="sticky-sidebar">
+                    <form id="filter-form" method="get" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        
+                        <div class="relative mb-8">
+                            <input type="text" name="search" value="{{ search }}" placeholder="Search spirits..." 
+                                   class="glass-input w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none">
+                            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+
+                        <div class="mb-8">
+                            <h3 class="filter-section-title">Categories</h3>
+                            <div class="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                                {% for category in categories %}
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="checkbox" name="category" value="{{ category.id }}" class="custom-checkbox category-filter" 
+                                           {% if category.id|stringformat:"s" in selected_categories %}checked{% endif %}>
+                                    <span class="text-gray-600 text-sm group-hover:text-[#A24E34] transition-colors">{{ category.name }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mb-8">
+                            <h3 class="filter-section-title">Price</h3>
+                            <div class="space-y-3">
+                                {% for value, label in price_ranges.items %}
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="radio" name="price" value="{{ value }}" class="custom-checkbox price-filter rounded-full" 
+                                           {% if price_filter == value %}checked{% endif %}>
+                                    <span class="text-gray-600 text-sm group-hover:text-[#A24E34] transition-colors">{{ label }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mb-8">
+                            <h3 class="filter-section-title">Brands</h3>
+                            <div class="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                {% for brand in brands %}
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="checkbox" name="brand" value="{{ brand.id }}" class="custom-checkbox brand-filter" 
+                                           {% if brand.id|stringformat:"s" in selected_brands %}checked{% endif %}>
+                                    <span class="text-gray-600 text-sm group-hover:text-[#A24E34] transition-colors">{{ brand.name }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <a href="{% url 'userproduct_list' %}" class="block w-full text-center py-2 text-sm text-[#A24E34] hover:bg-amber-50 rounded-lg transition-colors font-medium">
+                            Clear All Filters
+                        </a>
+                    </form>
+                </div>
+            </aside>
+
+            <main class="w-full md:w-3/4">
+                
+                <div class="hidden md:flex justify-between items-center mb-6">
+                    <p class="text-gray-500 font-medium">
+                        Showing <span class="text-[#2D1810] font-bold">{{ products.paginator.count }}</span> results
+                    </p>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-gray-500">Sort by:</label>
+                        <select form="filter-form" name="sort" id="sort-select" class="border-none bg-transparent font-semibold text-[#2D1810] focus:ring-0 cursor-pointer text-sm">
+                            <option value="default" {% if sort_option == 'default' %}selected{% endif %}>Featured</option>
+                            <option value="price_low_high" {% if sort_option == 'price_low_high' %}selected{% endif %}>Price: Low to High</option>
+                            <option value="price_high_low" {% if sort_option == 'price_high_low' %}selected{% endif %}>Price: High to Low</option>
+                            <option value="name_asc" {% if sort_option == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="loading-spinner" class="hidden fixed inset-0 bg-white/60 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-amber-900 border-t-transparent"></div>
+                </div>
+
+                <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for product in products %}
+                    <div class="boutique-card group stagger-fade-in" style="animation-delay: {{ forloop.counter0|add:1|get_digit:1 }}00ms">
+                        
+                        <div class="absolute top-3 left-3 z-10 flex gap-2">
+                            {% if product.applied_offer %}
+                            <span class="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">
+                                -{{ product.applied_offer.discount_percent }}%
+                            </span>
+                            {% endif %}
+                            {% if forloop.first %}
+                            <span class="bg-[#2D1810] text-amber-100 text-[10px] font-bold px-2 py-1 rounded shadow-sm">NEW</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="boutique-img-box">
+                            {% if product.default_variant %}
+                                <img src="{{ product.default_variant.primary_image.url }}" alt="{{ product.name }}">
+                            {% else %}
+                                <img src="{% static 'images/no-image.png' %}" alt="No Image" class="opacity-50">
+                            {% endif %}
+                            
+                            <a href="{% url 'product_details' product.uuid %}" class="card-action-btn">
+                                <span>View Details</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            </a>
+                        </div>
+
+                        <div class="p-5 flex flex-col flex-grow">
+                            <div class="mb-1 text-xs text-gray-400 uppercase tracking-wider font-semibold">{{ product.brand.name }}</div>
+                            <h3 class="font-serif text-lg font-bold text-[#2D1810] mb-2 leading-tight group-hover:text-[#A24E34] transition-colors">
+                                <a href="{% url 'product_details' product.uuid %}">{{ product.name }}</a>
+                            </h3>
+                            
+                            <div class="mt-auto pt-3 border-t border-dashed border-gray-100 flex items-center justify-between">
+                                <div>
+                                    {% if product.default_variant %}
+                                        {% if product.applied_offer %}
+                                            <span class="text-xs text-gray-400 line-through mr-1">₹{{ product.default_variant.price }}</span>
+                                            <span class="text-[#A24E34] font-bold text-lg">₹{{ product.final_price }}</span>
+                                        {% else %}
+                                            <span class="text-[#A24E34] font-bold text-lg">₹{{ product.default_variant.price }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-gray-400 text-sm">Unavailable</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <form action="{% url 'add_to_wishlist' product.uuid %}" method="POST" class="inline-block">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-300 transform active:scale-95" 
+                                            title="Add to Wishlist">
+                                        <svg class="w-6 h-6" fill="{% if product.is_wishlisted %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-span-full py-20 text-center">
+                        <div class="text-6xl mb-4">🥃</div>
+                        <h3 class="text-2xl font-bold text-[#2D1810] mb-2">No spirits found</h3>
+                        <p class="text-gray-500">Try adjusting your filters or search terms.</p>
+                        <a href="{% url 'userproduct_list' %}" class="mt-6 inline-block px-6 py-2 bg-[#2D1810] text-white rounded-lg">Reset Filters</a>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if products.paginator.num_pages > 1 %}
+                <div class="mt-12 flex justify-center">
+                    <nav class="flex items-center gap-2 bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                        {% if products.has_previous %}
+                        <a href="?page={{ products.previous_page_number }}&{{ querystring }}" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Previous</a>
+                        {% endif %}
+
+                        {% for num in products.paginator.page_range %}
+                            {% if products.number == num %}
+                            <span class="px-4 py-2 text-sm font-bold text-white bg-[#A24E34] rounded-lg shadow-md">{{ num }}</span>
+                            {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                            <a href="?page={{ num }}&{{ querystring }}" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if products.has_next %}
+                        <a href="?page={{ products.next_page_number }}&{{ querystring }}" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Next</a>
+                        {% endif %}
+                    </nav>
+                </div>
+                {% endif %}
+
+            </main>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    
+    // 1. HERO SPOTLIGHT EFFECT
+    const hero = document.getElementById('shopHero');
+    if(hero) {
+        hero.addEventListener('mousemove', (e) => {
+            const rect = hero.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            hero.style.setProperty('--mouse-x', `${x}px`);
+            hero.style.setProperty('--mouse-y', `${y}px`);
+        });
+    }
+
+    // 2. AUTO-SUBMIT FILTERS
+    const form = document.getElementById("filter-form");
+    const loadingSpinner = document.getElementById("loading-spinner");
+    const grid = document.getElementById('product-grid');
+
+    const inputs = document.querySelectorAll(".category-filter, .brand-filter, .price-filter, #sort-select");
+    inputs.forEach(input => {
+        input.addEventListener("change", () => {
+            if(loadingSpinner) loadingSpinner.classList.remove('hidden');
+            if(grid) grid.style.opacity = '0.5';
+            form.submit();
+        });
+    });
+
+    // 3. SEARCH DEBOUNCE
+    const searchInput = document.querySelector('input[name="search"]');
+    let timeout = null;
+    if(searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                if(loadingSpinner) loadingSpinner.classList.remove('hidden');
+                form.submit();
+            }, 800);
+        });
+    }
+
+    // 4. MOBILE DRAWER TOGGLE
+    const mobileBtn = document.getElementById('mobile-filter-btn');
+    const sidebar = document.getElementById('sidebar-filters');
+    
+    if(mobileBtn && sidebar) {
+        mobileBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('hidden');
+            sidebar.classList.toggle('fixed');
+            sidebar.classList.toggle('inset-0');
+            sidebar.classList.toggle('z-50');
+            sidebar.classList.toggle('bg-white');
+            sidebar.classList.toggle('p-4');
+        });
+    }
+});
+</script>
+
+{% endblock %}

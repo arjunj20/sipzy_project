@@ -1,0 +1,195 @@
+{% extends "admin_base.html" %}
+{% load static %}
+{% block title %}Edit Product Offer{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes fadeIn { 
+        from { opacity: 0; transform: translateY(20px);} 
+        to { opacity:1; transform: translateY(0);} 
+    }
+    .animate-fade-in { 
+        animation: fadeIn 0.45s ease-out; 
+    }
+    .alert-error {
+        background-color: #fee2e2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex-1 p-6 md:p-8 overflow-y-auto">
+
+    <!-- Header -->
+    <div class="mb-6 animate-fade-in">
+        <div class="flex items-center gap-2 mb-2">
+            <a href="{% url 'offer_list' %}" class="text-gray-600 hover:text-gray-800">
+                ←
+            </a>
+            <h1 class="text-3xl font-bold text-gray-800">Edit Product Offer</h1>
+        </div>
+        <p class="text-gray-600">Update discount details for this product</p>
+    </div>
+
+    <!-- Errors -->
+    {% if errors %}
+    <div class="alert-error animate-fade-in">
+        <ul class="list-disc list-inside space-y-1">
+            {% for message in errors.values %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden animate-fade-in">
+        <div class="px-6 py-4 border-b bg-gray-50">
+            <h2 class="text-lg font-semibold text-gray-800">Offer Details</h2>
+        </div>
+
+        <form method="post" class="p-6" novalidate>
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Offer Name -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium mb-2">
+                        Offer Name <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="offer_name"
+                        class="w-full px-4 py-2.5 border rounded-lg"
+                        value="{{ request.POST.offer_name|default:offer.offer_name }}"
+                        required
+                    >
+                </div>
+
+                <!-- Product (Locked) -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium mb-2">
+                        Product
+                    </label>
+                    <select class="w-full px-4 py-2.5 border rounded-lg bg-gray-100" disabled>
+                        <option>{{ offer.product.name }}</option>
+                    </select>
+                    <input type="hidden" name="product" value="{{ offer.product.id }}">
+                </div>
+
+                <!-- Discount -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        Discount Percentage <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="discount_percent"
+                        min="1"
+                        max="90"
+                        class="w-full px-4 py-2.5 border rounded-lg"
+                        value="{{ request.POST.discount_percent|default:offer.discount_percent }}"
+                        required
+                    >
+                </div>
+
+                <!-- Minimum Product Price -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        Minimum Product Price <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="min_product_price"
+                        class="w-full px-4 py-2.5 border rounded-lg"
+                        value="{{ request.POST.min_product_price|default:offer.min_product_price }}"
+                        required
+                    >
+                    <p class="text-xs text-gray-500 mt-1">
+                        Offer applies only if product price is ≥ this amount
+                    </p>
+                </div>
+
+                <!-- Maximum Product Price (NEW FIELD) -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        Maximum Product Price <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="max_product_price"
+                        class="w-full px-4 py-2.5 border rounded-lg"
+                        value="{{ request.POST.max_product_price|default:offer.max_product_price }}"
+                        required
+                    >
+                    <p class="text-xs text-gray-500 mt-1">
+                        Offer applies only if product price is ≤ this amount
+                    </p>
+                </div>
+
+                <!-- Start Date -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        Start Date <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="date"
+                        name="start_date"
+                        class="w-full px-4 py-2.5 border rounded-lg"
+                        value="{{ request.POST.start_date|default:offer.start_date|date:'Y-m-d' }}"
+                        required
+                    >
+                </div>
+
+                <!-- End Date -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        End Date <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="date"
+                        name="end_date"
+                        class="w-full px-4 py-2.5 border rounded-lg"
+                        value="{{ request.POST.end_date|default:offer.end_date|date:'Y-m-d' }}"
+                        required
+                    >
+                </div>
+
+                <!-- Status -->
+                <div class="md:col-span-2">
+                    <label class="inline-flex items-center">
+                        <input
+                            type="checkbox"
+                            name="is_active"
+                            {% if request.POST.is_active or offer.is_active %}checked{% endif %}
+                        >
+                        <span class="ml-2 text-sm font-medium">Active</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-8 pt-6 border-t flex gap-3">
+                <button
+                    type="submit"
+                    class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                    Update Offer
+                </button>
+                <a
+                    href="{% url 'offer_list' %}"
+                    class="px-6 py-2.5 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

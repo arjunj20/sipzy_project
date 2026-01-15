@@ -1,0 +1,162 @@
+{% extends "admin_base.html" %}
+{% block title %}Edit Category Offer{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px);}
+    to { opacity:1; transform: translateY(0);}
+}
+.animate-fade-in { animation: fadeIn 0.45s ease-out; }
+
+.alert-error {
+    background:#FEE2E2;
+    border:1px solid #FECACA;
+    color:#991B1B;
+    padding:1rem;
+    border-radius:0.75rem;
+    margin-bottom:1.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8 max-w-4xl mx-auto animate-fade-in">
+
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex items-center gap-2 mb-2">
+            <a href="{% url 'category_offer_list' %}" class="text-gray-600 hover:text-gray-800">
+                ←
+            </a>
+            <h1 class="text-3xl font-bold text-gray-800">Edit Category Offer</h1>
+        </div>
+        <p class="text-gray-600">Update discount details for this category</p>
+    </div>
+
+    <!-- Errors -->
+    {% if errors %}
+    <div class="alert-error">
+        <ul class="list-disc list-inside space-y-1 text-sm">
+            {% for message in errors.values %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Form -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b bg-gray-50">
+            <h2 class="text-lg font-semibold text-gray-800">Offer Details</h2>
+        </div>
+
+        <form method="post" class="p-6" novalidate>
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Offer Name -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium mb-2">
+                        Offer Name <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="offer_name"
+                        value="{{ request.POST.offer_name|default:offer.offer_name }}"
+                        class="w-full px-4 py-2.5 border rounded-lg"
+                        {% if offer.is_expired %}disabled{% endif %}
+                    >
+                </div>
+
+                <!-- Category (Locked) -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium mb-2">
+                        Category
+                    </label>
+                    <input
+                        type="text"
+                        value="{{ offer.category.name }}"
+                        class="w-full px-4 py-2.5 border rounded-lg bg-gray-100"
+                        disabled
+                    >
+                </div>
+
+                <!-- Discount -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        Discount Percentage <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="discount_percent"
+                        min="1"
+                        max="90"
+                        value="{{ request.POST.discount_percent|default:offer.discount_percent }}"
+                        class="w-full px-4 py-2.5 border rounded-lg"
+                        {% if offer.is_expired %}disabled{% endif %}
+                    >
+                </div>
+
+                <!-- Start Date -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        Start Date <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="date"
+                        name="start_date"
+                        value="{{ request.POST.start_date|default:offer.start_date|date:'Y-m-d' }}"
+                        class="w-full px-4 py-2.5 border rounded-lg"
+                        {% if offer.is_expired %}disabled{% endif %}
+                    >
+                </div>
+
+                <!-- End Date -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        End Date <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="date"
+                        name="end_date"
+                        value="{{ request.POST.end_date|default:offer.end_date|date:'Y-m-d' }}"
+                        class="w-full px-4 py-2.5 border rounded-lg"
+                        {% if offer.is_expired %}disabled{% endif %}
+                    >
+                </div>
+
+                <!-- Status -->
+                <div class="md:col-span-2">
+                    <label class="inline-flex items-center">
+                        <input
+                            type="checkbox"
+                            name="is_active"
+                            {% if offer.is_active %}checked{% endif %}
+                            {% if offer.is_expired %}disabled{% endif %}
+                        >
+                        <span class="ml-2 text-sm font-medium">Active</span>
+                    </label>
+                </div>
+
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-8 pt-6 border-t flex gap-3">
+                {% if not offer.is_expired %}
+                <button
+                    type="submit"
+                    class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Update Offer
+                </button>
+                {% endif %}
+                <a href="{% url 'category_offer_list' %}"
+                   class="px-6 py-2.5 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    Back
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

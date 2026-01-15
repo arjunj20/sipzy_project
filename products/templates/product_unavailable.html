@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="w-full py-10 flex justify-center">
+    <div class="bg-white shadow p-6 rounded text-center">
+        <h2 class="text-2xl font-semibold text-red-600">Product Unavailable</h2>
+        <p class="mt-3 text-gray-700">Sorry, this product is currently inactive or unavailable.</p>
+        <a href="{% url 'userproduct_list' %}" class="mt-5 inline-block px-4 py-2 bg-blue-600 text-white rounded">
+            Go Back to Products
+        </a>
+    </div>
+</section>
+{% endblock %}
