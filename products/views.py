@@ -8,7 +8,7 @@ from cart.models import CartItems
 from decimal import Decimal, ROUND_HALF_UP
 from django.db import transaction
 from django.views.decorators.cache import never_cache
-from wishlist.models import Wishlist
+
 from offers.utils import get_best_offer_for_product, apply_offer
 from django.urls import reverse
 from reviews.models import ProductReview
@@ -84,11 +84,7 @@ def userproduct_list(request):
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    wishlist = Wishlist.objects.filter(user=request.user)
-
     for product in page_obj:
-        is_wishlisted = False
-
         variant = min(product.variants.all(), key=lambda v: v.price, default=None)
         product.default_variant = variant
 
@@ -102,9 +98,6 @@ def userproduct_list(request):
             else:
                 product.final_price = variant.price
                 product.applied_offer = None
-        for i in wishlist:
-            if product.name == i.product.name:
-                product.is_wishlisted = True
 
 
     qs = request.GET.copy()
@@ -119,7 +112,8 @@ def userproduct_list(request):
         "2000-5000": "₹2,000 - ₹5,000",
         "5000+": "Above ₹5,000",
     }
-    
+
+
 
     return render(request, "userproduct_list.html", {
         "products": page_obj,

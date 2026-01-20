@@ -50,10 +50,8 @@ def user_signup(request):
     referral_token = request.GET.get("ref")
     if referral_token:
         request.session["referral_token"] = referral_token
-    data_form = request.POST.copy()
 
     if request.method == "POST":
-
         fullname = request.POST.get("fullname", "").strip()
         email = request.POST.get("email", "").strip()
         password = request.POST.get("password")
@@ -90,7 +88,7 @@ def user_signup(request):
             errors["confirm_password"] = "Passwords do not match."
 
         if errors:
-            return render(request, "user_signup.html", {"errors": errors, "data_form": data_form})
+            return render(request, "user_signup.html", {"errors": errors})
 
         try:
             otp = random.randint(100000, 999999)
@@ -121,9 +119,9 @@ def user_signup(request):
 
         except Exception:
             errors["general"] = "Something went wrong. Please try again."
-            return render(request, "user_signup.html", {"errors": errors, "data_form": data_form})
+            return render(request, "user_signup.html", {"errors": errors})
 
-    return render(request, "user_signup.html", {"data_form": data_form})
+    return render(request, "user_signup.html")
 
 
 import uuid
@@ -343,7 +341,6 @@ def landing_page(request):
 
     })
 
-
 @never_cache
 def user_login(request):
 
@@ -351,17 +348,12 @@ def user_login(request):
         return redirect("user_homepage")
 
     errors = {}
-    data_form = {} 
 
     if request.method == "POST":
-
         email = (request.POST.get("email") or "").strip()
         password = request.POST.get("password") or ""
 
-        data_form = {
-            "email": email  
-        }
-
+        # ---------- EMAIL ----------
         if not email:
             errors["email"] = "Email is required."
         else:
@@ -370,31 +362,49 @@ def user_login(request):
             except ValidationError:
                 errors["email"] = "Enter a valid email address."
 
+        # ---------- PASSWORD ----------
         if not password:
             errors["password"] = "Password is required."
         elif len(password) > 128:
             errors["password"] = "Invalid password."
 
         if errors:
-            return render(request, "user_login.html", {"errors": errors, "data_form": data_form})
+            return render(request, "user_login.html", {"errors": errors})
 
-        user = authenticate(request, email=email, password=password)
+        # ---------- AUTH ----------
+        try:
+            user = authenticate(request, email=email, password=password)
+        except Exception:
+            errors["server"] = "Authentication service unavailable. Try again later."
+            return render(request, "user_login.html", {"errors": errors})
 
         if user is None:
             errors["invalid"] = "Invalid email or password."
-            return render(request, "user_login.html", {"errors": errors, "data_form": data_form})
+            return render(request, "user_login.html", {"errors": errors})
 
+        # ---------- ACTIVE CHECK ----------
         if not user.is_active:
             errors["inactive"] = "User account is inactive. Contact support."
-            return render(request, "user_login.html", {"errors": errors, "data_form": data_form})
+            return render(request, "user_login.html", {"errors": errors})
 
-        login(request, user)
-        request.session["is_loggedin"] = True
+        # ---------- LOGIN ----------
+        try:
+            login(request, user)
+            request.session["is_loggedin"] = True
 
-        return redirect("user_homepage")
+            try:
+                user.is_loggedin = True
+                user.save(update_fields=["is_loggedin"])
+            except Exception:
+                pass
 
-    return render(request, "user_login.html", {"data_form": data_form})
+            return redirect("user_homepage")
 
+        except Exception:
+            errors["server"] = "Unable to complete login. Try again later."
+            return render(request, "user_login.html", {"errors": errors})
+
+    return render(request, "user_login.html")
 
 @never_cache
 def user_logout(request):
