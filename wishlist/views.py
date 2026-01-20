@@ -6,7 +6,7 @@ from .models import Wishlist
 from django.db.models import Min
 from django.db import transaction
 from decimal import Decimal
-
+from django.contrib import messages
 from cart.models import Cart, CartItems
 from django.views.decorators.http import require_POST
 
