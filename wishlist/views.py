@@ -20,7 +20,7 @@ def add_to_wishlist(request, product_uuid):
             user=request.user,
             product=product
         )
-        
+        messages.success(request, "the item has added in the wishlist")
     return redirect(request.META.get("HTTP_REFERER", "home"))
 
 
