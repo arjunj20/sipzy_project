@@ -94,9 +94,10 @@ def order_invoice(request, order_id):
     state = order.state or ""
     pincode = order.pincode or ""
 
-    subtotal = items.aggregate(
-        total=Sum("net_paid_amount")
-    )["total"] or Decimal("0.00")
+    subtotal = order.items.filter(status="delivered").aggregate(
+    total=Sum("net_paid_amount")
+        )["total"] or Decimal("0.00")
+
 
     total_coupon = items.aggregate(
         total=Sum("coupon_share")
@@ -179,7 +180,7 @@ def order_invoice(request, order_id):
     y -= 30
     p.setFont("Helvetica-Bold", 12)
     p.drawString(330, y, "Subtotal:")
-    p.drawString(460, y, f"₹{order.subtotal}")
+    p.drawString(460, y, f"₹{subtotal}")
 
     y -= 20
     p.setFillColor(green)
