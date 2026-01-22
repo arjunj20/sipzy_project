@@ -38,17 +38,14 @@ def add_coupon(request):
             discount_type = request.POST.get("discount_type")
             is_active = request.POST.get("is_active") == "on"
 
-            # ---------- CODE ----------
             if not code:
                 errors["code"] = "Coupon code is required."
             elif Coupon.objects.filter(code=code).exists():
                 errors["code"] = "Coupon code already exists."
 
-            # ---------- DISCOUNT TYPE ----------
             if discount_type not in ["flat", "percent"]:
                 errors["discount_type"] = "Invalid discount type."
 
-            # ---------- DECIMAL FIELDS ----------
             try:
                 discount_value = Decimal(request.POST.get("discount_value"))
                 min_order_amount = Decimal(request.POST.get("min_order_amount"))
@@ -60,8 +57,6 @@ def add_coupon(request):
                 max_uses_per_user = int(request.POST.get("max_uses_per_user", 1))
             except (ValueError, TypeError):
                 errors["usage_limit"] = "Enter valid integer values."
-
-            # ---------- BASIC NUMBER VALIDATION ----------
             if "discount_value" not in errors and discount_value <= 0:
                 errors["discount_value"] = "Discount value must be greater than zero."
 
@@ -76,8 +71,6 @@ def add_coupon(request):
 
             if max_uses_per_user > usage_limit:
                 errors["max_uses_per_user"] = "Max uses per user cannot exceed usage limit."
-
-            # ---------- PERCENT DISCOUNT RULES ----------
             max_discount_amount = None
             if discount_type == "percent":
                 if discount_value > 90:
@@ -92,7 +85,6 @@ def add_coupon(request):
                 except (InvalidOperation, TypeError):
                     errors["max_discount_amount"] = "Max discount amount is required for percentage coupons."
 
-            # ---------- DATE VALIDATION ----------
             valid_from_raw = request.POST.get("valid_from")
             valid_to_raw = request.POST.get("valid_to")
 
@@ -112,7 +104,6 @@ def add_coupon(request):
                 if valid_to < timezone.now():
                     errors["date"] = "Valid To cannot be in the past."
 
-            # ---------- FINAL CHECK ----------
             if errors:
                 return render(
                     request,
@@ -120,7 +111,6 @@ def add_coupon(request):
                     {"errors": errors}
                 )
 
-            # ---------- CREATE COUPON ----------
             Coupon.objects.create(
                 code=code,
                 discount_type=discount_type,
@@ -178,17 +168,14 @@ def edit_coupon(request, coupon_id):
         discount_type = request.POST.get("discount_type")
         is_active = request.POST.get("is_active") == "on"
 
-        # ---------- CODE ----------
         if not code:
             errors["code"] = "Coupon code is required."
         elif Coupon.objects.filter(code=code).exclude(id=coupon.id).exists():
             errors["code"] = "Coupon code already exists."
 
-        # ---------- DISCOUNT TYPE ----------
         if discount_type not in ["flat", "percent"]:
             errors["discount_type"] = "Invalid discount type."
 
-        # ---------- DECIMAL FIELDS ----------
         try:
             discount_value = Decimal(request.POST.get("discount_value"))
             min_order_amount = Decimal(request.POST.get("min_order_amount"))
@@ -203,7 +190,6 @@ def edit_coupon(request, coupon_id):
         except (ValueError, TypeError):
             errors["usage_limit"] = "Enter valid integer values."
 
-        # ---------- BASIC NUMBER VALIDATION ----------
         if "discount_value" not in errors and discount_value <= 0:
             errors["discount_value"] = "Discount value must be greater than zero."
 
@@ -219,7 +205,6 @@ def edit_coupon(request, coupon_id):
         if max_uses_per_user > usage_limit:
             errors["max_uses_per_user"] = "Max uses per user cannot exceed usage limit."
 
-        # ---------- PERCENT RULES ----------
         max_discount_amount = None
         if discount_type == "percent":
             if discount_value > 90:
@@ -234,7 +219,6 @@ def edit_coupon(request, coupon_id):
             except (InvalidOperation, TypeError):
                 errors["max_discount_amount"] = "Max discount amount is required."
 
-        # ---------- DATE VALIDATION ----------
         valid_from_raw = request.POST.get("valid_from")
         valid_to_raw = request.POST.get("valid_to")
 
@@ -254,7 +238,6 @@ def edit_coupon(request, coupon_id):
             if valid_to < timezone.now():
                 errors["date"] = "Valid To cannot be in the past."
 
-        # ---------- FINAL CHECK ----------
         if errors:
             return render(
                 request,
@@ -265,7 +248,6 @@ def edit_coupon(request, coupon_id):
                 },
             )
 
-        # ---------- UPDATE COUPON ----------
         coupon.code = code
         coupon.discount_type = discount_type
         coupon.discount_value = discount_value

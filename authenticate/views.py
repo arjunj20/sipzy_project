@@ -27,7 +27,7 @@ from django.core.mail import send_mail
 import random
 
 from referal.models import Referral
-from authenticate.models import CustomUser   # adjust import if needed
+from authenticate.models import CustomUser   
 from coupons.models import Coupon
 
 import random

@@ -1077,7 +1077,6 @@ def sales_report_pdf(request):
     orders = Order.objects.filter(payment_status="paid", total__gt=0).order_by('-created_at')
     today = timezone.now().date()
 
-    # --- Filtering Logic (Keep your existing logic) ---
     if filter_type == "today":
         orders = orders.filter(created_at__date=today)
     elif filter_type == "week":
@@ -1113,7 +1112,7 @@ def sales_report_pdf(request):
     ]
     summary_table = Table(summary_data, colWidths=[170, 170, 170])
     summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#6366f1")), # Indigo Header
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#6366f1")),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),

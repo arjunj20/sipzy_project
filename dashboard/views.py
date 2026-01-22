@@ -52,7 +52,6 @@ def visualization_data(request):
     grouping_method = request.GET.get("grouping_method", "Daily")
     now = timezone.now()
 
-    # ✅ SAME SOURCE OF TRUTH
     query_set = Order.objects.filter(payment_status="paid")
 
     if grouping_method == "Daily":

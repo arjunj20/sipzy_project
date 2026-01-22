@@ -359,7 +359,6 @@ def add_address(request):
     errors = {}
 
     if request.method == "POST":
-        # Regex defined INSIDE the view
         FULLNAME_REGEX = re.compile(r'^[A-Za-z .]+$')
         PHONE_REGEX = re.compile(r'^[6-9]\d{9}$')
         CITY_STATE_REGEX = re.compile(r'^[A-Za-z ]+$')
@@ -373,7 +372,6 @@ def add_address(request):
         state = request.POST.get("state", "").strip()
         pincode = request.POST.get("pincode", "").strip()
 
-        # Full Name
         if not full_name:
             errors["full_name"] = "Full name is required."
         elif len(full_name) < 3:
@@ -381,31 +379,26 @@ def add_address(request):
         elif not FULLNAME_REGEX.match(full_name):
             errors["full_name"] = "Name can contain only letters, spaces, and dot (.)."
 
-        # Phone
         if not phone:
             errors["phone_number"] = "Phone number is required."
         elif not PHONE_REGEX.match(phone):
             errors["phone_number"] = "Enter a valid 10-digit phone number."
 
-        # Address Line 1
         if not line1:
             errors["address_line1"] = "Address line is required."
         elif len(line1) < 5:
             errors["address_line1"] = "Address must be at least 5 characters."
 
-        # City
         if not city:
             errors["city"] = "City is required."
         elif not CITY_STATE_REGEX.match(city):
             errors["city"] = "City can contain only letters and spaces."
 
-        # State
         if not state:
             errors["state"] = "State is required."
         elif not CITY_STATE_REGEX.match(state):
             errors["state"] = "State can contain only letters and spaces."
 
-        # Pincode
         if not pincode:
             errors["pincode"] = "Pincode is required."
         elif not PINCODE_REGEX.match(pincode):
@@ -444,7 +437,6 @@ def edit_address(request, uuid):
     errors = {}
 
     if request.method == "POST":
-        # Regex defined INSIDE the view
         FULLNAME_REGEX = re.compile(r'^[A-Za-z .]+$')
         PHONE_REGEX = re.compile(r'^[6-9]\d{9}$')
         CITY_STATE_REGEX = re.compile(r'^[A-Za-z ]+$')
@@ -458,7 +450,6 @@ def edit_address(request, uuid):
         state = request.POST.get("state", "").strip()
         pincode = request.POST.get("pincode", "").strip()
 
-        # Full Name
         if not full_name:
             errors["full_name"] = "Full name is required."
         elif len(full_name) < 3:
@@ -466,31 +457,26 @@ def edit_address(request, uuid):
         elif not FULLNAME_REGEX.match(full_name):
             errors["full_name"] = "Name can contain only letters, spaces, and dot (.)."
 
-        # Phone
         if not phone:
             errors["phone_number"] = "Phone number is required."
         elif not PHONE_REGEX.match(phone):
             errors["phone_number"] = "Enter a valid 10-digit phone number."
 
-        # Address Line 1
         if not line1:
             errors["address_line1"] = "Address line is required."
         elif len(line1) < 5:
             errors["address_line1"] = "Address must be at least 5 characters."
 
-        # City
         if not city:
             errors["city"] = "City is required."
         elif not CITY_STATE_REGEX.match(city):
             errors["city"] = "City can contain only letters and spaces."
 
-        # State
         if not state:
             errors["state"] = "State is required."
         elif not CITY_STATE_REGEX.match(state):
             errors["state"] = "State can contain only letters and spaces."
 
-        # Pincode
         if not pincode:
             errors["pincode"] = "Pincode is required."
         elif not PINCODE_REGEX.match(pincode):
