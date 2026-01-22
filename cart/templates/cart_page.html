@@ -98,7 +98,7 @@
 
                                         <div class="mt-2 sm:mt-0">
                                             <span class="unit-price hidden">{{ item.unit_price }}</span>
-                                            <span class="item-total-display text-lg font-bold" hidden>
+                                            <span class="item-total-display text-lg font-bold">
                                                 ₹{{ item.total_price }}
                                             </span>
                                         </div>
@@ -152,6 +152,18 @@
                             <span class="text-gray-600">Tax</span>
                             <span class="tax-value font-medium">₹{{ tax }}</span>
                         </div>
+
+                        {% if cart.applied_coupon %}
+                        <div class="flex justify-between text-green-600 font-medium">
+                            <span>Coupon ({{ cart.applied_coupon.code }})</span>
+                            <span>-₹{{ cart.coupon_discount }}</span>
+                        </div>
+                        <form method="POST" action="{% url 'remove_coupon' %}">
+                            {% csrf_token %}
+                            <button class="text-red-500 text-xs hover:underline">Remove Coupon</button>
+                        </form>
+                        {% endif %}
+
                         <div class="border-t border-gray-200 pt-4">
                             <div class="flex justify-between text-lg font-bold">
                                 <span>Total</span>
@@ -234,19 +246,16 @@ document.querySelectorAll(".cart-item").forEach(item => {
             }
 
             if (data.success) {
-                // ✅ UPDATE UNIT PRICE IN THE ROW (Offer Price)
                 const unitPriceEl = item.querySelector(".unit-price-display");
                 if (unitPriceEl && data.unit_price) {
                     unitPriceEl.textContent = "₹" + data.unit_price;
                 }
 
-                // ✅ UPDATE ITEM TOTAL FOR THIS ROW (Quantity * Unit Price + Tax)
                 const itemTotalEl = item.querySelector(".item-total-display");
                 if (itemTotalEl && data.item_total) {
                     itemTotalEl.textContent = "₹" + data.item_total;
                 }
 
-                // ✅ UPDATE CART SUMMARY
                 document.querySelector(".subtotal-value").textContent = "₹" + data.subtotal;
                 document.querySelector(".total-value").textContent = "₹" + data.total;
 
@@ -283,7 +292,6 @@ document.querySelectorAll(".cart-item").forEach(item => {
     }
 });
 
-// REMOVE ITEM LOGIC
 document.querySelectorAll(".remove-item").forEach(btn => {
     btn.addEventListener("click", function() {
         const itemId = this.dataset.id;
@@ -314,7 +322,6 @@ document.querySelectorAll(".remove-item").forEach(btn => {
     });
 });
 
-// MODAL HELPER
 function showModal({ icon = "⚠️", title = "Alert", message = "" }) {
     document.getElementById("modalIcon").textContent = icon;
     document.getElementById("modalTitle").textContent = title;
