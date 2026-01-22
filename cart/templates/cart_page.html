@@ -4,23 +4,17 @@
 {% block content %}
 <div id="globalModal"
     class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
-    
     <div id="globalModalBox"
         class="bg-white/90 backdrop-blur-xl rounded-2xl p-6 w-80 shadow-xl transform scale-90 opacity-0 transition-all duration-300">
-
         <div id="modalIcon" class="text-4xl mb-3">⚠️</div>
-
         <h2 id="modalTitle" class="text-xl font-bold text-gray-800 mb-2"></h2>
-
         <p id="modalMessage" class="text-gray-600 mb-4 leading-relaxed"></p>
-
         <button id="modalCloseBtn"
             class="px-4 py-2 bg-[#A24E34] text-white rounded-lg w-full hover:bg-[#8D3A28] transition">
             OK
         </button>
     </div>
 </div>
-
 
 <div class="min-h-screen bg-gradient-to-br from-[#F4E9E2] via-[#FEFAF7] to-[#F4E9E2] py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
@@ -33,10 +27,8 @@
             <div class="lg:col-span-2">
                 {% if cart_items %}
                 <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-                    
                     <div class="divide-y divide-gray-100">
                         {% for item in cart_items %}
-
                         <div class="cart-item p-6 relative {% if not item.variant.product.is_active or item.quantity > item.variant.stock %}opacity-60{% endif %}"
                              data-item-id="{{ item.id }}">
 
@@ -45,7 +37,6 @@
                             {% endif %}
 
                             <div class="flex flex-col sm:flex-row gap-4">
-
                                 <div class="flex-shrink-0">
                                     <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
                                         <img src="{{ item.variant.primary_image.url }}" 
@@ -55,130 +46,78 @@
                                 </div>
 
                                 <div class="flex-grow">
-
                                     <div class="flex justify-between">
                                         <div>
-                                            <h3 class="font-bold text-lg text-gray-800">
-                                                {{ item.variant.product.name }}
-                                            </h3>
+                                            <h3 class="font-bold text-lg text-gray-800">{{ item.variant.product.name }}</h3>
                                             <p class="text-sm text-gray-500">{{ item.product.brand }}</p>
                                         </div>
-
                                         <button class="remove-item" data-id="{{ item.id }}">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor">
-                                                <path fill-rule="evenodd" 
-                                                      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 
-                                                         002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 
-                                                         1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 
-                                                         0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                                             </svg>
                                         </button>
-
                                     </div>
 
                                     <div class="mt-2 flex flex-wrap gap-2 text-sm">
-                                        <span class="px-2 py-1 bg-gray-100 rounded-full">
-                                            {{ item.variant.product.category }}
-                                        </span>
+                                        <span class="px-2 py-1 bg-gray-100 rounded-full">{{ item.variant.product.category }}</span>
                                     </div>
 
                                     <div class="mt-4">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Variant</label>
-
-                                        <select class="variant-select w-full max-w-xs border border-gray-300 
-                                                       rounded-lg px-3 py-2 text-sm focus:outline-none 
-                                                       focus:ring-2 focus:ring-[#A24E34] focus:border-transparent">
-
+                                        <select class="variant-select w-full max-w-xs border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A24E34] focus:border-transparent">
                                             {% for variant in item.variant.product.variants.all %}
                                             <option value="{{ variant.id }}"
                                                 {% if variant.id == item.variant.id %}selected{% endif %}
                                                 {% if variant.stock == 0 %}disabled{% endif %}>
-
-                                                {{ variant.variant }} -
-                                                ₹{{ variant.price }} (Base Price)
-
-                                                {% if variant.stock == 0 %}
-                                                    (Out of Stock)
-                                                {% else %}
-                                                    ({{ variant.stock }} available)
-                                                {% endif %}
+                                                {{ variant.variant }} - ₹{{ variant.price }} 
+                                                {% if variant.stock == 0 %}(Out of Stock){% else %}({{ variant.stock }} available){% endif %}
                                             </option>
                                             {% endfor %}
                                         </select>
                                     </div>
 
                                     <div class="mt-4 flex flex-wrap items-center justify-between">
-
                                         <div class="flex flex-col gap-1 mb-2 sm:mb-0">
-
                                             <div class="flex items-center gap-2">
                                                 {% if item.unit_price < item.variant.price %}
-                                                    <span class="text-sm text-gray-400 line-through">
-                                                        ₹{{ item.variant.price }}
-                                                    </span>
-
-                                                    <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                                                        Offer
-                                                    </span>
+                                                    <span class="text-sm text-gray-400 line-through">₹{{ item.variant.price }}</span>
+                                                    <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Offer</span>
                                                 {% endif %}
-
+                                                
                                                 <span class="unit-price-display font-bold text-[#A24E34] text-lg">
                                                     ₹{{ item.unit_price }}
                                                 </span>
                                             </div>
-
-                                            {% if item.unit_price < item.variant.price %}
-                                                <span class="text-xs text-green-600">
-                                                    Offer price applied
-                                                </span>
-                                            {% endif %}
                                         </div>
 
                                         <div class="flex items-center">
-                                            <button class="quantity-minus w-8 h-8 flex items-center justify-center 
-                                                           bg-gray-100 rounded-l-lg hover:bg-gray-200">-</button>
-
-                                            <input type="number"
-                                                   value="{{ item.quantity }}"
-                                                   min="1"
-                                                   max="{{ item.variant.stock }}"
-                                                   class="quantity-input w-12 h-8 text-center border-y border-gray-300">
-
-                                            <button class="quantity-plus w-8 h-8 flex items-center justify-center 
-                                                           bg-gray-100 rounded-r-lg hover:bg-gray-200">+</button>
+                                            <button class="quantity-minus w-8 h-8 flex items-center justify-center bg-gray-100 rounded-l-lg hover:bg-gray-200">-</button>
+                                            <input type="number" value="{{ item.quantity }}" min="1" max="{{ item.variant.stock }}" class="quantity-input w-12 h-8 text-center border-y border-gray-300">
+                                            <button class="quantity-plus w-8 h-8 flex items-center justify-center bg-gray-100 rounded-r-lg hover:bg-gray-200">+</button>
                                         </div>
 
                                         <div class="mt-2 sm:mt-0">
-
                                             <span class="unit-price hidden">{{ item.unit_price }}</span>
-
-                                            <span class="item-total text-lg font-bold">
+                                            <span class="item-total-display text-lg font-bold" hidden>
                                                 ₹{{ item.total_price }}
                                             </span>
                                         </div>
-
                                     </div>
 
                                     <div class="mt-2">
                                         {% if item.variant.stock == 0 %}
                                             <span class="text-sm text-red-500 font-medium">Out of Stock</span>
                                         {% elif item.quantity > item.variant.stock %}
-                                            <span class="text-sm text-red-500 font-medium">
-                                                Only {{ item.variant.stock }} available
-                                            </span>
+                                            <span class="text-sm text-red-500 font-medium">Only {{ item.variant.stock }} available</span>
                                         {% else %}
                                             <span class="text-sm text-green-500 font-medium">In Stock</span>
                                         {% endif %}
                                     </div>
-
                                 </div>
                             </div>
-
                         </div>
                         {% endfor %}
                     </div>
-
-                    
                     {% else %}
                     <div class="p-12 text-center">
                         <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -187,131 +126,63 @@
                             </svg>
                         </div>
                         <h3 class="text-xl font-medium text-gray-900 mb-2">Your cart is empty</h3>
-                        <p class="text-gray-500 mb-6">Add some products to your cart to continue shopping</p>
-                        <a href="{% url 'userproduct_list' %}" class="px-6 py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] transition-all duration-300 font-semibold inline-flex items-center">
+                        <a href="{% url 'userproduct_list' %}" class="px-6 py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] font-semibold inline-flex items-center">
                             Continue Shopping
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-                            </svg>
                         </a>
                     </div>
                     {% endif %}
                 </div>
-                    
             </div>
             
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-6">
                     <h2 class="text-xl font-bold text-gray-800 mb-6">Order Summary</h2>
-                    
                     <div class="space-y-4">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Subtotal</span>
                             <span class="font-medium subtotal-value">₹{{ sub_total }}</span>
-
                         </div>
-                        
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shipping Fee</span>
                             <span class="shipping-value font-medium">
-                                {% if shipping_fee == 0 %}
-                                <span class="text-green-500">Free</span>
-                                {% else %}
-                                ₹{{ shipping_fee }}
-                                {% endif %}
+                                {% if shipping_fee == 0 %}<span class="text-green-500">Free</span>{% else %}₹{{ shipping_fee }}{% endif %}
                             </span>
                         </div>
-                        
                         <div class="flex justify-between">
                             <span class="text-gray-600">Tax</span>
                             <span class="tax-value font-medium">₹{{ tax }}</span>
-
                         </div>
-                        
-                        {% if cart.applied_coupon %}
-                        <div class="flex justify-between text-green-600 font-medium">
-                            <span>
-                                Coupon ({{ cart.applied_coupon.code }})
-                                {% if cart.applied_coupon.discount_type == "percent" %}
-                                    – {{ cart.applied_coupon.discount_value }}% OFF
-                                {% endif %}
-                            </span>
-                            <span>-₹{{ cart.coupon_discount }}</span>
-                        </div>
-
-                        <form method="POST" action="{% url 'remove_coupon' %}">
-                            {% csrf_token %}
-                            <button class="text-red-600 text-xs mt-1 hover:underline">
-                                Remove coupon
-                            </button>
-                        </form>
-                        {% endif %}
-
-                        
                         <div class="border-t border-gray-200 pt-4">
                             <div class="flex justify-between text-lg font-bold">
                                 <span>Total</span>
                                 <span class="total-value">₹{{ cart.total_price }}</span>
-
                             </div>
                         </div>
                     </div>
-                    
                     <div class="mt-8">
                         {% if cart_items %}
-                            <a href="{% url 'checkout_page' %}" class="w-full py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] transition-all duration-300 font-semibold text-center block shadow-lg hover:shadow-xl">
+                            <a href="{% url 'checkout_page' %}" class="w-full py-3 bg-[#A24E34] text-white rounded-full hover:bg-[#8D3A28] font-semibold text-center block">
                                 Proceed to Checkout
                             </a>
-                           
                         {% else %}
-                        <button class="w-full py-3 bg-gray-400 text-white rounded-full font-semibold text-center block cursor-not-allowed" disabled>
-                            Proceed to Checkout
-                        </button>
+                        <button class="w-full py-3 bg-gray-400 text-white rounded-full cursor-not-allowed" disabled>Proceed to Checkout</button>
                         {% endif %}
                     </div>
-                    
-                    <div class="mt-4 text-center">
-                        <a href="{% url 'userproduct_list' %}" class="text-[#A24E34] hover:text-[#8D3A28] transition-colors inline-flex items-center text-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Continue Shopping
-                        </a>
-                    </div>
                 </div>
-                
-                
+
                 <div class="bg-white rounded-2xl shadow-lg p-6 mt-6">
                     <h3 class="text-lg font-bold text-gray-800 mb-4">Available Coupons</h3>
-
                     {% if available_coupons %}
                         {% for coupon in available_coupons %}
                         <div class="border rounded-lg p-4 mb-3 flex justify-between items-center">
                             <div>
                                 <p class="font-semibold text-gray-800">{{ coupon.code }}</p>
-
-                                {% if coupon.discount_type == "percent" %}
-                                    <p class="text-sm text-gray-600">
-                                        {{ coupon.discount_value }}% OFF
-                                        (Max ₹{{ coupon.max_discount_amount }})
-                                    </p>
-                                {% else %}
-                                    <p class="text-sm text-gray-600">
-                                        Flat ₹{{ coupon.discount_value }} OFF
-                                    </p>
-                                {% endif %}
-
-                                <p class="text-xs text-gray-500">
-                                    Min order ₹{{ coupon.min_order_amount }}
-                                </p>
+                                <p class="text-sm text-gray-600">Min order ₹{{ coupon.min_order_amount }}</p>
                             </div>
-
                             <form method="POST" action="{% url 'apply_coupon' %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="coupon_code" value="{{ coupon.code }}">
-                                <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                                    Apply
-                                </button>
+                                <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Apply</button>
                             </form>
                         </div>
                         {% endfor %}
@@ -319,11 +190,11 @@
                         <p class="text-sm text-gray-500">No coupons available</p>
                     {% endif %}
                 </div>
-
             </div>
         </div>
     </div>
 </div>
+
 <script>
 document.querySelectorAll(".cart-item").forEach(item => {
     const itemId = item.dataset.itemId;
@@ -350,7 +221,6 @@ document.querySelectorAll(".cart-item").forEach(item => {
         })
         .then(response => response.json())
         .then(data => { 
-
             if (data.corrected_quantity !== undefined) {
                 qtyInput.value = data.corrected_quantity;
             }
@@ -364,15 +234,17 @@ document.querySelectorAll(".cart-item").forEach(item => {
             }
 
             if (data.success) {
-
-                // ✅ UPDATE UNIT PRICE (OFFER PRICE)
+                // ✅ UPDATE UNIT PRICE IN THE ROW (Offer Price)
                 const unitPriceEl = item.querySelector(".unit-price-display");
                 if (unitPriceEl && data.unit_price) {
                     unitPriceEl.textContent = "₹" + data.unit_price;
                 }
 
-                // ✅ UPDATE ITEM TOTAL
-                item.querySelector(".item-total").textContent = "₹" + data.item_total;
+                // ✅ UPDATE ITEM TOTAL FOR THIS ROW (Quantity * Unit Price + Tax)
+                const itemTotalEl = item.querySelector(".item-total-display");
+                if (itemTotalEl && data.item_total) {
+                    itemTotalEl.textContent = "₹" + data.item_total;
+                }
 
                 // ✅ UPDATE CART SUMMARY
                 document.querySelector(".subtotal-value").textContent = "₹" + data.subtotal;
@@ -411,8 +283,7 @@ document.querySelectorAll(".cart-item").forEach(item => {
     }
 });
 
-
-// REMOVE ITEM
+// REMOVE ITEM LOGIC
 document.querySelectorAll(".remove-item").forEach(btn => {
     btn.addEventListener("click", function() {
         const itemId = this.dataset.id;
@@ -429,51 +300,29 @@ document.querySelectorAll(".remove-item").forEach(btn => {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-
                 itemDiv.style.transition = "opacity 0.3s ease";
                 itemDiv.style.opacity = "0";
-
                 setTimeout(() => {
                     itemDiv.remove();
-
-                    document.querySelectorAll(".subtotal-value").forEach(el => {
-                        el.textContent = "₹" + data.subtotal;
-                    });
-
-                    document.querySelectorAll(".tax-value").forEach(el => {
-                        el.textContent = "₹" + data.tax;
-                    });
-
-                    const shippingValue = parseFloat(data.shipping);
-                    document.querySelectorAll(".shipping-value").forEach(el => {
-                        el.textContent = shippingValue === 0 ? "Free" : "₹" + data.shipping;
-                    });
-                    
-                    // ✅ FIXED: Update Total Amount
+                    document.querySelector(".subtotal-value").textContent = "₹" + data.subtotal;
                     document.querySelector(".total-value").textContent = "₹" + data.total;
-
-                    if (data.remaining_items === 0) {
-                        window.location.reload();
-                    }
+                    document.querySelectorAll(".tax-value").forEach(el => el.textContent = "₹" + data.tax);
+                    if (data.remaining_items === 0) window.location.reload();
                 }, 300);
             }
         });
     });
 });
 
-
-// MODAL
+// MODAL HELPER
 function showModal({ icon = "⚠️", title = "Alert", message = "" }) {
     document.getElementById("modalIcon").textContent = icon;
     document.getElementById("modalTitle").textContent = title;
     document.getElementById("modalMessage").textContent = message;
-
     const modal = document.getElementById("globalModal");
     const box = document.getElementById("globalModalBox");
-
     modal.classList.remove("hidden");
     modal.classList.add("flex");
-
     setTimeout(() => {
         box.classList.remove("scale-90", "opacity-0");
         box.classList.add("scale-100", "opacity-100");
@@ -483,14 +332,11 @@ function showModal({ icon = "⚠️", title = "Alert", message = "" }) {
 document.getElementById("modalCloseBtn").addEventListener("click", () => {
     const modal = document.getElementById("globalModal");
     const box = document.getElementById("globalModalBox");
-
     box.classList.add("scale-90", "opacity-0");
-
     setTimeout(() => {
         modal.classList.add("hidden");
         modal.classList.remove("flex");
     }, 200);
 });
 </script>
-
 {% endblock %}

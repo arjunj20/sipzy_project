@@ -15,6 +15,14 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from wallet.models import Wallet, WalletTransaction
 
+
+
+from django.shortcuts import render
+from django.utils import timezone
+from datetime import timedelta, date
+from django.db.models import Sum, Count
+from orders.models import Order
+
 from decimal import Decimal
 
 @never_cache
@@ -912,6 +920,7 @@ def admin_edit_variant(request, uuid):
         "success": success
     })
 
+from datetime import timedelta, datetime, time
 
 @never_cache
 @transaction.atomic
@@ -928,41 +937,40 @@ def variant_delete(request, uuid):
 
     return redirect("variant_list", product_uuid=product_uuid)
 
-
-from django.shortcuts import render
-from django.utils import timezone
-from datetime import timedelta, date
-from django.db.models import Sum, Count
-from orders.models import Order
-
 def admin_sales_report(request):
     filter_type = request.GET.get("filter", "today")
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
 
-    orders = Order.objects.filter(payment_status="paid", total__gt=0)
-    today = timezone.now().date()
+    now = timezone.now()
+    today = now.date()
+
+    orders = Order.objects.filter(payment_status="paid")
+
     if filter_type == "today":
-        orders = orders.filter(created_at__date=today)
+        start_dt = timezone.make_aware(datetime.combine(today, time.min))
+        end_dt = timezone.make_aware(datetime.combine(today, time.max))
+        orders = orders.filter(created_at__range=(start_dt, end_dt))
 
     elif filter_type == "week":
-        orders = orders.filter(
-            created_at__date__gte=today - timedelta(days=7)
-        )
+        orders = orders.filter(created_at__gte=now - timedelta(days=7))
 
     elif filter_type == "month":
-        orders = orders.filter(
-            created_at__year=today.year,
-            created_at__month=today.month
-        )
+        start_dt = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        orders = orders.filter(created_at__gte=start_dt)
 
     elif filter_type == "year":
-        orders = orders.filter(created_at__year=today.year)
+        start_dt = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        orders = orders.filter(created_at__gte=start_dt)
 
     elif filter_type == "custom" and start_date and end_date:
-        orders = orders.filter(
-            created_at__date__range=[start_date, end_date]
+        start_dt = timezone.make_aware(
+            datetime.combine(datetime.strptime(start_date, "%Y-%m-%d"), time.min)
         )
+        end_dt = timezone.make_aware(
+            datetime.combine(datetime.strptime(end_date, "%Y-%m-%d"), time.max)
+        )
+        orders = orders.filter(created_at__range=(start_dt, end_dt))
 
     summary = orders.aggregate(
         total_orders=Count("id"),
@@ -970,8 +978,21 @@ def admin_sales_report(request):
         total_discount=Sum("coupon_discount"),
     )
 
+  
+    order_items_qs = (
+        OrderItem.objects
+        .select_related("order", "product")
+        .filter(order__in=orders)
+        .order_by("-created_at")
+    )
+
+    paginator = Paginator(order_items_qs, 10)  
+    page_number = request.GET.get("page")
+    order_items = paginator.get_page(page_number)
+
     context = {
-        "orders": orders,
+        "orders": orders.order_by("-created_at"),
+        "order_items": order_items,   
         "summary": summary,
         "filter_type": filter_type,
         "start_date": start_date,
@@ -980,12 +1001,12 @@ def admin_sales_report(request):
 
     return render(request, "sales_report.html", context)
 
-
 import openpyxl
 from django.http import HttpResponse
 from django.utils import timezone
 from datetime import timedelta
 from orders.models import Order
+
 def sales_report_excel(request):
     filter_type = request.GET.get("filter", "today")
     start_date = request.GET.get("start_date")
@@ -1072,7 +1093,6 @@ def sales_report_pdf(request):
     total_sales = orders.aggregate(Sum("total"))["total__sum"] or 0
     total_discount = orders.aggregate(Sum("coupon_discount"))["coupon_discount__sum"] or 0
 
-    # --- PDF Generation Setup ---
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = f"attachment; filename=Sales_Report_{today}.pdf"
 
@@ -1080,16 +1100,13 @@ def sales_report_pdf(request):
     elements = []
     styles = getSampleStyleSheet()
 
-    # Custom Styles
     title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], textColor=colors.HexColor("#0f172a"), fontSize=18, spaceAfter=10)
     subtitle_style = ParagraphStyle('SubtitleStyle', fontSize=10, textColor=colors.grey, spaceAfter=20)
 
-    # 1. Header
     elements.append(Paragraph("AdminHub - Sales Report", title_style))
     elements.append(Paragraph(f"Generated on: {timezone.now().strftime('%Y-%m-%d %H:%M')}", subtitle_style))
     elements.append(Spacer(1, 12))
 
-    # 2. Summary Table (Styled Box)
     summary_data = [
         ["Total Orders", "Total Revenue", "Total Discounts"],
         [str(total_orders), f"Rs. {total_sales}", f"Rs. {total_discount}"]
@@ -1112,7 +1129,6 @@ def sales_report_pdf(request):
     elements.append(summary_table)
     elements.append(Spacer(1, 30))
 
-    # 3. Main Data Table
     table_data = [["Order Number", "Date", "Discount", "Total Amount"]]
     for order in orders:
         table_data.append([
@@ -1124,7 +1140,7 @@ def sales_report_pdf(request):
 
     main_table = Table(table_data, colWidths=[140, 120, 120, 130])
     main_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#0f172a")), # Slate Header
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#0f172a")), 
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
@@ -1132,12 +1148,10 @@ def sales_report_pdf(request):
         ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
         ('GRID', (0, 1), (-1, -1), 0.5, colors.grey),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f5f9")]) # Zebra Stripes
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f5f9")])
     ]))
     
     elements.append(main_table)
-
-    # Build PDF
     doc.build(elements)
     return response
 

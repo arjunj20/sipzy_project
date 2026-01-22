@@ -25,8 +25,6 @@ class Order(models.Model):
 
     user = models.ForeignKey(CustomUser, related_name="orders", on_delete=models.CASCADE)
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True)
-
-        # Address snapshot (temporary nullable)
     full_name = models.CharField(max_length=100, null=True, blank=True)
     phone = models.CharField(max_length=30, null=True, blank=True)
     address_line1 = models.CharField(max_length=200, null=True, blank=True)
@@ -51,7 +49,7 @@ class Order(models.Model):
     )
 
     coupon_discount = models.DecimalField(
-        max_digits=10,
+        max_digits=10,      
         decimal_places=2,
         default=0
     )
@@ -81,7 +79,7 @@ class Order(models.Model):
             subtotal += item.net_paid_amount
             coupon_discount += item.coupon_share
 
-        self.subtotal = subtotal + coupon_discount  # original value before coupon
+        self.subtotal = subtotal + coupon_discount 
         self.coupon_discount = coupon_discount
         self.total = subtotal + self.shipping_fee
 
@@ -96,7 +94,7 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.order_number:
-            super().save(*args, **kwargs)   # get ID
+            super().save(*args, **kwargs)   
             self.order_number = f"sz{1000 + self.id}"
             super().save(update_fields=["order_number"])
         else:

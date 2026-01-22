@@ -11,29 +11,34 @@
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-6">
 
+    <!-- HEADER -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
             <h2 class="text-2xl font-bold text-slate-800">Sales Report</h2>
-            <p class="text-sm text-slate-500">Track and export your business performance</p>
+            <p class="text-sm text-slate-500">
+                Order summary and transaction history including refunds & cancellations
+            </p>
         </div>
-        
+
         <div class="flex flex-wrap gap-3">
             <a href="{% url 'sales_report_excel' %}?filter={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}"
-               class="flex items-center px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all font-semibold text-sm">
+               class="flex items-center px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl font-semibold text-sm">
                 <i class="fas fa-file-excel mr-2"></i> Export Excel
             </a>
+
             <a href="{% url 'sales_report_pdf' %}?filter={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}"
-               class="flex items-center px-4 py-2.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl hover:bg-rose-100 transition-all font-semibold text-sm">
+               class="flex items-center px-4 py-2.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl font-semibold text-sm">
                 <i class="fas fa-file-pdf mr-2"></i> Download PDF
             </a>
         </div>
     </div>
 
+    <!-- FILTERS -->
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Quick Filter</label>
-                <select name="filter" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-admin-accent outline-none">
+            <div>
+                <label class="text-xs font-bold text-slate-500 uppercase">Quick Filter</label>
+                <select name="filter" class="w-full bg-slate-50 border rounded-xl p-2.5 text-sm">
                     <option value="today" {% if filter_type == 'today' %}selected{% endif %}>Today</option>
                     <option value="week" {% if filter_type == 'week' %}selected{% endif %}>Last 7 Days</option>
                     <option value="month" {% if filter_type == 'month' %}selected{% endif %}>This Month</option>
@@ -42,96 +47,147 @@
                 </select>
             </div>
 
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Start Date</label>
-                <input type="date" name="start_date" value="{{ start_date }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-admin-accent">
+            <div>
+                <label class="text-xs font-bold text-slate-500 uppercase">Start Date</label>
+                <input type="date" name="start_date" value="{{ start_date }}"
+                       class="w-full bg-slate-50 border rounded-xl p-2.5 text-sm">
             </div>
 
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">End Date</label>
-                <input type="date" name="end_date" value="{{ end_date }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-admin-accent">
+            <div>
+                <label class="text-xs font-bold text-slate-500 uppercase">End Date</label>
+                <input type="date" name="end_date" value="{{ end_date }}"
+                       class="w-full bg-slate-50 border rounded-xl p-2.5 text-sm">
             </div>
 
-            <button type="submit" class="bg-admin-dark text-white font-bold py-2.5 px-6 rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
+            <button class="bg-admin-dark text-white font-bold py-2.5 rounded-xl">
                 Generate Report
             </button>
         </form>
     </div>
 
+    <!-- SUMMARY -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm group hover:border-admin-accent transition-colors">
-            <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                    <i class="fas fa-shopping-bag text-xl"></i>
-                </div>
-                <span class="text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg">Orders</span>
-            </div>
-            <p class="text-sm font-medium text-slate-500">Total Orders</p>
-            <h3 class="text-3xl font-bold text-slate-800">{{ summary.total_orders|default:0 }}</h3>
+        <div class="p-6 bg-white rounded-2xl border shadow-sm">
+            <p class="text-sm text-slate-500">Total Orders</p>
+            <h3 class="text-3xl font-bold">{{ summary.total_orders|default:0 }}</h3>
         </div>
 
-        <div class="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm group hover:border-admin-accent transition-colors">
-            <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-indigo-50 text-admin-accent rounded-xl">
-                    <i class="fas fa-indian-rupee-sign text-xl"></i>
-                </div>
-                <span class="text-xs font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded-lg">Revenue</span>
-            </div>
-            <p class="text-sm font-medium text-slate-500">Total Sales</p>
-            <h3 class="text-3xl font-bold text-slate-800">₹ {{ summary.total_sales|default:0 }}</h3>
+        <div class="p-6 bg-white rounded-2xl border shadow-sm">
+            <p class="text-sm text-slate-500">Total Sales</p>
+            <h3 class="text-3xl font-bold text-emerald-600">
+                ₹ {{ summary.total_sales|default:0 }}
+            </h3>
         </div>
 
-        <div class="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm group hover:border-admin-accent transition-colors">
-            <div class="flex items-center justify-between mb-4">
-                <div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
-                    <i class="fas fa-percent text-xl"></i>
-                </div>
-                <span class="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded-lg">Savings</span>
-            </div>
-            <p class="text-sm font-medium text-slate-500">Total Discount</p>
-            <h3 class="text-3xl font-bold text-slate-800 text-rose-600">₹ {{ summary.total_discount|default:0 }}</h3>
+        <div class="p-6 bg-white rounded-2xl border shadow-sm">
+            <p class="text-sm text-slate-500">Total Discount</p>
+            <h3 class="text-3xl font-bold text-rose-600">
+                ₹ {{ summary.total_discount|default:0 }}
+            </h3>
         </div>
     </div>
 
+    <!-- TRANSACTION HISTORY -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="font-bold text-slate-800">Transaction Details</h3>
+        <div class="p-6 border-b font-bold text-slate-800">
+            Transaction History (Items)
         </div>
+
         <div class="overflow-x-auto">
             <table class="w-full text-left">
-                <thead>
-                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-widest font-bold">
+                <thead class="bg-slate-50 text-xs uppercase font-bold text-slate-500">
+                    <tr>
                         <th class="px-6 py-4">Order No</th>
-                        <th class="px-6 py-4">Date</th>
-                        <th class="px-6 py-4">Total Amount</th>
-                        <th class="px-6 py-4">Discount Applied</th>
+                        <th class="px-6 py-4">Product</th>
+                        <th class="px-6 py-4">Amount</th>
                         <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4">Reason</th>
+                        <th class="px-6 py-4">Date</th>
                     </tr>
                 </thead>
+
                 <tbody class="divide-y divide-slate-100">
-                    {% for order in orders %}
-                    <tr class="hover:bg-slate-50/50 transition-colors text-sm">
-                        <td class="px-6 py-4 font-bold text-admin-accent">#{{ order.order_number }}</td>
-                        <td class="px-6 py-4 text-slate-600">{{ order.created_at|date:"d M, Y" }}</td>
-                        <td class="px-6 py-4 font-bold text-slate-800">₹ {{ order.total }}</td>
-                        <td class="px-6 py-4 text-rose-500 font-medium">₹ {{ order.coupon_discount|default:"0" }}</td>
+                {% for item in order_items %}
+                    <tr class="hover:bg-slate-50 text-sm">
+                        <td class="px-6 py-4 font-bold text-admin-accent">
+                            {{ item.order.order_number }}
+                        </td>
                         <td class="px-6 py-4">
-                            <span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase">
-                                Success
-                            </span>
+                            {{ item.product.name|default:"Product Removed" }}
+                        </td>
+                        <td class="px-6 py-4 font-bold">
+                            ₹ {{ item.net_paid_amount }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if item.status == "cancelled" %}
+                                <span class="bg-slate-200 text-slate-700 px-2 py-1 rounded text-xs">Cancelled</span>
+                            {% elif item.status == "returned" %}
+                                <span class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs">Returned</span>
+                            {% else %}
+                                <span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs">
+                                    {{ item.status|title }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-slate-500">
+                            {% if item.status == "cancelled" %}
+                                {{ item.cancel_reason|default:"—" }}
+                            {% elif item.status == "returned" and item.return_request %}
+                                {{ item.return_request.reason }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-slate-600">
+                            {{ item.created_at|date:"d M Y" }}
                         </td>
                     </tr>
-                    {% empty %}
+                {% empty %}
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 italic">
-                            <i class="fas fa-folder-open text-4xl mb-3 block opacity-20"></i>
-                            No sales data found for the selected period.
+                        <td colspan="6" class="text-center py-10 text-slate-400 italic">
+                            No transaction history found
                         </td>
                     </tr>
-                    {% endfor %}
+                {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        <!-- PAGINATION CONTROLS -->
+        {% if order_items.has_other_pages %}
+        <div class="flex justify-center p-4 border-t">
+            <nav class="flex items-center gap-2 text-sm">
+
+                {% if order_items.has_previous %}
+                    <a href="?page={{ order_items.previous_page_number }}&filter={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}"
+                       class="px-3 py-1 border rounded hover:bg-slate-100">
+                        Prev
+                    </a>
+                {% endif %}
+
+                {% for num in order_items.paginator.page_range %}
+                    {% if order_items.number == num %}
+                        <span class="px-3 py-1 bg-admin-dark text-white rounded font-bold">
+                            {{ num }}
+                        </span>
+                    {% elif num > order_items.number|add:'-3' and num < order_items.number|add:'3' %}
+                        <a href="?page={{ num }}&filter={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}"
+                           class="px-3 py-1 border rounded hover:bg-slate-100">
+                            {{ num }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if order_items.has_next %}
+                    <a href="?page={{ order_items.next_page_number }}&filter={{ filter_type }}&start_date={{ start_date }}&end_date={{ end_date }}"
+                       class="px-3 py-1 border rounded hover:bg-slate-100">
+                        Next
+                    </a>
+                {% endif %}
+
+            </nav>
+        </div>
+        {% endif %}
     </div>
 
 </div>

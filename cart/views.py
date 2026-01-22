@@ -19,7 +19,12 @@ from wallet.models import Wallet
 from wallet.services import debit_wallet
 from coupons.services import apply_coupon_for_user
 import re
-
+from decimal import Decimal
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.cache import never_cache
+from offers.utils import get_best_offer_for_product, apply_offer
+from products.models import ProductVariants
 
 @never_cache
 def cart_page(request):
@@ -55,13 +60,6 @@ def cart_page(request):
     }
 
     return render(request, "cart_page.html", context)
-
-from decimal import Decimal
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.views.decorators.cache import never_cache
-from offers.utils import get_best_offer_for_product, apply_offer
-from products.models import ProductVariants
 
 @never_cache
 @require_POST

@@ -65,6 +65,7 @@ def order_detail(request, uuid):
 
     for item in items:
         item.net_paid = item.price - item.coupon_share
+        
 
     return render(request, "orders/order_detail.html", {
         "order": order,

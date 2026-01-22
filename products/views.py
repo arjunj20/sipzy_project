@@ -249,6 +249,15 @@ def product_details(request, uuid):
         rating_count=Count("id") 
     )
 
+    wishlists = Wishlist.objects.filter(user=request.user)
+
+    is_wishlisted = False
+
+    for i in wishlists:
+        if product.name == i.product.name:
+            is_wishlisted = True
+
+
     context = {
         'product': product,
         "offer": offer,
@@ -265,6 +274,7 @@ def product_details(request, uuid):
         'main_image': main_image,
         'message': message,
         "error" : error,
+        "is_wishlisted": is_wishlisted,
         "avg_rating": avg_rating["avg"] or 0,
         "rating_count": avg_rating["rating_count"],
         "breadcrumbs": [

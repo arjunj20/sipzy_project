@@ -144,6 +144,14 @@
                     {% endif %}
                 </div>
 
+                
+
+                {% if is_wishlisted %}
+                <button disabled class="w-full bg-gray-200 text-gray-500 py-3 rounded-lg">
+                    ❤️ In Wishlist
+                </button>
+
+                {% else %}
                 <form method="POST" action="{% url 'add_to_wishlist' product.uuid %}">
                     {% csrf_token %}
                     <button type="submit"
@@ -154,11 +162,6 @@
                         Add to Wishlist
                     </button>
                 </form>
-
-                {% if is_wishlisted %}
-                <button disabled class="w-full bg-gray-200 text-gray-500 py-3 rounded-lg">
-                    ❤️ In Wishlist
-                </button>
                 {% endif %}
             </div>
 
