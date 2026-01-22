@@ -19,6 +19,8 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
+from reportlab.lib.colors import red, green, black
+
 
 @never_cache
 def order_list(request):
@@ -69,8 +71,6 @@ def order_detail(request, uuid):
         "items": items,
     })
 
-from django.contrib import messages
-
 def order_invoice(request, order_id):
 
     order = get_object_or_404(
@@ -88,23 +88,25 @@ def order_invoice(request, order_id):
         )
         return redirect("order_detail", uuid=order.uuid)
 
-
-
     full_name = order.full_name or ""
     address_line1 = order.address_line1 or "Address not available"
     city = order.city or ""
     state = order.state or ""
     pincode = order.pincode or ""
 
-    subtotal = items.aggregate(
-        total=Sum("price")
+    subtotal = order.items.filter(status="delivered").aggregate(
+    total=Sum("net_paid_amount")
+        )["total"] or Decimal("0.00")
+
+
+    total_coupon = items.aggregate(
+        total=Sum("coupon_share")
     )["total"] or Decimal("0.00")
 
     GST_RATE = Decimal("0.18")
     tax = (subtotal * GST_RATE).quantize(Decimal("0.01"))
     shipping_fee = Decimal("0.00")
-    total = subtotal + tax + shipping_fee
-
+    total = subtotal + shipping_fee
 
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = (
@@ -114,7 +116,6 @@ def order_invoice(request, order_id):
     p = canvas.Canvas(response, pagesize=A4)
     width, height = A4
     y = height - 50
-
 
     p.setFont("Helvetica-Bold", 20)
     p.drawString(30, y, "INVOICE")
@@ -146,9 +147,12 @@ def order_invoice(request, order_id):
     y -= 40
     p.setFont("Helvetica-Bold", 12)
     p.drawString(30, y, "Product")
-    p.drawString(230, y, "Variant")
-    p.drawString(330, y, "Qty")
-    p.drawString(400, y, "Line Total")
+    p.drawString(210, y, "Variant")
+    p.drawString(300, y, "Qty")
+    p.setFillColor(green)
+    p.drawString(340, y, "Coupon")
+    p.setFillColor(black)
+    p.drawString(420, y, "Paid")
 
     y -= 20
     p.setFont("Helvetica", 12)
@@ -159,20 +163,30 @@ def order_invoice(request, order_id):
             y = height - 50
             p.setFont("Helvetica", 12)
 
-        p.drawString(30, y, item.product.name)
+        p.setFillColor(black)
+        p.drawString(30, y, item.product.name if item.product else "-")
         p.drawString(
-            230,
+            210,
             y,
             item.variant.variant if item.variant else "-"
         )
-        p.drawString(330, y, str(item.quantity))
-        p.drawString(400, y, f"₹{item.price}")
+        p.drawString(300, y, str(item.quantity))
+        p.setFillColor(green)
+        p.drawString(340, y, f"-₹{item.coupon_share}")
+        p.setFillColor(black)
+        p.drawString(420, y, f"₹{item.net_paid_amount}")
         y -= 20
 
     y -= 30
     p.setFont("Helvetica-Bold", 12)
     p.drawString(330, y, "Subtotal:")
     p.drawString(460, y, f"₹{subtotal}")
+
+    y -= 20
+    p.setFillColor(green)
+    p.drawString(330, y, "Coupon Discount:")
+    p.drawString(460, y, f"-₹{total_coupon}")
+    p.setFillColor(black)
 
     y -= 20
     p.drawString(330, y, "Tax (GST 18%):")
@@ -191,6 +205,7 @@ def order_invoice(request, order_id):
     p.save()
 
     return response
+
 
 @never_cache
 @transaction.atomic

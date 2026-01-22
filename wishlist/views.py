@@ -6,7 +6,7 @@ from .models import Wishlist
 from django.db.models import Min
 from django.db import transaction
 from decimal import Decimal
-
+from django.contrib import messages
 from cart.models import Cart, CartItems
 from django.views.decorators.http import require_POST
 
@@ -20,7 +20,7 @@ def add_to_wishlist(request, product_uuid):
             user=request.user,
             product=product
         )
-
+        messages.success(request, "the item has added in the wishlist")
     return redirect(request.META.get("HTTP_REFERER", "home"))
 
 
@@ -29,7 +29,7 @@ def add_to_wishlist(request, product_uuid):
 def remove_from_wishlist(request, product_uuid):
     deleted, _ = Wishlist.objects.filter(
         user=request.user,
-        product__uuid=product_uuid   # ✅ important
+        product__uuid=product_uuid  
     ).delete()
 
     if deleted == 0:
@@ -50,17 +50,16 @@ def remove_from_wishlist(request, product_uuid):
 def move_to_cart(request, product_uuid):
     product = get_object_or_404(Products, uuid=product_uuid)
 
-    # ✅ get cheapest variant (same logic as product list)
     variant = product.variants.order_by("price").first()
 
     if not variant:
-        return redirect("wishlist")  # no stock / no variants
+        return redirect("wishlist")  
 
     cart, _ = Cart.objects.get_or_create(user=request.user)
 
     cart_item, created = CartItems.objects.get_or_create(
         cart=cart,
-        variant=variant,   # ✅ CORRECT
+        variant=variant,  
         defaults={
             "quantity": 1,
             "unit_price": variant.price,
@@ -74,7 +73,6 @@ def move_to_cart(request, product_uuid):
         cart_item.total_price = cart_item.quantity * cart_item.unit_price
         cart_item.save()
 
-    # ✅ remove from wishlist
     Wishlist.objects.filter(
         user=request.user,
         product=product

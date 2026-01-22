@@ -3,412 +3,199 @@
 {% block title %}Edit Product{% endblock %}
 
 {% block extra_css %}
-<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 <style>
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px);} to { opacity:1; transform: translateY(0);} }
-  .animate-fade-in { animation: fadeIn 0.45s ease-out; }
-  .thumb { width:72px; height:72px; object-fit:cover; border-radius:8px; border:1px solid #E5E7EB; }
-  .img-card { width:160px; height:160px; object-fit:cover; border-radius:8px; border:1px solid #E5E7EB; }
-  .accordion { border-top:1px solid #EEF2F7; padding-top:12px; margin-top:12px; }
+  .thumb { width: 90px; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
+  .img-card { width: 160px; height: 160px; object-fit: cover; border-radius: 10px; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="flex-1 p-6 md:p-8 overflow-y-auto">
+<div class="p-6 max-w-6xl mx-auto">
+
   <!-- Header -->
-  <div class="mb-6 animate-fade-in flex items-center justify-between">
+  <div class="flex justify-between items-center mb-6">
     <div>
-      <h1 class="text-2xl font-bold text-gray-800">Edit Product</h1>
-      <p class="text-gray-600 mt-1">{{ product.name }}</p>
+      <h1 class="text-2xl font-bold">Edit Product</h1>
+      <p class="text-gray-500">{{ product.name }}</p>
     </div>
-    <div>
-      <a href="{% url 'product_list' %}" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Back</a>
-    </div>
+    <a href="{% url 'product_list' %}" class="px-4 py-2 border rounded-lg">Back</a>
   </div>
 
-  <!-- Success Message -->
-  {% if success %}
-    <div class="mb-4 px-4 py-3 bg-green-100 text-green-700 rounded-lg animate-fade-in border border-green-300">
-      {{ success }}
-    </div>
-  {% endif %}
-
-  <!-- PRODUCT EDIT FORM -->
-  <div class="bg-white rounded-xl shadow-md p-6 animate-fade-in">
-    <h2 class="text-lg font-semibold mb-4">Product Information</h2>
-    
-    <form method="post" enctype="multipart/form-data">
+  <!-- Product Form -->
+  <div class="bg-white p-6 rounded-xl shadow mb-6">
+    <form method="post">
       {% csrf_token %}
       <input type="hidden" name="action" value="edit_product">
-      
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Name Field -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">Name</label>
-          <input name="name" value="{{ product.name }}" class="mt-1 px-3 py-2 border rounded-lg w-full {% if errors.name %}border-red-500{% endif %}" required>
-          {% if errors.name %}
-            <p class="text-sm text-red-600 mt-1">{{ errors.name }}</p>
-          {% endif %}
+          <label class="text-sm">Name</label>
+          <input name="name" value="{{ product.name }}" class="w-full mt-1 border rounded-lg px-3 py-2">
         </div>
 
-        <!-- Brand Field -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">Brand</label>
-          <select name="brand" class="mt-1 px-3 py-2 border rounded-lg w-full {% if errors.brand %}border-red-500{% endif %}">
-            <option value="">-- Select Brand --</option>
+          <label class="text-sm">Brand</label>
+          <select name="brand" class="w-full mt-1 border rounded-lg px-3 py-2">
             {% for b in brands %}
-              <option value="{{ b.id }}" {% if product.brand_id == b.id %}selected{% endif %}>{{ b.name }}</option>
+              <option value="{{ b.id }}" {% if product.brand_id == b.id %}selected{% endif %}>
+                {{ b.name }}
+              </option>
             {% endfor %}
           </select>
-          {% if errors.brand %}
-            <p class="text-sm text-red-600 mt-1">{{ errors.brand }}</p>
-          {% endif %}
         </div>
 
-        <!-- Category Field -->
         <div>
-          <label class="block text-sm font-medium text-gray-700">Category</label>
-          <select name="category" class="mt-1 px-3 py-2 border rounded-lg w-full {% if errors.category %}border-red-500{% endif %}">
-            <option value="">-- Select Category --</option>
+          <label class="text-sm">Category</label>
+          <select name="category" class="w-full mt-1 border rounded-lg px-3 py-2">
             {% for c in categories %}
-              <option value="{{ c.id }}" {% if product.category_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+              <option value="{{ c.id }}" {% if product.category_id == c.id %}selected{% endif %}>
+                {{ c.name }}
+              </option>
             {% endfor %}
           </select>
-          {% if errors.category %}
-            <p class="text-sm text-red-600 mt-1">{{ errors.category }}</p>
-          {% endif %}
         </div>
 
-        <!-- Active Field -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Status</label>
-          <label class="inline-flex items-center mt-2">
-            <input type="checkbox" name="is_active" class="form-checkbox" {% if product.is_active %}checked{% endif %}>
-            <span class="ml-2 text-sm text-gray-700">Is Active</span>
-          </label>
+        <div class="flex items-center mt-6">
+          <input type="checkbox" name="is_active" {% if product.is_active %}checked{% endif %}>
+          <span class="ml-2">Active</span>
         </div>
 
-        <!-- Description Field -->
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700">Description</label>
-          <textarea name="description" rows="3" class="mt-1 px-3 py-2 border rounded-lg w-full {% if errors.description %}border-red-500{% endif %}" required>{{ product.description }}</textarea>
-          {% if errors.description %}
-            <p class="text-sm text-red-600 mt-1">{{ errors.description }}</p>
-          {% endif %}
+          <label class="text-sm">Description</label>
+          <textarea name="description" rows="3" class="w-full mt-1 border rounded-lg px-3 py-2">
+{{ product.description }}</textarea>
         </div>
       </div>
 
-      <div class="mt-4">
-        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Product</button>
-      </div>
+      <button class="mt-4 px-5 py-2 bg-blue-600 text-white rounded-lg">
+        Save Product
+      </button>
     </form>
   </div>
 
-  <!-- PRODUCT IMAGES SECTION -->
-  <div class="bg-white rounded-xl shadow-md p-6 mt-6 animate-fade-in">
-    <h2 class="text-lg font-semibold mb-4">Product Images</h2>
-    
-    <!-- Existing Images -->
-    <div class="mb-6">
-      <h3 class="text-sm font-medium text-gray-700 mb-3">Current Images</h3>
-      {% if product.images.all %}
-        <div class="flex gap-3 flex-wrap">
-          {% for img in product.images.all %}
-            <div class="relative group">
-              <img src="{{ img.image.url }}" class="img-card" alt="Product image">
-              <form method="post" action="{% url 'product_image_delete' img.id %}" style="position:absolute; top:0; right:0;" onsubmit="return confirm('Delete this image?');">
-                {% csrf_token %}
-                <button type="submit" class="px-2 py-1 text-xs bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">×</button>
-              </form>
-            </div>
-          {% endfor %}
+  <!-- Images -->
+  <div class="bg-white p-6 rounded-xl shadow">
+    <h2 class="font-semibold mb-4">Product Images</h2>
+
+    <!-- Existing -->
+    <div class="flex gap-4 flex-wrap mb-6">
+      {% for img in product.images.all %}
+        <div class="relative">
+          <img src="{{ img.image.url }}" class="img-card">
+          <form method="post" action="{% url 'product_image_delete' img.id %}" class="absolute top-2 right-2">
+            {% csrf_token %}
+            <button class="bg-red-500 text-white px-2 rounded">×</button>
+          </form>
         </div>
-      {% else %}
-        <p class="text-gray-500 text-sm">No product images yet.</p>
-      {% endif %}
+      {% endfor %}
     </div>
 
-    <!-- Add New Images -->
-    <div class="border-t pt-4">
-      <h3 class="text-sm font-medium text-gray-700 mb-3">Add More Images</h3>
-      <form method="post" enctype="multipart/form-data" id="addImagesForm">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="add_images">
-        
-        <div class="mb-4">
-          <input id="rawImagesInputEdit" type="file" accept="image/*" multiple class="mt-1" />
-          <div id="hiddenFilesContainer"></div>
-          <p class="text-sm text-gray-500 mt-1">Select multiple images - each will be cropped individually</p>
-          <div id="previewGridEdit" class="mt-3 flex gap-3 flex-wrap"></div>
-        </div>
+    <!-- Upload -->
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_images">
 
-        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Add Images</button>
-      </form>
-    </div>
-  </div>
+      <input id="imageInput" type="file" accept="image/*" multiple>
+      <div id="hiddenInputs"></div>
 
+      <div id="preview" class="flex gap-3 flex-wrap mt-4"></div>
 
-<!-- Crop Modal -->
-<div id="cropModal" class="fixed inset-0 z-50 hidden">
-  <div class="modal-overlay absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-4">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-lg font-semibold">Crop Image <span id="cropCounter"></span></h3>
-        <button type="button" onclick="closeCropModal()" class="px-3 py-1 border rounded-lg hover:bg-gray-100">Cancel</button>
-      </div>
-
-      <div style="height:60vh; background:#f0f0f0; border-radius:8px; overflow:hidden;">
-        <img id="cropImage" src="" alt="Crop" style="max-width:100%; max-height:100%; display:block; margin:0 auto;">
-      </div>
-
-      <div class="mt-4 flex items-center justify-between">
-        <div class="space-x-2">
-          <button type="button" id="zoomInBtn" class="px-3 py-1 border rounded-lg hover:bg-gray-100">Zoom In</button>
-          <button type="button" id="zoomOutBtn" class="px-3 py-1 border rounded-lg hover:bg-gray-100">Zoom Out</button>
-          <button type="button" id="rotateBtn" class="px-3 py-1 border rounded-lg hover:bg-gray-100">Rotate</button>
-        </div>
-        <button type="button" id="cropDoneBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Done</button>
-      </div>
-    </div>
+      <button class="mt-4 px-5 py-2 bg-green-600 text-white rounded-lg">
+        Add Images
+      </button>
+    </form>
   </div>
 </div>
 
+<!-- Crop Modal -->
+<div id="cropModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white p-4 rounded-xl w-full max-w-3xl">
+    <h3 class="font-semibold mb-2">
+      Crop Image <span id="counter"></span>
+    </h3>
+
+    <div class="h-[60vh] bg-gray-100 rounded overflow-hidden">
+      <img id="cropImg">
+    </div>
+
+    <div class="flex justify-between mt-4">
+      <div>
+        <button id="zoomIn" class="border px-3 py-1 rounded">+</button>
+        <button id="zoomOut" class="border px-3 py-1 rounded">−</button>
+        <button id="rotate" class="border px-3 py-1 rounded">↻</button>
+      </div>
+      <button id="done" class="bg-blue-600 text-white px-4 py-2 rounded">
+        Done
+      </button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-
 <script>
-let cropper = null;
+let files = [], cropped = [], index = 0, cropper;
 
-// ===== VARIANT FORM TOGGLE =====
-document.getElementById('openVariantFormBtn').addEventListener('click', () => {
-  document.getElementById('variantFormWrap').classList.remove('hidden');
-});
+const input = document.getElementById('imageInput');
+const modal = document.getElementById('cropModal');
+const img = document.getElementById('cropImg');
+const counter = document.getElementById('counter');
+const hidden = document.getElementById('hiddenInputs');
+const preview = document.getElementById('preview');
 
-function closeVariantForm() { 
-  document.getElementById('variantFormWrap').classList.add('hidden'); 
-}
+input.onchange = e => {
+  files = [...e.target.files];
+  cropped = [];
+  index = 0;
+  preview.innerHTML = '';
+  hidden.innerHTML = '';
+  openCrop();
+};
 
-// ===== PRODUCT IMAGES CROPPER (MULTIPLE FILES) =====
-const rawInputEdit = document.getElementById('rawImagesInputEdit');
-const hiddenContainer = document.getElementById('hiddenFilesContainer');
-const previewGridEdit = document.getElementById('previewGridEdit');
-const cropCounter = document.getElementById('cropCounter');
-
-let rawFilesEdit = [];
-let croppedFilesEdit = [];
-let currentIndexEdit = 0;
-
-rawInputEdit.addEventListener('change', (e) => {
-  rawFilesEdit = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
-  croppedFilesEdit = [];
-  currentIndexEdit = 0;
-  previewGridEdit.innerHTML = '';
-  hiddenContainer.innerHTML = '';
-  
-  if (rawFilesEdit.length === 0) {
-    alert('Please select at least one image file');
-    return;
-  }
-  
-  processNextRawEdit();
-});
-
-function processNextRawEdit() {
-  if (currentIndexEdit >= rawFilesEdit.length) {
-    // All images cropped, create hidden inputs
-    croppedFilesEdit.forEach((file, idx) => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.name = 'images[]';
-      input.style.display = 'none';
-      
+function openCrop() {
+  if (index >= files.length) {
+    cropped.forEach(f => {
+      const i = document.createElement('input');
+      i.type = 'file';
+      i.name = 'images[]';
       const dt = new DataTransfer();
-      dt.items.add(file);
-      input.files = dt.files;
-      
-      hiddenContainer.appendChild(input);
-    });
-    
-    renderPreviewsEdit();
-    return;
-  }
-  
-  const file = rawFilesEdit[currentIndexEdit];
-  const reader = new FileReader();
-  
-  reader.onload = (ev) => {
-    const cropImageEl = document.getElementById('cropImage');
-    cropImageEl.src = ev.target.result;
-    cropImageEl.onload = () => {
-      if (cropper) cropper.destroy();
-      
-      cropper = new Cropper(cropImageEl, { 
-        viewMode: 1, 
-        background: false, 
-        autoCropArea: 1, 
-        aspectRatio: 1,
-        guides: true,
-        highlight: true,
-      });
-      
-      cropCounter.textContent = `(${currentIndexEdit + 1} of ${rawFilesEdit.length})`;
-      document.getElementById('cropModal').classList.remove('hidden');
-      window.currentCropMode = 'product_images';
-    }
-  };
-  
-  reader.readAsDataURL(file);
-}
+      dt.items.add(f);
+      i.files = dt.files;
+      hidden.appendChild(i);
 
-function renderPreviewsEdit() {
-  previewGridEdit.innerHTML = "";
-  
-  croppedFilesEdit.forEach((file, idx) => {
-    const url = URL.createObjectURL(file);
-    const wrapper = document.createElement('div');
-    wrapper.className = 'flex flex-col items-center';
-    
-    const img = document.createElement('img');
-    img.src = url;
-    img.className = 'thumb';
-    wrapper.appendChild(img);
-
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.textContent = 'Remove';
-    removeBtn.className = 'mt-2 px-2 py-1 text-xs border rounded-lg hover:bg-gray-100';
-    removeBtn.addEventListener('click', () => {
-      croppedFilesEdit.splice(idx, 1);
-      renderPreviewsEdit();
-      
-      // Recreate hidden inputs
-      hiddenContainer.innerHTML = '';
-      croppedFilesEdit.forEach((f) => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.name = 'images';
-        input.style.display = 'none';
-        const dt = new DataTransfer();
-        dt.items.add(f);
-        input.files = dt.files;
-        hiddenContainer.appendChild(input);
-      });
-    });
-    
-    wrapper.appendChild(removeBtn);
-    previewGridEdit.appendChild(wrapper);
-  });
-}
-
-// ===== VARIANT IMAGE CROPPER =====
-const rawVariant = document.getElementById('rawVariantImage');
-const hiddenVariant = document.getElementById('hiddenVariantPrimary');
-const variantPreview = document.getElementById('variantPreview');
-
-rawVariant.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    const cropImageEl = document.getElementById('cropImage');
-    cropImageEl.src = ev.target.result;
-    cropImageEl.onload = () => {
-      if (cropper) cropper.destroy();
-      
-      cropper = new Cropper(cropImageEl, { 
-        viewMode: 1, 
-        background: false, 
-        autoCropArea: 1, 
-        aspectRatio: 1,
-        guides: true,
-        highlight: true,
-      });
-      
-      cropCounter.textContent = '';
-      document.getElementById('cropModal').classList.remove('hidden');
-      window.currentCropMode = 'variant_image';
-      window.variantFileName = file.name;
-    }
-  };
-  reader.readAsDataURL(file);
-});
-
-// ===== CROP CONTROLS =====
-document.getElementById('zoomInBtn').addEventListener('click', () => {
-  if (cropper) cropper.zoom(0.1);
-});
-
-document.getElementById('zoomOutBtn').addEventListener('click', () => {
-  if (cropper) cropper.zoom(-0.1);
-});
-
-document.getElementById('rotateBtn').addEventListener('click', () => {
-  if (cropper) cropper.rotate(90);
-});
-
-document.getElementById('cropDoneBtn').addEventListener('click', () => {
-  if (!cropper) return;
-  
-  const canvas = cropper.getCroppedCanvas({ 
-    width: 1000, 
-    height: 1000, 
-    imageSmoothingQuality: 'high' 
-  });
-  
-  canvas.toBlob((blob) => {
-    if (window.currentCropMode === 'product_images') {
-      const origName = rawFilesEdit[currentIndexEdit].name.replace(/\.[^/.]+$/, "");
-      const file = new File([blob], origName + ".jpg", { type: "image/jpeg" });
-      croppedFilesEdit.push(file);
-      
-      currentIndexEdit++;
-      
-      document.getElementById('cropModal').classList.add('hidden');
-      cropper.destroy();
-      cropper = null;
-      
-      processNextRawEdit();
-      
-    } else if (window.currentCropMode === 'variant_image') {
-      const origName = (window.variantFileName || 'variant').replace(/\.[^/.]+$/, "");
-      const file = new File([blob], origName + ".jpg", { type: "image/jpeg" });
-      
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      hiddenVariant.files = dt.files;
-      
-      variantPreview.innerHTML = '';
       const img = document.createElement('img');
-      img.src = URL.createObjectURL(file);
+      img.src = URL.createObjectURL(f);
       img.className = 'thumb';
-      variantPreview.appendChild(img);
-      
-      document.getElementById('cropModal').classList.add('hidden');
-      cropper.destroy();
-      cropper = null;
-    }
-  }, 'image/jpeg', 0.85);
-});
+      preview.appendChild(img);
+    });
+    return;
+  }
 
-function closeCropModal() {
-  document.getElementById('cropModal').classList.add('hidden');
-  if (cropper) { 
-    cropper.destroy(); 
-    cropper = null; 
-  }
-  
-  // Reset if canceling mid-crop
-  if (window.currentCropMode === 'product_images') {
-    rawInputEdit.value = '';
-    rawFilesEdit = [];
-    croppedFilesEdit = [];
-    currentIndexEdit = 0;
-    previewGridEdit.innerHTML = '';
-    hiddenContainer.innerHTML = '';
-  }
+  const r = new FileReader();
+  r.onload = e => {
+    img.src = e.target.result;
+    modal.classList.remove('hidden');
+    cropper?.destroy();
+    cropper = new Cropper(img, { aspectRatio: 1 });
+    counter.textContent = `(${index + 1}/${files.length})`;
+  };
+  r.readAsDataURL(files[index]);
 }
+
+document.getElementById('done').onclick = () => {
+  cropper.getCroppedCanvas({ width: 1000, height: 1000 }).toBlob(b => {
+    cropped.push(new File([b], `img_${index}.jpg`, { type: 'image/jpeg' }));
+    cropper.destroy();
+    modal.classList.add('hidden');
+    index++;
+    openCrop();
+  });
+};
+
+zoomIn.onclick = () => cropper.zoom(0.1);
+zoomOut.onclick = () => cropper.zoom(-0.1);
+rotate.onclick = () => cropper.rotate(90);
 </script>
 {% endblock %}
