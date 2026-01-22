@@ -1,137 +1,105 @@
-Django eCommerce Application (MVT Based)
+                                                        Sipzy – Premium Liquor eCommerce Platform
+                                                        
+Sipzy is a sophisticated eCommerce web application dedicated to the retail of premium spirits. Built using the Python Django framework and the MVT (Model-View-Template) architecture, the platform provides a seamless shopping experience with robust features including secure payments, real-time inventory management, and a comprehensive rewards system.
 
-A Django-based eCommerce web application built using the Model–View–Template (MVT) architecture.
-The project focuses on implementing real-world eCommerce features such as cart management, coupons, orders, and payment integration using Django’s standard approach.
+Live Project Links
+Production Site: arjunj.online
 
-Architecture
+Source Code: GitHub Repository
 
-This project follows Django’s MVT (Model–View–Template) pattern:
+                                                                        Core Features
 
-Models – Database structure and business logic
+User Experience
 
-Views – Request handling and application logic
+Authentication System: Secure user registration and login with OTP verification to ensure account safety.
 
-Templates – User interface (HTML, CSS, JS)
+Advanced Product Management: Product listings with multi-level categories and detailed variants for different sizes and prices.
 
-Features
-User Side
+Cart & Checkout Flow: A dynamic AJAX-powered cart system allowing users to update quantities and variants without page reloads.
 
-User authentication (Signup, Login, OTP verification)
+Wallet System: Integrated digital wallet for users to maintain a balance, receive refunds, and make quick purchases.
 
-Product listing & product detail pages
+Reviews & Ratings: A feedback system where verified customers can rate products and write reviews.
 
-Product variants with stock & pricing
+Promotions & Savings
 
-Cart functionality (Add, update, remove)
+Coupon Management: A flexible coupon system where users can apply promotional codes to receive flat or percentage-based discounts.
 
-Coupon apply & discount calculation
+Offer Module: Dedicated product and category-based offers that automatically calculate and display discounted prices.
 
-Tax and shipping fee calculation
+Order & Payment
 
-Order placement and order history
+Razorpay Integration: Secure and streamlined payment processing using the Razorpay gateway.
 
-Razorpay payment integration
+Order Tracking: Detailed order history and status updates for users to monitor their purchases from processing to delivery.
 
-Breadcrumb navigation for better UX
+Tax & Shipping: Automatic calculation of GST and shipping fees based on the cart total.
 
-Admin Side
+Administration
 
-Product & category management
+Executive Dashboard: A powerful admin interface to manage inventory, monitor sales reports, and oversee user activity.
 
-Product variants
+System Controls: Tools for creating coupons, managing product offers, and updating order fulfillment statuses.
 
-Offers & discounts
+Technical Stack
 
-Coupon creation and deletion
+Backend: Python Django (MVT Architecture)
 
-Order management
+Frontend: HTML5, CSS3, JavaScript, Tailwind CSS
 
-User management
+Database: PostgreSQL
 
-Tech Stack
-Layer	Technology
-Backend	Django (MVT)
-Frontend	Django Templates, HTML, CSS, JavaScript
-Database	PostgreSQL 
-Payment Gateway	Razorpay
-Authentication	Django Auth + OTP
-Styling	Tailwind CSS / Custom CSS
-📁 Project Structure
-project_root/
-│
-├── accounts/        # Authentication & user profile
-├── products/        # Products, categories, variants
-├── cart/            # Cart logic
-├── orders/          # Orders & checkout
-├── coupons/         # Coupon system
-├── offers/          # Product offers
-├── templates/       # Django templates
-├── static/          # CSS, JS, images
-├── manage.py
-└── README.md
+Payment Gateway: Razorpay
 
-Installation & Setup Clone Repository
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+Version Control: Git & GitHub
 
- Create Virtual Environment
+Project Structure
+
+accounts: Handles user profiles, authentication, and wallet logic.
+
+products: Manages the product catalog, variants, and stock levels.
+
+cart: Contains the logic for session-based and database-persisted shopping carts.
+
+orders: Manages checkout processes, shipping details, and order status.
+
+coupons & offers: Handles the logic for discount validation and price deductions.
+
+templates: Contains the Django HTML templates for the user interface.
+
+Installation and Setup
+
+Clone the Repository
+
+git clone https://github.com/arjunj20/sipzy_project.git
+cd sipzy_project
+Set Up a Virtual Environment
+
 python -m venv env
-source env/bin/activate   # Linux / Mac
-env\Scripts\activate      # Windows
+source env/bin/activate  # Linux/Mac
+env\Scripts\activate     # Windows
 
 Install Dependencies
+
 pip install -r requirements.txt
 
- Environment Variables
+Configure Environment Variables Create a .env file in the root directory and add your credentials:
 
-Create a .env file:
+SECRET_KEY
 
-SECRET_KEY=your_secret_key
-DEBUG=True
-RAZORPAY_KEY_ID=your_key_id
-RAZORPAY_KEY_SECRET=your_key_secret
+DATABASE_URL
 
-5️⃣ Database Setup
+RAZORPAY_KEY_ID
+
+RAZORPAY_KEY_SECRET
+
+Database Migration
+
 python manage.py makemigrations
 python manage.py migrate
-
-6️⃣ Create Admin User
-python manage.py createsuperuser
-
-7️⃣ Run Server
+Start the Development Server
 python manage.py runserver
 
+Author
 
-Open -> http://127.0.0.1:8000/
-
- Razorpay Payment Flow
-
-User places an order
-
-Razorpay checkout opens
-
-Payment verification handled on server
-
-Order status updated after successful payment
-
- Learning Outcome
-
-This project helped in gaining hands-on experience with:
-
-Django MVT workflow
-
-Session-based cart handling
-
-Decimal-safe price calculations
-
-Coupon and offer logic
-
-Payment gateway integration
-
-Admin & user role separation
-
- Author
-
-Arjun
-Software Engineer | Django Developer
-Kerala, India 
+Arjun Software Engineer | Django Developer Kerala, India
