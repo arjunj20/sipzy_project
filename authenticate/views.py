@@ -106,12 +106,17 @@ def user_signup(request):
 
             send_mail(
                 subject="Sipzy - Email Verification OTP",
-                message=(
+                message = (
                     f"Hello {fullname},\n\n"
-                    f"Your OTP is {otp}.\n\n"
-                    "This OTP is valid for 1.40 minutes.\n\n"
+                    "Thank you for signing up with Sipzy.\n\n"
+                    f"Your One-Time Password (OTP) for account verification is:\n\n"
+                    f"{otp}\n\n"
+                    "This OTP is valid for 1.40 minutes. Please do not share this code with anyone.\n\n"
+                    "If you did not request this, please ignore this email.\n\n"
+                    "Best regards,\n"
                     "Sipzy Team"
-                ),
+                )
+                ,
                 from_email="sipzy505@gmail.com",
                 recipient_list=[email],
                 fail_silently=False,
@@ -262,7 +267,7 @@ def resend_otp(request):
         "You requested a new OTP to verify your email address "
         "for creating your Sipzy account.\n\n"
         f"Your new One-Time Password (OTP) is: {new_otp}\n\n"
-        "⏰ This OTP is valid for 1.36 minutes only.\n\n"
+        "This OTP is valid for 1.36 minutes only.\n\n"
         "If you did not request this OTP, please ignore this email.\n\n"
         "Thank you,\n"
         "Sipzy Team"
@@ -445,8 +450,14 @@ def forgot_password(request):
             send_mail(
                 subject="Sipzy - Password Reset OTP",
                 message=(
-                    f"Hello,\n\nYour OTP for resetting your Sipzy password is {otp}. "
-                    f"It will expire in 5 minutes.\n\nThank you!"
+                    "Hello,\n\n"
+                    "We received a request to reset your Sipzy account password.\n\n"
+                    f"Your One-Time Password (OTP) for password reset is:\n\n"
+                    f"{otp}\n\n"
+                    "This OTP is valid for 5 minutes. Please do not share this code with anyone.\n\n"
+                    "If you did not request a password reset, please ignore this email.\n\n"
+                    "Best regards,\n"
+                    "Sipzy Team"
                 ),
                 from_email="sipzy505@gmail.com",
                 recipient_list=[email],
@@ -563,8 +574,16 @@ def resend_forgot_otp(request):
 
     send_mail(
         subject="Sipzy - Password Reset OTP (Resent)",
-        message=f"Hello,\n\nYour new OTP for resetting your Sipzy password is {otp}. "
-                f"It will expire in 5 minutes.\n\nThank you!",
+        message=(
+            "Hello,\n\n"
+            "As requested, here is your new One-Time Password (OTP) for resetting your Sipzy password:\n\n"
+            f"{otp}\n\n"
+            "This OTP is valid for 5 minutes. Please do not share this code with anyone.\n\n"
+            "If you did not request this, please ignore this email.\n\n"
+            "Thank you,\n"
+            "Sipzy Team"
+        ),
+
         from_email="sipzy505@gmail.com",
         recipient_list=[email],
         fail_silently=False,
