@@ -1,4 +1,4 @@
-                                                        Sipzy – Premium Liquor eCommerce Platform
+Sipzy – Premium Liquor eCommerce Platform
                                                         
 Sipzy is a sophisticated eCommerce web application dedicated to the retail of premium spirits. Built using the Python Django framework and the MVT (Model-View-Template) architecture, the platform provides a seamless shopping experience with robust features including secure payments, real-time inventory management, and a comprehensive rewards system.
 
@@ -7,7 +7,7 @@ Production Site: arjunj.online
 
 Source Code: GitHub Repository
 
-                                                                        Core Features
+Core Features
 
 User Experience
 
