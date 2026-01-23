@@ -96,31 +96,7 @@
                 </div>
 
                 <!-- Minimum Price -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">Minimum Product Price *</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2">₹</span>
-                        <input type="number" name="min_product_price"
-                               value="{{ request.POST.min_product_price|default:'' }}"
-                               class="w-full pl-10 px-4 py-2.5 border rounded-lg"
-                               placeholder="1000" required>
-                    </div>
-                </div>
-
-                <!-- Maximum Price (NEW FIELD) -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">Maximum Product Price *</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2">₹</span>
-                        <input type="number" name="max_product_price"
-                               value="{{ request.POST.max_product_price|default:'' }}"
-                               class="w-full pl-10 px-4 py-2.5 border rounded-lg"
-                               placeholder="5000" required>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">
-                        Offer applies only if product price is ≤ this amount
-                    </p>
-                </div>
+               
 
                 <!-- Status -->
                 <div>

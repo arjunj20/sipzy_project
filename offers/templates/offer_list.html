@@ -98,8 +98,6 @@
                         <th class="py-4 px-6 text-left">Offer Name</th>
                         <th class="py-4 px-6 text-left">Product</th>
                         <th class="py-4 px-6 text-left">Discount</th>
-                        <th class="py-4 px-6 text-left">Price Range</th>
-                        <th class="py-4 px-6 text-left">Validity</th>
                         <th class="py-4 px-6 text-left">Status</th>
                         <th class="py-4 px-6 text-center">Actions</th>
                     </tr>
@@ -122,17 +120,7 @@
                             </span>
                         </td>
 
-                        <td class="py-4 px-6">
-                            <span class="price-range">
-                                ₹{{ offer.min_product_price }} – ₹{{ offer.max_product_price }}
-                            </span>
-                        </td>
-
-                        <td class="py-4 px-6">
-                            <span class="date-range">
-                                {{ offer.start_date|date:"M d, Y" }} – {{ offer.end_date|date:"M d, Y" }}
-                            </span>
-                        </td>
+                        
 
                         <td class="py-4 px-6">
                             {% if offer.is_expired %}

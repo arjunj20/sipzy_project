@@ -15,6 +15,9 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from wallet.models import Wallet, WalletTransaction
 
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.views.decorators.cache import never_cache
 
 
 from django.shortcuts import render
@@ -300,6 +303,7 @@ def brand_list(request):
         "total_brands": total_brands,
     }
     return render(request, "brand_list.html", context)
+
 @never_cache
 def brand_add(request):
 
@@ -612,9 +616,6 @@ def product_delete(request, product_id):
 
     return redirect("product_list")
 
-from django.core.paginator import Paginator
-from django.db.models import Q
-from django.views.decorators.cache import never_cache
 @never_cache
 def admin_order_item_list(request):
 

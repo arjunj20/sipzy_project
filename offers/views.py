@@ -15,6 +15,8 @@ def offer_list(request):
     offers = paginator.get_page(page_number)
     return render(request, "offer_list.html",{"offers": offers})
 
+
+
 def add_product_offer(request):
 
     if not request.user.is_authenticated or not request.user.is_superuser:
@@ -27,8 +29,6 @@ def add_product_offer(request):
         product_id = request.POST.get("product")
         offer_name = request.POST.get("offer_name")
         discount_percent_raw = request.POST.get("discount_percent")
-        min_product_price_raw = request.POST.get("min_product_price")
-        max_product_price_raw = request.POST.get("max_product_price")
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
         is_active = True if request.POST.get("is_active") else False
@@ -37,8 +37,6 @@ def add_product_offer(request):
             "product": product_id,
             "offer_name": offer_name,
             "discount_percent": discount_percent_raw,
-            "min_product_price": min_product_price_raw,
-            "max_product_price": max_product_price_raw,
             "start_date": start_date,
             "end_date": end_date,
         }
@@ -60,8 +58,6 @@ def add_product_offer(request):
                 product=product,
                 offer_name=offer_name,
                 discount_percent=int(discount_percent_raw),
-                min_product_price=int(min_product_price_raw),
-                max_product_price=int(max_product_price_raw),
                 start_date=start_date,
                 end_date=end_date,
                 is_active=is_active
@@ -74,7 +70,7 @@ def add_product_offer(request):
         except Products.DoesNotExist:
             errors["product"] = "Invalid product selected"
         except ValueError:
-            errors["number"] = "Discount and prices must be valid numbers"
+            errors["discount_percent"] = "Discount must be a valid number"
         except ValidationError as e:
             errors["validation"] = e.messages
         except Exception:
@@ -94,8 +90,6 @@ def edit_product_offer(request, uuid):
     if request.method == "POST":
         offer_name = request.POST.get("offer_name")
         discount_percent_raw = request.POST.get("discount_percent")
-        min_product_price_raw = request.POST.get("min_product_price")
-        max_product_price_raw = request.POST.get("max_product_price")
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
         is_active = True if request.POST.get("is_active") else False
@@ -103,8 +97,6 @@ def edit_product_offer(request, uuid):
         required_fields = {
             "offer_name": offer_name,
             "discount_percent": discount_percent_raw,
-            "min_product_price": min_product_price_raw,
-            "max_product_price": max_product_price_raw,
             "start_date": start_date,
             "end_date": end_date,
         }
@@ -122,8 +114,6 @@ def edit_product_offer(request, uuid):
         try:
             prod.offer_name = offer_name
             prod.discount_percent = int(discount_percent_raw)
-            prod.min_product_price = int(min_product_price_raw)
-            prod.max_product_price = int(max_product_price_raw)
             prod.start_date = start_date
             prod.end_date = end_date
             prod.is_active = is_active
@@ -133,7 +123,7 @@ def edit_product_offer(request, uuid):
             return redirect("offer_list")
 
         except ValueError:
-            errors["number"] = "Discount and prices must be valid numbers"
+            errors["discount_percent"] = "Discount must be a valid number"
         except ValidationError as e:
             errors["validation"] = e.messages
         except Exception:
@@ -143,7 +133,6 @@ def edit_product_offer(request, uuid):
         "offer": prod,
         "errors": errors
     })
-
 
 def deactivate_product_offer(request, uuid):
     if not request.user.is_authenticated or not request.user.is_superuser:
