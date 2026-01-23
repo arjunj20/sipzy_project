@@ -190,7 +190,6 @@ def category_add_offer(request):
         end_date_raw = request.POST.get("end_date")
         is_active = True if request.POST.get("is_active") else False
 
-        # -------- REQUIRED FIELDS --------
         if not category_id:
             errors["category"] = "Category is required."
 
@@ -206,7 +205,6 @@ def category_add_offer(request):
         if not end_date_raw:
             errors["end_date"] = "End date is required."
 
-        # -------- DISCOUNT PERCENT VALIDATION --------
         if discount_percent_raw:
             try:
                 discount_percent = int(discount_percent_raw)
@@ -220,7 +218,6 @@ def category_add_offer(request):
             except ValueError:
                 errors["discount_percent"] = "Discount must be a valid number."
 
-        # -------- DATE VALIDATION --------
         if start_date_raw and end_date_raw:
             if start_date_raw >= end_date_raw:
                 errors["end_date"] = "End date must be after start date."
@@ -235,7 +232,6 @@ def category_add_offer(request):
                 },
             )
 
-        # -------- CREATE OFFER --------
         try:
             category = get_object_or_404(Category, id=category_id)
 
@@ -275,7 +271,6 @@ def edit_category_offer(request, uuid):
     offer = get_object_or_404(CategoryOffer, uuid=uuid)
     errors = {}
 
-    # 🚫 Expired offer protection
     if offer.is_expired:
         errors["expired"] = "Expired offers cannot be edited."
 
@@ -286,7 +281,6 @@ def edit_category_offer(request, uuid):
         end_date_raw = request.POST.get("end_date")
         is_active = True if request.POST.get("is_active") else False
 
-        # -------- REQUIRED FIELDS --------
         if not offer_name:
             errors["offer_name"] = "Offer name is required."
 
@@ -299,7 +293,6 @@ def edit_category_offer(request, uuid):
         if not end_date_raw:
             errors["end_date"] = "End date is required."
 
-        # -------- DISCOUNT VALIDATION --------
         if discount_percent_raw:
             try:
                 discount_percent = int(discount_percent_raw)
@@ -313,7 +306,6 @@ def edit_category_offer(request, uuid):
             except ValueError:
                 errors["discount_percent"] = "Discount must be a valid number."
 
-        # -------- DATE VALIDATION --------
         if start_date_raw and end_date_raw:
             if start_date_raw >= end_date_raw:
                 errors["end_date"] = "End date must be after start date."
@@ -328,7 +320,6 @@ def edit_category_offer(request, uuid):
                 },
             )
 
-        # -------- UPDATE OFFER --------
         try:
             offer.offer_name = offer_name
             offer.discount_percent = discount_percent

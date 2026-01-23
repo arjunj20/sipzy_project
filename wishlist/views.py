@@ -9,6 +9,7 @@ from decimal import Decimal
 from django.contrib import messages
 from cart.models import Cart, CartItems
 from django.views.decorators.http import require_POST
+from offers.utils import get_best_offer_for_product, apply_offer
 
 
 @login_required
@@ -91,10 +92,20 @@ def wishlist_page(request):
         .select_related("product")
         .prefetch_related("product__variants")
     )
-
+                  
     for item in wishlist_items:
+        product = item.product
         variants = item.product.variants.all()
         item.default_variant = min(variants, key=lambda v: v.price, default=None)
+        for i in variants:
+            i.offer_price = None
+            offer = get_best_offer_for_product(product)
+
+            if offer:
+                i.offer_price = apply_offer(i.price, offer)
+                i.applied_offer = offer
+
+    
 
     return render(request, "wishlist/wishlist.html", {
         "wishlist_items": wishlist_items
