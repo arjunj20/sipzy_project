@@ -158,7 +158,7 @@ def user_signupotp(request):
 
     now = timezone.now()
     elapsed = (now - otp_time).total_seconds()
-    allowed_time = 100
+    allowed_time = 120
     remaining_time = max(0, int(allowed_time - elapsed))
 
     if request.method == 'POST':
