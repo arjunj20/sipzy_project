@@ -111,7 +111,7 @@ def user_signup(request):
                     "Thank you for signing up with Sipzy.\n\n"
                     f"Your One-Time Password (OTP) for account verification is:\n\n"
                     f"{otp}\n\n"
-                    "This OTP is valid for 1.40 minutes. Please do not share this code with anyone.\n\n"
+                    "This OTP is valid for 2 minutes. Please do not share this code with anyone.\n\n"
                     "If you did not request this, please ignore this email.\n\n"
                     "Best regards,\n"
                     "Sipzy Team"
