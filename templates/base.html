@@ -103,7 +103,7 @@
     <nav class="hidden md:flex gap-8 text-sm font-medium">
         <a href="{% url 'user_homepage' %}" class="hover:text-amber-400 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-amber-400 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">Home</a>
         <a href="{% url 'userproduct_list' %}" class="hover:text-amber-400 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-amber-400 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">Shop</a>
-        <a href="#" class="hover:text-amber-400 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-amber-400 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">Contact Us</a>
+        <a href="#footer-main" class="hover:text-amber-400 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-amber-400 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">Contact Us</a>
         <a href="#" class="hover:text-amber-400 transition-colors duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-amber-400 after:left-0 after:bottom-0 hover:after:w-full after:transition-all">About Us</a>
     </nav>
 
@@ -181,7 +181,7 @@
     {% endblock %}
 </main>
 
-<footer class="bg-gradient-to-br from-[#2d1810] to-[#1a0f0a] text-white py-12 px-8">
+<footer class="bg-gradient-to-br from-[#2d1810] to-[#1a0f0a] text-white py-12 px-8" id="footer-main">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-sm max-w-6xl mx-auto">
         <div>
             <h3 class="font-bold mb-4 text-lg text-amber-400">SHOP</h3>
@@ -200,7 +200,7 @@
         <div>
             <h3 class="font-bold mb-4 text-lg text-amber-400">ABOUT US</h3>
             <ul class="space-y-2">
-                <li><a href="#" class="hover:text-amber-300 transition-colors">Contact Us</a></li>
+                <li><a href="#footer-main" class="hover:text-amber-300 transition-colors">Contact Us</a></li>
                 <li><a href="#" class="hover:text-amber-300 transition-colors">Privacy Policy</a></li>
             </ul>
         </div>

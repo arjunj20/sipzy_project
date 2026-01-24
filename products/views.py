@@ -143,7 +143,7 @@ def userproduct_list(request):
 @never_cache
 def product_details(request, uuid):
     if not request.user.is_authenticated or request.user.is_superuser:
-        return redirect("landing_page")
+        return redirect("user_login")
 
     product = get_object_or_404(Products, uuid=uuid)
 
