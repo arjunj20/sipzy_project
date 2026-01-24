@@ -1,105 +1,90 @@
-Sipzy – Premium Liquor eCommerce Platform
-                                                        
-Sipzy is a sophisticated eCommerce web application dedicated to the retail of premium spirits. Built using the Python Django framework and the MVT (Model-View-Template) architecture, the platform provides a seamless shopping experience with robust features including secure payments, real-time inventory management, and a comprehensive rewards system.
+# 🍷 Sipzy – Premium Liquor E-Commerce Platform
 
-Live Project Links
-Production Site: arjunj.online
+<p align="center">
+  <img src="https://images.unsplash.com/photo-1604908554268-20d95c65c65a" alt="Sipzy Banner" width="100%" />
+</p>
 
-Source Code: GitHub Repository
+<p align="center">
+  <b>Your favorite premium drinks, delivered effortlessly.</b>
+</p>
 
-Core Features
+---
 
-User Experience
+## 📌 Description
 
-Authentication System: Secure user registration and login with OTP verification to ensure account safety.
+Sipzy is a **liquor e-commerce web application** built to solve a real-world problem:  
+carrying heavy liquor bottles and limited in-store variety.
 
-Advanced Product Management: Product listings with multi-level categories and detailed variants for different sizes and prices.
+The idea was inspired by witnessing people struggle to transport bulky bottles from beverage shops.  
+Sipzy enables users to **browse, select, and purchase premium drinks online**, offering convenience, variety, and secure payments — all from home.
 
-Cart & Checkout Flow: A dynamic AJAX-powered cart system allowing users to update quantities and variants without page reloads.
+---
 
-Wallet System: Integrated digital wallet for users to maintain a balance, receive refunds, and make quick purchases.
+## 🎯 Problem Statement
 
-Reviews & Ratings: A feedback system where verified customers can rate products and write reviews.
+- Carrying heavy liquor bottles from physical stores is inconvenient
+- Beverage shops have **limited stock and variety**
+- Manual billing and discount handling causes errors
+- Lack of secure and flexible payment options
 
-Promotions & Savings
+---
 
-Coupon Management: A flexible coupon system where users can apply promotional codes to receive flat or percentage-based discounts.
+## 💡 Solution
 
-Offer Module: Dedicated product and category-based offers that automatically calculate and display discounted prices.
+Sipzy provides a **fully digital liquor shopping experience** where users can:
+- Access a wide variety of premium drinks
+- Apply coupons and offers automatically
+- Manage carts with proper stock validations
+- Pay securely via **Wallet** or **Razorpay**
+- Avoid physical effort and time consumption
 
-Order & Payment
+---
 
-Razorpay Integration: Secure and streamlined payment processing using the Razorpay gateway.
+## 🚀 Key Features
 
-Order Tracking: Detailed order history and status updates for users to monitor their purchases from processing to delivery.
+- 🛒 **Advanced Cart Management**
+  - Stock-based quantity validation
+  - Real-time price calculation
 
-Tax & Shipping: Automatic calculation of GST and shipping fees based on the cart total.
+- 🎟 **Coupons & Offers System**
+  - Rule-based discount validation
+  - Prevention of misuse and duplication
 
-Administration
+- 💳 **Dual Payment Options**
+  - Wallet payment system
+  - Razorpay payment gateway integration
 
-Executive Dashboard: A powerful admin interface to manage inventory, monitor sales reports, and oversee user activity.
+- 🔐 **Secure Backend**
+  - Django authentication & validations
+  - PostgreSQL-powered relational database
 
-System Controls: Tools for creating coupons, managing product offers, and updating order fulfillment statuses.
+- 🎨 **Responsive UI**
+  - Built with Tailwind CSS
+  - Optimized for mobile and desktop
 
-Technical Stack
+---
 
-Backend: Python Django (MVT Architecture)
+## 🛠 Tech Stack
 
-Frontend: HTML5, CSS3, JavaScript, Tailwind CSS
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=python,django,postgres,html,css,tailwind" />
+</p>
 
-Database: PostgreSQL
+| Technology     | Usage                          |
+|---------------|--------------------------------|
+| Python        | Backend Logic                  |
+| Django        | Web Framework                  |
+| PostgreSQL    | Database                       |
+| HTML5         | Markup                         |
+| CSS3          | Styling                        |
+| Tailwind CSS  | Responsive UI                  |
+| Razorpay      | Online Payments                |
 
-Payment Gateway: Razorpay
+---
 
-Version Control: Git & GitHub
+## ⚙️ Installation & Setup
 
-Project Structure
-
-accounts: Handles user profiles, authentication, and wallet logic.
-
-products: Manages the product catalog, variants, and stock levels.
-
-cart: Contains the logic for session-based and database-persisted shopping carts.
-
-orders: Manages checkout processes, shipping details, and order status.
-
-coupons & offers: Handles the logic for discount validation and price deductions.
-
-templates: Contains the Django HTML templates for the user interface.
-
-Installation and Setup
-
-Clone the Repository
-
-git clone https://github.com/arjunj20/sipzy_project.git
-cd sipzy_project
-Set Up a Virtual Environment
-
-python -m venv env
-source env/bin/activate  # Linux/Mac
-env\Scripts\activate     # Windows
-
-Install Dependencies
-
-pip install -r requirements.txt
-
-Configure Environment Variables Create a .env file in the root directory and add your credentials:
-
-SECRET_KEY
-
-DATABASE_URL
-
-RAZORPAY_KEY_ID
-
-RAZORPAY_KEY_SECRET
-
-Database Migration
-
-python manage.py makemigrations
-python manage.py migrate
-Start the Development Server
-python manage.py runserver
-
-Author
-
-Arjun Software Engineer | Django Developer Kerala, India
+### 1️⃣ Clone the repository
+```bash
+git clone https://github.com/your-username/sipzy.git
+cd sipzy
