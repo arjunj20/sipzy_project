@@ -5,6 +5,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
 
 <style>
     :root {
@@ -22,66 +23,46 @@
         animation: fadeInUp 0.8s ease-out forwards;
     }
 
-    /* Main Container */
     .profile-page-bg {
         min-height: 100vh;
         background: var(--bg-surface);
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 40px 20px;
+        padding: 20px;
         position: relative;
         overflow: hidden;
     }
 
-    /* Floating Background Glows */
     .bg-glow {
         position: absolute;
-        width: 400px;
-        height: 400px;
-        background: rgba(183, 71, 42, 0.05);
-        filter: blur(100px);
+        width: 300px;
+        height: 300px;
+        background: rgba(183, 71, 42, 0.08);
+        filter: blur(80px);
         border-radius: 50%;
         z-index: 0;
     }
 
-    /* Card Styling */
     .otp-card {
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
         border: 1px solid white;
-        border-radius: 40px;
+        border-radius: 30px;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
         width: 100%;
-        max-width: 900px;
-        display: flex;
-        flex-direction: column;
-        md-flex-direction: row;
+        max-width: 950px;
         overflow: hidden;
         z-index: 10;
     }
 
-    /* Left Panel: Visual */
-    .visual-panel {
-        background: black;
-        padding: 40px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        color: white;
-        text-align: center;
-    }
-
-    /* OTP Field Styling */
+    /* Target specific OTP input behavior */
     .otp-field {
-        width: 50px;
-        height: 60px;
         background: #f3f4f6;
         border: 2px solid transparent;
-        border-radius: 15px;
+        border-radius: 12px;
         text-align: center;
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         font-weight: 800;
         transition: all 0.3s;
         outline: none;
@@ -94,21 +75,18 @@
         transform: translateY(-2px);
     }
 
-    /* Timer Pill */
     .timer-pill {
         display: inline-flex;
         align-items: center;
         gap: 8px;
         background: #fef2f2;
         color: #dc2626;
-        padding: 8px 16px;
+        padding: 6px 14px;
         border-radius: 20px;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         font-weight: 700;
-        margin-bottom: 20px;
     }
 
-    /* Error Shake */
     @keyframes shake {
         10%, 90% { transform: translate3d(-1px, 0, 0); }
         40%, 60% { transform: translate3d(2px, 0, 0); }
@@ -117,32 +95,33 @@
 </style>
 
 <div class="profile-page-bg">
-    <div class="bg-glow" style="top: -100px; left: -100px;"></div>
-    <div class="bg-glow" style="bottom: -100px; right: -100px;"></div>
+    <div class="bg-glow top-[-50px] left-[-50px] md:top-[-100px] md:left-[-100px]"></div>
+    <div class="bg-glow bottom-[-50px] right-[-50px] md:bottom-[-100px] md:right-[-100px]"></div>
 
     <div class="otp-card animate-fade-in flex flex-col md:flex-row">
         
-        <div class="md:w-1/2 visual-panel bg-black p-12 flex flex-col justify-center items-center text-white relative">
-            <h2 class="text-2xl font-bold tracking-tighter text-[#B7472A] absolute top-10 left-10">SIPZY.</h2>
-            <img src="{% static 'images/illu 1.png' %}" alt="Illustration" class="w-64 h-auto drop-shadow-2xl animate-pulse">
-            <h1 class="text-3xl font-extrabold mt-8 leading-tight">Secure <br>Verification</h1>
-            <p class="text-gray-400 mt-4 font-light">Protecting your account with two-step security.</p>
+        <div class="hidden md:flex md:w-5/12 lg:w-1/2 bg-black p-8 lg:p-12 flex-col justify-center items-center text-white relative">
+            <h2 class="text-xl font-bold tracking-tighter text-[#B7472A] absolute top-8 left-8">SIPZY.</h2>
+            <img src="{% static 'images/illu 1.png' %}" alt="Security Illustration" class="w-48 lg:w-64 h-auto drop-shadow-2xl animate-pulse">
+            <h1 class="text-2xl lg:text-3xl font-extrabold mt-8 leading-tight text-center">Secure <br>Verification</h1>
+            <p class="text-gray-400 mt-4 font-light text-center text-sm lg:text-base">Protecting your account with <br>two-step security.</p>
         </div>
 
-        <div class="md:w-1/2 bg-white p-10 md:p-16 flex flex-col justify-center items-center">
+        <div class="w-full md:w-7/12 lg:w-1/2 bg-white p-6 sm:p-10 md:p-12 lg:p-16 flex flex-col justify-center items-center">
             <div class="w-full max-w-sm">
-                <header class="text-center mb-10">
-                    <h2 class="text-4xl font-black text-gray-900 tracking-tight">Enter OTP</h2>
-                    <p class="text-gray-400 mt-2 font-medium">Verification code sent to your inbox</p>
+                <header class="text-center mb-8">
+                    <h2 class="md:hidden text-xl font-bold text-[#B7472A] mb-4">SIPZY.</h2>
+                    <h2 class="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Enter OTP</h2>
+                    <p class="text-gray-400 mt-2 text-sm font-medium">We sent a 6-digit code to your email</p>
                 </header>
 
-                <form method="POST" id="otpForm" class="space-y-8">
+                <form method="POST" id="otpForm" class="space-y-6">
                     {% csrf_token %}
                     
-                    <div class="flex justify-between gap-2">
+                    <div class="grid grid-cols-6 gap-2 sm:gap-3">
                         {% for i in "123456" %}
                         <input type="text" maxlength="1" name="otp{{ forloop.counter }}" 
-                               class="otp-field" inputmode="numeric">
+                               class="otp-field aspect-square w-full" inputmode="numeric" required>
                         {% endfor %}
                     </div>
 
@@ -153,25 +132,25 @@
                         </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <button type="submit" class="w-full bg-black text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-gray-800 transform active:scale-95 transition-all duration-300">
+                    <div class="space-y-4 pt-2">
+                        <button type="submit" class="w-full bg-black text-white py-4 rounded-xl font-bold text-base shadow-lg hover:bg-gray-800 active:scale-95 transition-all duration-300">
                             Verify Now
                         </button>
-                        <a href="{% url 'user_signup' %}" class="block text-center text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-red-600 transition">
+                        <a href="{% url 'user_signup' %}" class="block text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-[#B7472A] transition">
                             Cancel & Return
                         </a>
                     </div>
                 </form>
 
-                <form method="POST" action="{% url 'resend_otp' %}" class="mt-8 text-center border-t pt-8">
+                <form method="POST" action="{% url 'resend_otp' %}" class="mt-8 text-center border-t border-gray-100 pt-6">
                     {% csrf_token %}
-                    <p class="text-sm text-gray-500 mb-3">Didn't get the code?</p>
-                    <button id="resendBtn" type="submit" class="hidden text-[#B7472A] font-black text-sm uppercase tracking-widest hover:underline">
-                        Resend OTP
+                    <p class="text-xs text-gray-500 mb-2">Didn't receive the code?</p>
+                    <button id="resendBtn" type="submit" class="hidden text-[#B7472A] font-black text-xs uppercase tracking-widest hover:underline">
+                        Resend New OTP
                     </button>
                     
                     {% if error %}
-                    <div class="mt-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold animate-shake">
+                    <div class="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-xs font-bold animate-shake">
                         {% for key, msg in error.items %}{{ msg }}{% endfor %}
                     </div>
                     {% endif %}
@@ -182,15 +161,26 @@
 </div>
 
 <script>
-    // 1. Auto-focus Jump Script
+    // 1. Improved Auto-focus Jump Script
     const inputs = document.querySelectorAll('.otp-field');
+    const form = document.getElementById('otpForm');
+
     inputs.forEach((input, index) => {
         input.addEventListener('input', (e) => {
+            // Jump to next if filled
             if (e.target.value && index < inputs.length - 1) {
                 inputs[index + 1].focus();
             }
+            
+            // Auto-submit if the last box is filled
+            const allFilled = Array.from(inputs).every(i => i.value.length === 1);
+            if (allFilled) {
+                form.submit();
+            }
         });
+
         input.addEventListener('keydown', (e) => {
+            // Jump back on backspace
             if (e.key === 'Backspace' && !e.target.value && index > 0) {
                 inputs[index - 1].focus();
             }
@@ -198,7 +188,7 @@
     });
 
     // 2. Timer Script
-    let timeLeft = {{ remaining_time }};
+    let timeLeft = parseInt("{{ remaining_time }}");
     const timerDisplay = document.getElementById("timer");
     const timerPill = document.getElementById("timerPill");
     const resendBtn = document.getElementById("resendBtn");
@@ -207,7 +197,8 @@
         if (timeLeft <= 0) {
             clearInterval(countdown);
             timerDisplay.textContent = "Code Expired";
-            timerPill.style.backgroundColor = "#fee2e2";
+            timerPill.style.backgroundColor = "#fee2e2"; // Soft red
+            timerPill.style.color = "#b91c1c";
             resendBtn.classList.remove("hidden");
             return;
         }
@@ -219,7 +210,7 @@
     }
 
     const countdown = setInterval(updateTimerUI, 1000);
-    updateTimerUI(); // Initial call
+    updateTimerUI(); 
 </script>
 
 {% endblock %}

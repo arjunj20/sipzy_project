@@ -50,6 +50,7 @@ def user_signup(request):
     referral_token = request.GET.get("ref")
     if referral_token:
         request.session["referral_token"] = referral_token
+
     data_form = request.POST.copy()
 
     if request.method == "POST":
@@ -93,14 +94,14 @@ def user_signup(request):
             return render(request, "user_signup.html", {"errors": errors, "data_form": data_form})
 
         try:
-            otp = random.randint(100000, 999999)
+            otp = random.randint(100000, 999999)  # here this otp variable stores a 6 digit number
 
             request.session["signup_data"] = {
                 "fullname": fullname,
                 "email": email,
                 "password": password,
                 "otp": otp,
-                "otp_time": timezone.now().isoformat(),
+                "otp_time": timezone.now().isoformat(), 
                 "referral_token": request.session.get("referral_token"),
             }
 
@@ -142,7 +143,7 @@ def user_signupotp(request):
 
     errors = {}
     signup_data = request.session.get("signup_data")
-    if not signup_data:
+    if not signup_data:                 
         messages.error(request, "Session expired. Please sign up again.")
         return redirect("user_signup")
 
@@ -267,7 +268,7 @@ def resend_otp(request):
         "You requested a new OTP to verify your email address "
         "for creating your Sipzy account.\n\n"
         f"Your new One-Time Password (OTP) is: {new_otp}\n\n"
-        "This OTP is valid for 1.36 minutes only.\n\n"
+        "This OTP is valid for 2 minutes only.\n\n"
         "If you did not request this OTP, please ignore this email.\n\n"
         "Thank you,\n"
         "Sipzy Team"
@@ -454,7 +455,7 @@ def forgot_password(request):
                     "We received a request to reset your Sipzy account password.\n\n"
                     f"Your One-Time Password (OTP) for password reset is:\n\n"
                     f"{otp}\n\n"
-                    "This OTP is valid for 5 minutes. Please do not share this code with anyone.\n\n"
+                    "This OTP is valid for 2minutes. Please do not share this code with anyone.\n\n"
                     "If you did not request a password reset, please ignore this email.\n\n"
                     "Best regards,\n"
                     "Sipzy Team"
@@ -487,6 +488,13 @@ def forgot_password_otp(request):
 
     if not email or not session_otp:
         return redirect("forgot_password")
+    
+    otp_datetime = parse_datetime(otp_time)
+    allowed_time = 120
+    now = timezone.now()
+    diff = (now - otp_datetime).total_seconds()
+    remaining_time = max(0, int(allowed_time - diff))
+    
 
     if request.method == "POST":
         otp = (
@@ -497,19 +505,15 @@ def forgot_password_otp(request):
             + request.POST.get("otp5")
             + request.POST.get("otp6")
         )
-
-        otp_datetime = parse_datetime(otp_time)
-        now = timezone.now()
-        diff = (now - otp_datetime).total_seconds()
-
-        if diff > 300: 
+        if diff > allowed_time: 
             error = "OTP expired. Request a new one."
         elif otp != session_otp:
             error = "Incorrect OTP"
         else:
             request.session["forgot_verified"] = True
             return redirect("reset_password")
-    return render(request, "forgot_password_otp.html", {"error": error})
+        print(remaining_time)
+    return render(request, "forgot_password_otp.html", {"error": error, "remaining_time": remaining_time})
 
 
 @never_cache
@@ -578,7 +582,7 @@ def resend_forgot_otp(request):
             "Hello,\n\n"
             "As requested, here is your new One-Time Password (OTP) for resetting your Sipzy password:\n\n"
             f"{otp}\n\n"
-            "This OTP is valid for 5 minutes. Please do not share this code with anyone.\n\n"
+            "This OTP is valid for 2 minutes. Please do not share this code with anyone.\n\n"
             "If you did not request this, please ignore this email.\n\n"
             "Thank you,\n"
             "Sipzy Team"

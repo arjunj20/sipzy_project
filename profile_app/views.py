@@ -160,7 +160,21 @@ def change_email(request):
 
         send_mail(
             subject="Email Change Verification OTP",
-            message=f"Your OTP to change email is {otp}",
+            message = f"""
+                        Hi there,
+
+                        We received a request to change the email address associated with your account.
+
+                        Your One-Time Password (OTP) is: {otp}
+
+                        ⏳ This OTP is valid for 2 minutes only.
+
+                        For your security, please do not share this OTP with anyone.  
+                        If you did not request this change, no action is required.
+
+                        Regards,  
+                        Sipzy Support Team
+                        """,
             from_email="sipzy505@gmail.com",
             recipient_list=[new_email],
             fail_silently=False,
@@ -204,7 +218,7 @@ def email_otp(request):
 
     now = timezone.now()
     elapsed = (now - otp_time).total_seconds()
-    allowed_time = 100  
+    allowed_time = 120  
     remaining_time = max(0, int(allowed_time - elapsed))
 
     if request.method == "POST":

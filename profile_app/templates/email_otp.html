@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Countdown Logic
-    let timeLeft = parseInt("{{ remaining_time|default:0 }}");
+    let timeLeft = parseInt("{{ remaining_time }}");
     if (timeLeft > 0) {
         const timerInterval = setInterval(() => {
             timeLeft--;
