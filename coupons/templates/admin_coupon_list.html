@@ -27,7 +27,7 @@
                 {% for coupon in coupons %}
                 <tr class="hover:bg-gray-50">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ coupon.code }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{{ coupon.discount_amount }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{{ coupon.max_discount_amount }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹{{ coupon.min_order_amount }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {{ coupon.valid_from|date:"d M Y" }} – {{ coupon.valid_to|date:"d M Y" }}
