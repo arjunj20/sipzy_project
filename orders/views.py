@@ -65,11 +65,18 @@ def order_detail(request, uuid):
 
     for item in items:
         item.net_paid = item.price - item.coupon_share
+    
+    is_invoice = False
+    for i in items:
+        if i.status == "delivered":
+            is_invoice = True
+            break
         
 
     return render(request, "orders/order_detail.html", {
         "order": order,
         "items": items,
+        "is_invoice": is_invoice,
     })
 
 def order_invoice(request, order_id):
