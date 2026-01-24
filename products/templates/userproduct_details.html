@@ -82,7 +82,7 @@
                         </span>
                     </div>
                     <p class="text-sm text-green-700 font-medium">
-                        You save ₹{{ selected_variant.price|floatformat:2|add:"-"|add:final_unit_price }}
+                        You save ₹{{ you_saved }}
                     </p>
                 {% else %}
                     <span class="text-2xl font-bold text-gray-800">
@@ -282,18 +282,7 @@
                     <span class="text-gray-600">Category</span>
                     <span class="font-medium">{{ product.category.name }}</span>
                 </div>
-                <div class="flex justify-between border-b border-gray-200 pb-2">
-                    <span class="text-gray-600">Alcohol Content</span>
-                    <span class="font-medium">40% ABV</span>
-                </div>
-                <div class="flex justify-between border-b border-gray-200 pb-2">
-                    <span class="text-gray-600">Country</span>
-                    <span class="font-medium">United States</span>
-                </div>
-                <div class="flex justify-between border-b border-gray-200 pb-2">
-                    <span class="text-gray-600">Aging</span>
-                    <span class="font-medium">4+ Years</span>
-                </div>
+                
             </div>
         </div>
     </div>

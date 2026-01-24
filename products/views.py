@@ -203,6 +203,7 @@ def product_details(request, uuid):
             if offer:
                 rp.offer = offer
                 rp.final_price = apply_offer(variant.price, offer)
+                
             else:
                 rp.final_price = variant.price
 
@@ -210,11 +211,15 @@ def product_details(request, uuid):
     offer = None
 
     final_unit_price = selected_variant.price
+    
 
     offer = get_best_offer_for_product(product)
+    
+    you_saved = 0
 
     if offer:
         final_unit_price = apply_offer(selected_variant.price, offer)
+        you_saved += selected_variant.price - final_unit_price
     
     total_price = final_unit_price * quantity
     
@@ -272,6 +277,7 @@ def product_details(request, uuid):
         'related_products': related_products, 
         'all_images': all_images,
         'main_image': main_image,
+        "you_saved": you_saved,
         'message': message,
         "error" : error,
         "is_wishlisted": is_wishlisted,
