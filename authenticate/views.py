@@ -396,6 +396,7 @@ def user_login(request):
 
         login(request, user)
         request.session["is_loggedin"] = True
+        messages.success(request, f"Login is successfull.. Welcome to Sipzy Mr.{request.user.fullname}...")
 
         return redirect("user_homepage")
 
@@ -409,6 +410,7 @@ def user_logout(request):
         user.is_loggedin = False
         user.save()
         logout(request)
+        messages.success(request, "thank you for visiting sipzy...")
     return redirect("user_homepage")
     
 @never_cache

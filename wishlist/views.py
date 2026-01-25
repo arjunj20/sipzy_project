@@ -10,19 +10,35 @@ from django.contrib import messages
 from cart.models import Cart, CartItems
 from django.views.decorators.http import require_POST
 from offers.utils import get_best_offer_for_product, apply_offer
+from django.http import JsonResponse
 
+
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
 
 @login_required
 def add_to_wishlist(request, product_uuid):
     if request.method == "POST":
         product = get_object_or_404(Products, uuid=product_uuid)
 
-        Wishlist.objects.get_or_create(
+        wishlist_item, created = Wishlist.objects.get_or_create(
             user=request.user,
             product=product
         )
-        messages.success(request, "the item has added in the wishlist")
-    return redirect(request.META.get("HTTP_REFERER", "home"))
+        if created:
+            message = "Item is added to wishlist"
+            status = "added"
+        else:
+            message = "Item already in wishlist"
+            status = "already exists"
+        return JsonResponse({
+            'status': status,
+            'message': message,
+            'product_name': product.name 
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
 @login_required

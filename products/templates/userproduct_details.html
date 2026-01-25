@@ -6,10 +6,10 @@
 {% block content %}
 
 <svg style="display: none;">
-  <defs>
+<defs>
     <linearGradient id="half-star" x1="0" x2="100%" y1="0" y2="0">
-      <stop offset="50%" stop-color="#facc15" /> <stop offset="50%" stop-color="#d1d5db" /> </linearGradient>
-  </defs>
+    <stop offset="50%" stop-color="#facc15" /> <stop offset="50%" stop-color="#d1d5db" /> </linearGradient>
+</defs>
 </svg>
 
 <div class="container mx-auto px-4 py-8">
@@ -29,7 +29,7 @@
             <div class="flex space-x-2 overflow-x-auto py-2">
                 {% for img in all_images %}
                 <a href="?variant={{ selected_variant.uuid }}&quantity={{ quantity }}&image={{ img.url }}"
-                   class="flex-shrink-0 w-20 h-20 border-2 rounded-lg overflow-hidden hover:border-[#B7472A] transition-colors {% if img.url == main_image %}border-[#B7472A]{% else %}border-transparent{% endif %}">
+                class="flex-shrink-0 w-20 h-20 border-2 rounded-lg overflow-hidden hover:border-[#B7472A] transition-colors {% if img.url == main_image %}border-[#B7472A]{% else %}border-transparent{% endif %}">
                     <img src="{{ img.url }}" alt="{{ img.alt }}" class="w-full h-full object-contain">
                 </a>
                 {% endfor %}
@@ -96,7 +96,7 @@
                 <div class="flex flex-wrap gap-2">
                     {% for variant in product.variants.all %}
                     <a href="?variant={{ variant.uuid }}&quantity={{ quantity }}"
-                       class="px-4 py-2 border-2 rounded-lg transition-colors inline-block text-center {% if variant.id == selected_variant.id %}border-[#B7472A] bg-[#B7472A] text-white{% else %}border-gray-300 text-gray-700 hover:border-[#B7472A]{% endif %}">
+                    class="px-4 py-2 border-2 rounded-lg transition-colors inline-block text-center {% if variant.id == selected_variant.id %}border-[#B7472A] bg-[#B7472A] text-white{% else %}border-gray-300 text-gray-700 hover:border-[#B7472A]{% endif %}">
                         {{ variant.variant }}
                     </a>
                     {% endfor %}
@@ -117,12 +117,12 @@
                 <div class="flex items-center space-x-4">
                     <div class="flex items-center border border-gray-300 rounded-lg">
                         <a href="?variant={{ selected_variant.uuid }}&quantity={{ quantity|add:'-1' }}&image={{ main_image }}"
-                           class="px-3 py-2 text-gray-600 hover:text-gray-800 {% if quantity <= 1 %}pointer-events-none opacity-50{% endif %}">
+                        class="px-3 py-2 text-gray-600 hover:text-gray-800 {% if quantity <= 1 %}pointer-events-none opacity-50{% endif %}">
                             -
                         </a>
                         <span class="w-16 text-center border-0">{{ quantity }}</span>
                         <a href="?variant={{ selected_variant.uuid }}&quantity={{ quantity|add:'1' }}&image={{ main_image }}"
-                           class="px-3 py-2 text-gray-600 hover:text-gray-800 {% if quantity >= selected_variant.stock %}pointer-events-none opacity-50{% endif %}">
+                        class="px-3 py-2 text-gray-600 hover:text-gray-800 {% if quantity >= selected_variant.stock %}pointer-events-none opacity-50{% endif %}">
                             +
                         </a>
                     </div>
@@ -146,23 +146,24 @@
 
                 
 
-                {% if is_wishlisted %}
-                <button disabled class="w-full bg-gray-200 text-gray-500 py-3 rounded-lg">
-                    ❤️ In Wishlist
-                </button>
-
-                {% else %}
-                <form method="POST" action="{% url 'add_to_wishlist' product.uuid %}">
-                    {% csrf_token %}
-                    <button type="submit"
-                        class="w-full border border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
-                        </svg>
-                        Add to Wishlist
+                <div id="wishlist-container">
+                    {% if is_wishlisted %}
+                    <button disabled class="w-full bg-gray-200 text-gray-500 py-3 rounded-lg">
+                        ❤️ In Wishlist
                     </button>
-                </form>
-                {% endif %}
+                    {% else %}
+                    <form id="ajax-wishlist-form" method="POST" action="{% url 'add_to_wishlist' product.uuid %}">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="w-full border border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                            </svg>
+                            Add to Wishlist
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="bg-gray-50 rounded-lg p-4">
@@ -322,14 +323,9 @@
     </div>
 </div>
 
-{% if message or error %}
 <div id="notificationContainer" class="fixed top-6 right-6 z-50">
-    {% if message %}
-    <div id="slideMessage"
-        class="fluidic-notification success bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white p-5 rounded-2xl shadow-2xl transform translate-x-full opacity-0 backdrop-blur-md bg-opacity-90 border border-white/20 overflow-hidden">
-        
+    <div id="slideMessage" class="hidden fluidic-notification success bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white p-5 rounded-2xl shadow-2xl transform translate-x-full opacity-0 backdrop-blur-md bg-opacity-90 border border-white/20 overflow-hidden">
         <div class="liquid-waves"></div>
-        
         <div class="relative z-10 flex items-center gap-4">
             <div class="checkmark-container">
                 <svg class="fluid-checkmark" width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -337,13 +333,10 @@
                 </svg>
             </div>
             <div class="flex-1 min-w-0">
-                <span class="font-bold text-lg block bg-clip-text text-transparent bg-gradient-to-r from-white to-emerald-100">
-                    Success!
-                </span>
-                <span class="font-medium text-white/90">{{ message }}</span>
+                <span class="font-bold text-lg block bg-clip-text text-transparent bg-gradient-to-r from-white to-emerald-100">Success!</span>
+                <span id="success-text" class="font-medium text-white/90"></span>
             </div>
-            <button type="button" onclick="dismissNotification('success')" 
-                    class="close-btn relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20 transition-all duration-300 group">
+            <button type="button" onclick="dismissNotification('success')" class="close-btn relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20 transition-all duration-300 group">
                 <div class="absolute inset-0 rounded-full bg-white/10 group-hover:scale-125 transition-transform duration-300"></div>
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 6L6 18M6 6l12 12"/>
@@ -352,14 +345,9 @@
         </div>
         <div class="liquid-drip absolute bottom-0 left-1/2 transform -translate-x-1/2"></div>
     </div>
-    {% endif %}
     
-    {% if error %}
-    <div id="slideError"
-        class="fluidic-notification error bg-gradient-to-br from-rose-500 via-pink-500 to-red-500 text-white p-5 rounded-2xl shadow-2xl transform translate-x-full opacity-0 backdrop-blur-md bg-opacity-90 border border-white/20 overflow-hidden">
-        
+    <div id="slideError" class="hidden fluidic-notification error bg-gradient-to-br from-rose-500 via-pink-500 to-red-500 text-white p-5 rounded-2xl shadow-2xl transform translate-x-full opacity-0 backdrop-blur-md bg-opacity-90 border border-white/20 overflow-hidden">
         <div class="liquid-waves error-waves"></div>
-        
         <div class="relative z-10 flex items-center gap-4">
             <div class="xmark-container">
                 <svg class="fluid-xmark" width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -367,13 +355,10 @@
                 </svg>
             </div>
             <div class="flex-1 min-w-0">
-                <span class="font-bold text-lg block bg-clip-text text-transparent bg-gradient-to-r from-white to-rose-100">
-                    Attention Needed!
-                </span>
-                <span class="font-medium text-white/90">{{ error }}</span>
+                <span class="font-bold text-lg block bg-clip-text text-transparent bg-gradient-to-r from-white to-rose-100">Attention!</span>
+                <span id="error-text" class="font-medium text-white/90"></span>
             </div>
-            <button type="button" onclick="dismissNotification('error')" 
-                    class="close-btn relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20 transition-all duration-300 group">
+            <button type="button" onclick="dismissNotification('error')" class="close-btn relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20 transition-all duration-300 group">
                 <div class="absolute inset-0 rounded-full bg-white/10 group-hover:scale-125 transition-transform duration-300"></div>
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 6L6 18M6 6l12 12"/>
@@ -382,169 +367,124 @@
         </div>
         <div class="error-pulse absolute inset-0 rounded-2xl"></div>
     </div>
-    {% endif %}
 </div>
+
+{% if message or error %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        {% if message %} showDynamicNotification('{{ message }}', 'success'); {% endif %}
+        {% if error %} showDynamicNotification('{{ error }}', 'error'); {% endif %}
+    });
+</script>
 {% endif %}
 
 <script>
-// Main function to handle notifications
-function initNotifications() {
-    const msg = document.getElementById("slideMessage");
-    const errorMsg = document.getElementById("slideError");
-    
-    createFluidStyles();
-    
-    if (msg) {
-        setTimeout(() => fluidSlideIn(msg, 'success'), 100);
-        let dismissTimeout = setTimeout(() => dismissNotification('success'), 4500);
-        msg.addEventListener('mouseenter', () => {
-            clearTimeout(dismissTimeout);
-            pauseFluidAnimation(msg);
-        });
-        msg.addEventListener('mouseleave', () => {
-            dismissTimeout = setTimeout(() => dismissNotification('success'), 2500);
-            resumeFluidAnimation(msg);
+// Logic to handle Wishlist AJAX
+document.addEventListener('submit', function(e) {
+    if (e.target && e.target.id === 'ajax-wishlist-form') {
+        e.preventDefault();
+        const form = e.target;
+        const url = form.action;
+        const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'added' || data.status === 'already exists') {
+                const container = document.getElementById('wishlist-container');
+                container.innerHTML = `
+                    <button disabled class="w-full bg-gray-200 text-gray-500 py-3 rounded-lg">
+                        ❤️ In Wishlist
+                    </button>
+                `;
+                showDynamicNotification(data.message, 'success');
+            } else {
+                showDynamicNotification(data.message || 'Something went wrong', 'error');
+            }
+        })
+        .catch(error => {
+            showDynamicNotification('Network error. Please try again.', 'error');
         });
     }
+});
+
+let successTimeout, errorTimeout;
+
+function showDynamicNotification(message, type) {
+    const element = type === 'success' ? document.getElementById('slideMessage') : document.getElementById('slideError');
+    const textSpan = type === 'success' ? document.getElementById('success-text') : document.getElementById('error-text');
     
-    if (errorMsg) {
-        setTimeout(() => fluidSlideIn(errorMsg, 'error'), 150);
-        let errorDismissTimeout = setTimeout(() => dismissNotification('error'), 5000);
-        errorMsg.addEventListener('mouseenter', () => {
-            clearTimeout(errorDismissTimeout);
-            pauseFluidAnimation(errorMsg);
-        });
-        errorMsg.addEventListener('mouseleave', () => {
-            errorDismissTimeout = setTimeout(() => dismissNotification('error'), 3000);
-            resumeFluidAnimation(errorMsg);
-        });
+    textSpan.innerText = message;
+    element.classList.remove('hidden');
+    
+    fluidSlideIn(element, type);
+
+    // Auto dismiss after 4 seconds
+    if (type === 'success') {
+        clearTimeout(successTimeout);
+        successTimeout = setTimeout(() => dismissNotification('success'), 4000);
+    } else {
+        clearTimeout(errorTimeout);
+        errorTimeout = setTimeout(() => dismissNotification('error'), 4000);
     }
 }
 
+function dismissNotification(type) {
+    const element = type === 'success' ? document.getElementById('slideMessage') : document.getElementById('slideError');
+    if (element && !element.classList.contains('hidden')) {
+        fluidSlideOut(element);
+    }
+}
+
+// REST OF SCRIPTS
+function initNotifications() {
+    createFluidStyles();
+}
 document.addEventListener("DOMContentLoaded", initNotifications);
 
-// Create fluid styles only once
 function createFluidStyles() {
     if (document.getElementById('fluid-styles')) return;
-    
     const style = document.createElement('style');
     style.id = 'fluid-styles';
     style.textContent = `
-        .liquid-waves {
-            position: absolute;
-            inset: -2px;
-            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.2) 75%, rgba(255,255,255,0.1) 100%);
-            background-size: 400% 400%;
-            animation: liquidFlow 8s ease-in-out infinite;
-            border-radius: inherit;
-            z-index: 1;
-        }
-        .error-waves {
-            animation: liquidFlowError 6s ease-in-out infinite;
-            background: linear-gradient(45deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.25) 25%, rgba(255,255,255,0.15) 50%, rgba(255,182,193,0.25) 75%, rgba(255,255,255,0.15) 100%);
-        }
-        .liquid-drip {
-            width: 20px;
-            height: 30px;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
-            border-radius: 0 0 10px 10px;
-            animation: drip 2.5s ease-in-out infinite;
-            filter: blur(1px);
-        }
-        .error-pulse {
-            animation: errorPulse 2s ease-in-out infinite;
-            box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.2);
-            pointer-events: none;
-            z-index: 0;
-        }
-        .checkmark-container, .xmark-container {
-            position: relative;
-            width: 40px;
-            height: 40px;
-            background: rgba(255,255,255,0.15);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .checkmark-container::before, .xmark-container::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.8), transparent);
-            animation: rotateCheck 3s linear infinite;
-            border-radius: inherit;
-        }
-        .xmark-container::before {
-             background: conic-gradient(from 0deg, rgba(255,100,100,0.8), rgba(255,255,255,0.8), rgba(255,100,100,0.8));
-        }
+        .liquid-waves { position: absolute; inset: -2px; background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.2) 75%, rgba(255,255,255,0.1) 100%); background-size: 400% 400%; animation: liquidFlow 8s ease-in-out infinite; border-radius: inherit; z-index: 1; }
+        .error-waves { animation: liquidFlowError 6s ease-in-out infinite; background: linear-gradient(45deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.25) 25%, rgba(255,255,255,0.15) 50%, rgba(255,182,193,0.25) 75%, rgba(255,255,255,0.15) 100%); }
+        .liquid-drip { width: 20px; height: 30px; background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent); border-radius: 0 0 10px 10px; animation: drip 2.5s ease-in-out infinite; filter: blur(1px); }
+        .error-pulse { animation: errorPulse 2s ease-in-out infinite; box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.2); pointer-events: none; z-index: 0; }
+        .checkmark-container, .xmark-container { position: relative; width: 40px; height: 40px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .checkmark-container::before, .xmark-container::before { content: ''; position: absolute; inset: -2px; background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.8), transparent); animation: rotateCheck 3s linear infinite; border-radius: inherit; }
         .fluid-checkmark { animation: drawCheckmark 1.2s ease-out forwards; stroke-dasharray: 24; stroke-dashoffset: 24; }
         .fluid-xmark { animation: drawXmark 1s ease-out forwards; stroke-dasharray: 48; stroke-dashoffset: 48; }
-        
         @keyframes liquidFlow { 0% { background-position: 0% 50%; transform: scale(1); } 50% { background-position: 100% 50%; transform: scale(1.02); } 100% { background-position: 0% 50%; transform: scale(1); } }
         @keyframes liquidFlowError { 0% { background-position: 0% 0%; filter: hue-rotate(0deg); } 50% { background-position: 100% 100%; filter: hue-rotate(180deg); } 100% { background-position: 0% 0%; filter: hue-rotate(360deg); } }
         @keyframes drip { 0%, 100% { height: 5px; opacity: 0.5; } 50% { height: 30px; opacity: 1; } }
         @keyframes errorPulse { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.02); } }
         @keyframes drawCheckmark { to { stroke-dashoffset: 0; } }
-        @keyframes drawXmark { 0% { stroke-dashoffset: 48; } 50% { stroke-dashoffset: 24; } 100% { stroke-dashoffset: 0; } }
+        @keyframes drawXmark { to { stroke-dashoffset: 0; } }
         @keyframes rotateCheck { to { transform: rotate(360deg); } }
-        
-        /* Slide Animations */
         @keyframes fluidSlideIn { 0% { transform: translateX(100%) translateY(-20px) scale(0.8); opacity: 0; filter: blur(10px); } 100% { transform: translateX(0) translateY(0) scale(1); opacity: 1; filter: blur(0); } }
-        @keyframes fluidSlideInError { 0% { transform: translateX(100%) translateY(20px) scale(0.8); opacity: 0; filter: blur(10px); } 100% { transform: translateX(0) translateY(0) scale(1); opacity: 1; filter: blur(0); } }
         @keyframes fluidSlideOut { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(120%); opacity: 0; } }
-        
-        .fluid-slide-in { animation: fluidSlideIn 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        .fluid-slide-in-error { animation: fluidSlideInError 1.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; }
-        .fluid-slide-out, .fluid-slide-out-error { animation: fluidSlideOut 1s forwards; }
-        
-        /* Bubbles */
-        .bubble { position: absolute; background: rgba(255,255,255,0.3); border-radius: 50%; pointer-events: none; animation: floatUp 3s ease-in forwards; }
-        .error-bubble { background: rgba(255, 182, 193, 0.4); }
-        @keyframes floatUp { to { transform: translateY(-100px); opacity: 0; } }
+        .fluid-slide-in { animation: fluidSlideIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .fluid-slide-out { animation: fluidSlideOut 0.8s forwards; }
     `;
     document.head.appendChild(style);
 }
 
 function fluidSlideIn(element, type) {
-    element.classList.add(type === 'error' ? 'fluid-slide-in-error' : 'fluid-slide-in');
-    element.classList.remove('translate-x-full', 'opacity-0');
-    createBubbles(element, 8, type);
+    element.classList.remove('hidden', 'translate-x-full', 'opacity-0');
+    element.classList.add('fluid-slide-in');
 }
 
 function fluidSlideOut(element) {
-    const type = element.classList.contains('error') ? 'error' : 'success';
-    element.classList.remove('fluid-slide-in', 'fluid-slide-in-error');
+    element.classList.remove('fluid-slide-in');
     element.classList.add('fluid-slide-out');
-    setTimeout(() => { if(element.parentNode) element.parentNode.removeChild(element); }, 1000);
-}
-
-function createBubbles(container, count, type) {
-    for (let i = 0; i < count; i++) {
-        const bubble = document.createElement('div');
-        bubble.className = type === 'error' ? 'bubble error-bubble' : 'bubble';
-        const size = Math.random() * 15 + 5;
-        bubble.style.cssText = `width: ${size}px; height: ${size}px; left: ${Math.random() * container.offsetWidth}px; bottom: 0;`;
-        container.appendChild(bubble);
-        setTimeout(() => { if(bubble.parentNode) bubble.parentNode.removeChild(bubble); }, 3000);
-    }
-}
-
-function pauseFluidAnimation(element) {
-    element.style.animationPlayState = 'paused';
-    const waves = element.querySelector('.liquid-waves');
-    if (waves) waves.style.animationPlayState = 'paused';
-}
-function resumeFluidAnimation(element) {
-    element.style.animationPlayState = 'running';
-    const waves = element.querySelector('.liquid-waves');
-    if (waves) waves.style.animationPlayState = 'running';
-}
-
-function dismissNotification(type) {
-    if (type === 'success') { const msg = document.getElementById('slideMessage'); if (msg) fluidSlideOut(msg); }
-    else { const err = document.getElementById('slideError'); if (err) fluidSlideOut(err); }
+    setTimeout(() => { element.classList.add('hidden'); element.classList.remove('fluid-slide-out'); }, 800);
 }
 
 function validateQuantityInput() {
@@ -564,9 +504,7 @@ function validateQuantityInput() {
     });
 }
 document.addEventListener("DOMContentLoaded", validateQuantityInput);
-</script>
 
-<script>
 const container = document.querySelector(".zoom-container");
 const image = document.querySelector(".zoom-image");
 let zoomLevel = 2.2; 
@@ -584,9 +522,7 @@ container.addEventListener("mouseleave", () => { image.style.transition = "trans
 <style>
 .zoom-container { position: relative; overflow: hidden; width: 100%; height: 24rem; border-radius: 10px; background: #f3f3f3; cursor: zoom-in; }
 .zoom-image { width: 100%; height: 100%; object-fit: contain; transform: scale(1); transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease-out; will-change: transform; }
-.fluidic-notification { --mouse-x: 50%; --mouse-y: 50%; transition: transform 0.3s ease-out; background: linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(6, 182, 212, 0.9) 100%); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1); }
-.fluidic-notification::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.1) 0%, transparent 50%); opacity: 0; transition: opacity 0.3s; border-radius: inherit; z-index: 1; pointer-events: none; }
-.fluidic-notification:hover::after { opacity: 1; }
+.fluidic-notification { transition: transform 0.3s ease-out; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); }
 @media (max-width: 640px) { .fluidic-notification { left: 4px; right: 4px; max-width: calc(100vw - 8px); } }
 </style>
 

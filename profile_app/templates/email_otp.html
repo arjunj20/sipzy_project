@@ -232,15 +232,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnText = document.getElementById('btnText');
     const resendSection = document.getElementById('resendSection');
     const timerSection = document.getElementById('timerSection');
+    const countdownDisplay = document.getElementById('countdown');
 
     // Auto-focus first input
     inputs[0].focus();
 
-    // Input behavior: Auto-jump to next
+    // Input behavior: Auto-jump & Auto-submit
     inputs.forEach((input, index) => {
         input.addEventListener('input', (e) => {
             if (e.target.value.length === 1 && index < inputs.length - 1) {
                 inputs[index + 1].focus();
+            }
+            
+            // Check if all inputs are filled to auto-submit
+            const allFilled = Array.from(inputs).every(i => i.value.length === 1);
+            if (allFilled) {
+                form.dispatchEvent(new Event('submit')); // Trigger UI changes
+                form.submit();
             }
         });
 
@@ -251,26 +259,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Countdown Logic
-    let timeLeft = parseInt("{{ remaining_time }}");
+    // --- Professional MM:SS Countdown Logic ---
+    let timeLeft = parseInt("{{ remaining_time|default:0 }}");
+
+    function updateTimerDisplay() {
+        if (timeLeft <= 0) {
+            timerSection.style.display = 'none';
+            submitBtn.style.display = 'none';
+            resendSection.style.display = 'block';
+            resendSection.classList.add('animate-fade-in');
+            return;
+        }
+
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        
+        // Format as 00:00
+        const displayTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        countdownDisplay.textContent = displayTime;
+    }
+
     if (timeLeft > 0) {
+        updateTimerDisplay(); // Initial call
         const timerInterval = setInterval(() => {
             timeLeft--;
-            document.getElementById('countdown').textContent = timeLeft + 's';
+            updateTimerDisplay();
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                timerSection.style.display = 'none';
-                submitBtn.style.display = 'none';
-                resendSection.style.display = 'block';
-                resendSection.classList.add('animate-fade-in');
             }
         }, 1000);
-    } else if (timeLeft <= 0 && timerSection) {
-        // Handle case where it's already expired on load
-        timerSection.style.display = 'none';
-        submitBtn.style.display = 'none';
-        resendSection.style.display = 'block';
+    } else {
+        // Fallback for expired on load
+        updateTimerDisplay();
     }
 
     // Submit UX

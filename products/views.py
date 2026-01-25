@@ -12,6 +12,7 @@ from wishlist.models import Wishlist
 from offers.utils import get_best_offer_for_product, apply_offer
 from django.urls import reverse
 from reviews.models import ProductReview
+from django.contrib import messages
 
 
 
@@ -330,6 +331,9 @@ def add_to_cart(request):
         ).first()
 
         if item:
+            if item.quantity >=5 :
+                request.session["message"] = "the item limit of 5 is exceeded"
+                return redirect("product_details", uuid=variant.product.uuid)
             item.quantity += qty
             item.unit_price = unit_price
             item.tax_amount = unit_tax * item.quantity
@@ -344,8 +348,8 @@ def add_to_cart(request):
                 tax_amount=tax_amount,
                 total_price=total_price,
             )
+        
 
         recalculate_cart_totals(cart)
-
     request.session["message"] = "Item added to cart"
     return redirect("product_details", uuid=variant.product.uuid)

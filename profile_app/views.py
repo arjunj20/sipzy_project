@@ -7,8 +7,6 @@ import re
 import base64
 from django.core.files.base import ContentFile
 
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.contrib import messages
@@ -20,6 +18,12 @@ from authenticate.models import Address
 from django.conf import settings
 from wallet.models import Wallet
 from referal.models import Referral
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
 
 PASSWORD_REGEX = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@#$!%*?&]{8,}$")
@@ -104,6 +108,7 @@ def edit_profile(request):
                 )
 
         user.save()
+        messages.success(request, "Profile updated successfully")
         return redirect("user_profile")
 
     return render(
@@ -183,15 +188,6 @@ def change_email(request):
         return redirect("email_otp")
 
     return render(request, "change_email.html")
-
-
-
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.utils import timezone
-from django.utils.dateparse import parse_datetime
 
 @login_required
 @never_cache
@@ -361,7 +357,6 @@ def add_addresses(request):
         state = request.POST.get("state", "").strip()
         pincode = request.POST.get("pincode", "").strip()
 
-        # 1️⃣ Full Name
         if not full_name:
             errors["full_name"] = "Full name is required."
         elif len(full_name) < 3:
@@ -369,31 +364,28 @@ def add_addresses(request):
         elif not FULLNAME_REGEX.match(full_name):
             errors["full_name"] = "Name can contain only letters, spaces, and dot (.)."
 
-        # 2️⃣ Phone Number
+        
         if not phone:
             errors["phone_number"] = "Phone number is required."
         elif not PHONE_REGEX.match(phone):
             errors["phone_number"] = "Enter a valid 10-digit phone number."
 
-        # 3️⃣ Address Line 1
         if not line1:
             errors["address_line1"] = "Address line is required."
         elif len(line1) < 5:
             errors["address_line1"] = "Address must be at least 5 characters."
 
-        # 4️⃣ City
         if not city:
             errors["city"] = "City is required."
         elif not CITY_STATE_REGEX.match(city):
             errors["city"] = "City can contain only letters and spaces."
 
-        # 5️⃣ State
+        
         if not state:
             errors["state"] = "State is required."
         elif not CITY_STATE_REGEX.match(state):
             errors["state"] = "State can contain only letters and spaces."
 
-        # 6️⃣ Pincode
         if not pincode:
             errors["pincode"] = "Pincode is required."
         elif not PINCODE_REGEX.match(pincode):
@@ -413,6 +405,7 @@ def add_addresses(request):
             pincode=pincode,
         )
 
+        messages.success(request, "Added the new address")
         return redirect("user_profile")
 
     return render(request, "add_addresses.html")
@@ -434,7 +427,6 @@ def edit_addresses(request, uuid):
 
     errors = {}
 
-    # Same regex rules everywhere
     FULLNAME_REGEX = re.compile(r'^[A-Za-z .]+$')
     PHONE_REGEX = re.compile(r'^[6-9]\d{9}$')
     CITY_STATE_REGEX = re.compile(r'^[A-Za-z ]+$')
@@ -449,7 +441,6 @@ def edit_addresses(request, uuid):
         state = request.POST.get("state", "").strip()
         pincode = request.POST.get("pincode", "").strip()
 
-        # 1️⃣ Full Name
         if not full_name:
             errors["full_name"] = "Full name is required."
         elif len(full_name) < 3:
@@ -457,31 +448,26 @@ def edit_addresses(request, uuid):
         elif not FULLNAME_REGEX.match(full_name):
             errors["full_name"] = "Name can contain only letters, spaces, and dot (.)."
 
-        # 2️⃣ Phone
         if not phone:
             errors["phone_number"] = "Phone number is required."
         elif not PHONE_REGEX.match(phone):
             errors["phone_number"] = "Enter a valid 10-digit phone number."
 
-        # 3️⃣ Address Line 1
         if not line1:
             errors["address_line1"] = "Address line is required."
         elif len(line1) < 5:
             errors["address_line1"] = "Address must be at least 5 characters."
 
-        # 4️⃣ City
         if not city:
             errors["city"] = "City is required."
         elif not CITY_STATE_REGEX.match(city):
             errors["city"] = "City can contain only letters and spaces."
 
-        # 5️⃣ State
         if not state:
             errors["state"] = "State is required."
         elif not CITY_STATE_REGEX.match(state):
             errors["state"] = "State can contain only letters and spaces."
 
-        # 6️⃣ Pincode
         if not pincode:
             errors["pincode"] = "Pincode is required."
         elif not PINCODE_REGEX.match(pincode):
@@ -497,7 +483,6 @@ def edit_addresses(request, uuid):
                 }
             )
 
-        # Update fields only after validation
         address.full_name = full_name
         address.phone_number = phone
         address.address_line1 = line1
@@ -507,6 +492,7 @@ def edit_addresses(request, uuid):
         address.pincode = pincode
 
         address.save()
+        messages.success(request, "Address is updated successfully")
         return redirect("user_profile")
 
     return render(
@@ -528,4 +514,5 @@ def delete_address(request, uuid):
     )
 
     address.delete()
+    messages.success(request, "Address deleted successfully")
     return redirect("user_profile")

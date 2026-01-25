@@ -189,6 +189,30 @@
         background: white;
     }
 
+    /* ================= 5. SIPZY CUSTOM NOTIFICATION ================= */
+    .sipzy-toast {
+        position: fixed;
+        top: 100px; /* Position below your navbar */
+        right: 30px;
+        z-index: 1000;
+        background: rgba(26, 46, 26, 0.8); /* Dark green glassmorphism */
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(74, 222, 128, 0.2);
+        border-radius: 12px;
+        padding: 16px 24px;
+        color: #d1fae5; /* Soft light green text */
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform: translateX(120%); /* Start off-screen */
+    }
+
+    .sipzy-toast.show {
+        transform: translateX(0);
+    }
+
 </style>
 {% endblock %}
 
@@ -354,18 +378,20 @@
                                     {% endif %}
                                 </div>
                                 
-                                <form action="{% url 'add_to_wishlist' product.uuid %}" method="POST" class="inline-block">
+                                <form action="{% url 'add_to_wishlist' product.uuid %}" method="POST" class="inline-block wishlist-form">
                                     {% csrf_token %}
-                                  
-                                    <button type="submit" 
-                                            class="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-300 transform active:scale-95" 
+                                    <button type="button" 
+                                            onclick="toggleWishlist(this)"
+                                            class="wishlist-btn p-2 {% if product.is_wishlisted %}text-red-500{% else %}text-gray-300{% endif %} hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-300 transform active:scale-95" 
                                             title="Add to Wishlist">
-                                        <svg class="w-6 h-6" fill="{% if product.is_wishlisted %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="wishlist-icon w-6 h-6" 
+                                             fill="{% if product.is_wishlisted %}currentColor{% else %}none{% endif %}" 
+                                             stroke="currentColor" 
+                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                                         </svg>
                                     </button>
-                                
-                                </form>
+                                </form> 
                             </div>
                         </div>
                     </div>
@@ -463,6 +489,60 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 });
-</script>
 
-{% endblock %}
+// 5. AJAX WISHLIST LOGIC
+function toggleWishlist(button) {
+    const form = button.closest('.wishlist-form');
+    const url = form.getAttribute('action');
+    const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+    const icon = button.querySelector('.wishlist-icon');
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'added' || data.status === 'exists') {
+            // Update Heart Color
+            icon.setAttribute('fill', 'currentColor');
+            button.classList.add('text-red-500');
+            button.classList.remove('text-gray-300');
+            
+            // Show Sipzy Styled Notification
+            showSipzyNotification(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showSipzyNotification("Please login to manage your wishlist");
+    });
+}
+
+function showSipzyNotification(message) {
+    // Create notification element
+    const toast = document.createElement('div');
+    toast.className = 'sipzy-toast';
+    
+    // Add same content as your screenshot (text + close button)
+    toast.innerHTML = `
+        <span style="font-size: 0.9rem; font-weight: 500;">${message.toLowerCase()}...</span>
+        <button onclick="this.parentElement.remove()" style="margin-left: 8px; color: #fbbf24; font-size: 1.2rem; line-height: 1;">&times;</button>
+    `;
+    
+    document.body.appendChild(toast);
+
+    // Trigger Animation
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+    }, 4000);
+}
+</script>
+{% endblock %}  

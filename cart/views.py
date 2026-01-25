@@ -149,6 +149,7 @@ def ajax_delete_item(request):
     cart.total_price = cart.item_subtotal + cart.shipping_fee
     cart.save()
     recalculate_cart_totals(cart)
+    messages.success(request, "the item has been deleted")
     return JsonResponse({
         "success": True,
         "subtotal": float(cart.item_subtotal),
