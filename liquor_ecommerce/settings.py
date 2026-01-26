@@ -16,18 +16,63 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
 
-# SECURITY WARNING: keep the secret key used in production secret!
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/django.log"),
+            "formatter": "verbose",
+            "level": "INFO",
+        },
+        "error_file": {
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/error.log"),
+            "formatter": "verbose",
+            "level": "ERROR",
+        },
+    },
+
+    "loggers": {
+        "django": {
+            "handlers": ["console", "file", "error_file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "": {  
+        "handlers": ["console", "file", "error_file"],
+        "level": "INFO",
+    },
+    },
+}
+
+
+
+
 SECRET_KEY = config('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
+
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
 CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app', 'https://*.ngrok.io', 'https://*.ngrok-free.dev']

@@ -327,6 +327,7 @@ def landing_page(request):
     if request.user.is_authenticated and not request.user.is_superuser:
         return redirect("user_homepage")
     
+   
     products = (
         Products.objects
         .annotate(variant_count=Count("variants"))
