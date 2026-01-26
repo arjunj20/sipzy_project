@@ -29,7 +29,8 @@ import random
 from referal.models import Referral
 from authenticate.models import CustomUser   
 from coupons.models import Coupon
-
+import uuid
+from datetime import timedelta
 import random
 import re
 from django.utils import timezone
@@ -131,10 +132,6 @@ def user_signup(request):
 
     return render(request, "user_signup.html", {"data_form": data_form})
 
-
-import uuid
-from datetime import timedelta
-
 @never_cache
 def user_signupotp(request):
 
@@ -150,8 +147,8 @@ def user_signupotp(request):
     correct_otp = str(signup_data["otp"])
 
     try:
-        otp_time = parse_datetime(signup_data["otp_time"])
-        otp_time = otp_time.astimezone(timezone.get_current_timezone())
+        otp_time = parse_datetime(signup_data["otp_time"]) #parse_datetime() method converts the string datetime into python datetime object
+        otp_time = otp_time.astimezone(timezone.get_current_timezone()) 
     except Exception as e:
         print("OTP TIME ERROR:", e)
         messages.error(request, "OTP error. Please try again.")
