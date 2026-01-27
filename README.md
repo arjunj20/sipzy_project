@@ -198,20 +198,17 @@ python manage.py runserver
 
 ---
 
-## 📸 **Screenshots**
-
-<div align="center">
+## 📸 Screenshots
 
 ### 🏠 Home Page
-<img src="https://via.placeholder.com/800x400/2C1810/D4AF37?text=Sipzy+Home+Page" alt="Home Page" width="80%"/>
+<img src="screenshots/home_page.png" alt="Sipzy Home Page" width="80%" />
 
 ### 🛒 Shopping Cart
-<img src="https://via.placeholder.com/800x400/3D2817/D4AF37?text=Shopping+Cart" alt="Cart" width="80%"/>
+<img src="screenshots/cart.png" alt="Shopping Cart" width="80%" />
 
 ### 💳 Checkout
-<img src="https://via.placeholder.com/800x400/2C1810/D4AF37?text=Secure+Checkout" alt="Checkout" width="80%"/>
+<img src="screenshots/checkout.png" alt="Secure Checkout" width="80%" />
 
-</div>
 
 ---
 
