@@ -235,16 +235,7 @@ liquor_ecommerce/
 ├── 📁 templates/
 ├── 📁 wallet/
 ├── 📁 wishlist/
-├── 📄 admin.py
-├── 📄 apps.py
-├── 📄 context_processors.py
-├── 📄 models.py
-├── 📄 tests.py
-├── 📄 urls.py
-├── 📄 views.py
-├── ⚙️ manage.py
-├── 📄 requirements.txt
-└── 📖 README.md
+
 ```
 
 ---
