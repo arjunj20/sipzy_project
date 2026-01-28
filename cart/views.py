@@ -74,7 +74,7 @@ def update_cart_item(request):
     variant_id = request.POST.get("variant_id")
 
     cart = get_user_cart(request.user)
-
+  
     try:
         item = CartItems.objects.select_related(
             "variant", "variant__product"
@@ -137,7 +137,7 @@ def update_cart_item(request):
 @require_POST
 def ajax_delete_item(request):
 
-    if not request.user.is_authenticated or request.user.is_superuser:
+    if not request.user.is_authenticated or request .user.is_superuser:
         return redirect("landing_page")
     item_id = request.POST.get("id")
 
@@ -224,7 +224,7 @@ def place_order(request):
 
     address = get_object_or_404(Address, id=selected_address_id, user=user)
 
-    cart = Cart.objects.select_for_update().get(user=user)
+    cart = Cart.objects.select_for_update().get(user=user) 
     cart_items = CartItems.objects.select_for_update().filter(cart=cart)
 
     if not cart_items.exists():

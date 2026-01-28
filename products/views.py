@@ -33,7 +33,7 @@ def userproduct_list(request):
             variant_count__gte=1     
         )
         .select_related("brand", "category")
-    )
+    ) 
 
     search = request.GET.get("search", "")
     if search:
@@ -77,7 +77,7 @@ def userproduct_list(request):
     elif sort_option == "name_desc":
         products = products.order_by("-name")
     else:
-        products = products.order_by("-created_at")
+        products = products.order_by("-created_at") 
 
     products = products.prefetch_related("variants")
 
@@ -171,10 +171,7 @@ def product_details(request, uuid):
         elif quantity > selected_variant.stock:
             quantity = selected_variant.stock
     except (ValueError, TypeError):
-        quantity = 1
-    
-    average_rating = 4.5  
-    review_count = 128   
+        quantity = 1  
 
     reviews = ProductReview.objects.filter(product=product).order_by("-created_at")
 
@@ -349,7 +346,6 @@ def add_to_cart(request):
                 total_price=total_price,
             )
         
-
         recalculate_cart_totals(cart)
     request.session["message"] = "Item added to cart"
     return redirect("product_details", uuid=variant.product.uuid)

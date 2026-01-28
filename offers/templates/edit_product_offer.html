@@ -99,39 +99,7 @@
                     >
                 </div>
 
-                <!-- Minimum Product Price -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">
-                        Minimum Product Price <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="number"
-                        name="min_product_price"
-                        class="w-full px-4 py-2.5 border rounded-lg"
-                        value="{{ request.POST.min_product_price|default:offer.min_product_price }}"
-                        required
-                    >
-                    <p class="text-xs text-gray-500 mt-1">
-                        Offer applies only if product price is ≥ this amount
-                    </p>
-                </div>
-
-                <!-- Maximum Product Price (NEW FIELD) -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">
-                        Maximum Product Price <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="number"
-                        name="max_product_price"
-                        class="w-full px-4 py-2.5 border rounded-lg"
-                        value="{{ request.POST.max_product_price|default:offer.max_product_price }}"
-                        required
-                    >
-                    <p class="text-xs text-gray-500 mt-1">
-                        Offer applies only if product price is ≤ this amount
-                    </p>
-                </div>
+               
 
                 <!-- Start Date -->
                 <div>

@@ -17,6 +17,9 @@ def offer_list(request):
 
 
 
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+
 def add_product_offer(request):
 
     if not request.user.is_authenticated or not request.user.is_superuser:
@@ -27,7 +30,7 @@ def add_product_offer(request):
 
     if request.method == "POST":
         product_id = request.POST.get("product")
-        offer_name = request.POST.get("offer_name")
+        offer_name = request.POST.get("offer_name", "").strip()
         discount_percent_raw = request.POST.get("discount_percent")
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
@@ -52,27 +55,61 @@ def add_product_offer(request):
             })
 
         try:
+            discount_percent = int(discount_percent_raw)
+            if discount_percent <= 0 or discount_percent > 90:
+                errors["discount_percent"] = "Discount must be between 1% and 90%"
+        except ValueError:
+            errors["discount_percent"] = "Discount must be a valid number"
+
+        if start_date > end_date:
+            errors["end_date"] = "End date must be after start date"
+
+        if errors:
+            return render(request, "add_product_offer.html", {
+                "products": products,
+                "errors": errors
+            })
+
+        try:
             product = Products.objects.get(id=product_id)
 
+            if is_active:
+                existing_offer = ProductOffer.objects.filter(
+                    product=product,
+                    is_active=True
+                ).exists()
+
+                if existing_offer:
+                    errors["product"] = (
+                        "This product already has an active offer. "
+                        "Please deactivate the existing offer first."
+                    )
+                    return render(request, "add_product_offer.html", {
+                        "products": products,
+                        "errors": errors
+                    })
+
+           
             offer = ProductOffer(
                 product=product,
                 offer_name=offer_name,
-                discount_percent=int(discount_percent_raw),
+                discount_percent=discount_percent,
                 start_date=start_date,
                 end_date=end_date,
                 is_active=is_active
             )
 
-            offer.full_clean()
+            offer.full_clean() 
             offer.save()
+
             return redirect("offer_list")
 
         except Products.DoesNotExist:
             errors["product"] = "Invalid product selected"
-        except ValueError:
-            errors["discount_percent"] = "Discount must be a valid number"
+
         except ValidationError as e:
             errors["validation"] = e.messages
+
         except Exception:
             errors["error"] = "Something went wrong. Please try again."
 
@@ -88,12 +125,13 @@ def edit_product_offer(request, uuid):
     errors = {}
 
     if request.method == "POST":
-        offer_name = request.POST.get("offer_name")
+        offer_name = request.POST.get("offer_name", "").strip()
         discount_percent_raw = request.POST.get("discount_percent")
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
         is_active = True if request.POST.get("is_active") else False
 
+        # 1️⃣ Required fields validation
         required_fields = {
             "offer_name": offer_name,
             "discount_percent": discount_percent_raw,
@@ -111,21 +149,57 @@ def edit_product_offer(request, uuid):
                 "errors": errors
             })
 
+        # 2️⃣ Discount validation
         try:
+            discount_percent = int(discount_percent_raw)
+            if discount_percent <= 0 or discount_percent > 90:
+                errors["discount_percent"] = "Discount must be between 1% and 90%"
+        except ValueError:
+            errors["discount_percent"] = "Discount must be a valid number"
+
+        # 3️⃣ Date validation
+        if start_date > end_date:
+            errors["end_date"] = "End date must be after start date"
+
+        if errors:
+            return render(request, "edit_product_offer.html", {
+                "offer": prod,
+                "errors": errors
+            })
+
+        try:
+            # 4️⃣ ACTIVE OFFER VALIDATION (🔥 IMPORTANT)
+            if is_active:
+                existing_offer = ProductOffer.objects.filter(
+                    product=prod.product,
+                    is_active=True
+                ).exclude(id=prod.id).exists()
+
+                if existing_offer:
+                    errors["is_active"] = (
+                        "This product already has another active offer. "
+                        "Please deactivate it first."
+                    )
+                    return render(request, "edit_product_offer.html", {
+                        "offer": prod,
+                        "errors": errors
+                    })
+
+            # 5️⃣ Save safely
             prod.offer_name = offer_name
-            prod.discount_percent = int(discount_percent_raw)
+            prod.discount_percent = discount_percent
             prod.start_date = start_date
             prod.end_date = end_date
             prod.is_active = is_active
 
             prod.full_clean()
             prod.save()
+
             return redirect("offer_list")
 
-        except ValueError:
-            errors["discount_percent"] = "Discount must be a valid number"
         except ValidationError as e:
             errors["validation"] = e.messages
+
         except Exception:
             errors["error"] = "Something went wrong. Please try again."
 
