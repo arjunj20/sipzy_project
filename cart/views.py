@@ -203,7 +203,6 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
 from django.views.decorators.cache import never_cache
-
 @never_cache
 @transaction.atomic
 def place_order(request):
@@ -307,7 +306,7 @@ def place_order(request):
         count += 1
 
     if payment_method == "COD":
-        order.payment_status = "paid"
+        order.payment_status = "pending"
         order.payment_method = "cod"
         order.save(update_fields=["payment_status", "payment_method"])
 

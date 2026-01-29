@@ -696,6 +696,10 @@ def update_suborder_status(request, item_id):
     item = get_object_or_404(OrderItem, id=item_id)
     action = request.POST.get("status")
 
+    if action == "delivered" and item.order.payment_method == "cod":
+        item.order.payment_status = "paid"
+        item.order.save(update_fields=["payment_status"])
+
     if action in ["approved", "rejected"]:
         if not hasattr(item, "return_request"):
             return JsonResponse({
@@ -741,7 +745,7 @@ def update_suborder_status(request, item_id):
 
         order = item.order
 
-        if order.payment_method.lower() in ["razorpay", "wallet"] and order.payment_status == "paid":
+        if order.payment_status == "paid":
 
             wallet, _ = Wallet.objects.get_or_create(
                 user=order.user,

@@ -18,7 +18,6 @@ import cloudinary.api
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -53,18 +52,22 @@ LOGGING = {
         },
     },
 
+   
+    "root": {
+        "handlers": ["console", "file", "error_file"],
+        "level": "INFO",
+    },
+
+
     "loggers": {
         "django": {
             "handlers": ["console", "file", "error_file"],
             "level": "INFO",
-            "propagate": True,
+            "propagate": False,
         },
-        "": {  
-        "handlers": ["console", "file", "error_file"],
-        "level": "INFO",
-    },
     },
 }
+
 
 
 

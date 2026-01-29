@@ -61,7 +61,7 @@
 </p>
 
         </div>
-{% if order.payment_status != "paid" %}
+{% if order.payment_status != "paid" and order.payment_method != "cod" %}
     <div class="mt-4 p-4 rounded-lg bg-red-50 border border-red-200">
         <p class="text-red-700 font-semibold text-sm flex items-center gap-2">
             ⚠️ Payment Pending
@@ -197,9 +197,11 @@
     {% endif %}
 
 {% endif %}
+              
 
+            
 
-        {% if order.payment_status == "paid" %}
+        {% if order.payment_status == "paid" or order.payment_method == "cod" %}
 
             {% if item.status == "pending" or item.status == "processing" %}
             <button
@@ -208,6 +210,7 @@
                 Cancel
             </button>
             {% endif %}
+            
 
             {% if item.status == "delivered" and not item.return_request %}
             <button
@@ -235,7 +238,7 @@
             </span>
             {% endif %}
 
-        {% else %}
+        {% elif order.payment_status != "paid" and order.payment_method != "cod" %}
             <span class="text-xs text-red-600 font-semibold">
                 Payment not completed
             </span>
