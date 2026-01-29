@@ -131,7 +131,6 @@ def edit_product_offer(request, uuid):
         end_date = request.POST.get("end_date")
         is_active = True if request.POST.get("is_active") else False
 
-        # 1️⃣ Required fields validation
         required_fields = {
             "offer_name": offer_name,
             "discount_percent": discount_percent_raw,
@@ -149,7 +148,6 @@ def edit_product_offer(request, uuid):
                 "errors": errors
             })
 
-        # 2️⃣ Discount validation
         try:
             discount_percent = int(discount_percent_raw)
             if discount_percent <= 0 or discount_percent > 90:
@@ -157,7 +155,6 @@ def edit_product_offer(request, uuid):
         except ValueError:
             errors["discount_percent"] = "Discount must be a valid number"
 
-        # 3️⃣ Date validation
         if start_date > end_date:
             errors["end_date"] = "End date must be after start date"
 
@@ -168,7 +165,6 @@ def edit_product_offer(request, uuid):
             })
 
         try:
-            # 4️⃣ ACTIVE OFFER VALIDATION (🔥 IMPORTANT)
             if is_active:
                 existing_offer = ProductOffer.objects.filter(
                     product=prod.product,
@@ -185,7 +181,7 @@ def edit_product_offer(request, uuid):
                         "errors": errors
                     })
 
-            # 5️⃣ Save safely
+            
             prod.offer_name = offer_name
             prod.discount_percent = discount_percent
             prod.start_date = start_date
