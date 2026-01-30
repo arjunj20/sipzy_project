@@ -179,7 +179,9 @@ def user_signupotp(request):
             return render(request, "user_signupotp.html", {
                 "error": errors,
                 "remaining_time": remaining_time
-            })
+            },
+                status=404
+            )
 
         try:
             user = CustomUser.objects.create_user(
@@ -232,11 +234,15 @@ def user_signupotp(request):
             return render(request, "user_signupotp.html", {
                 "error": errors,
                 "remaining_time": remaining_time
-            })
+            },
+                status=404
+            )
 
     return render(request, "user_signupotp.html", {
         "remaining_time": remaining_time
-    })
+    },
+
+    )
 
 
 @never_cache

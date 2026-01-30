@@ -75,22 +75,43 @@ class Coupon(models.Model):
         ordering = ["-created_at"]
 
     def clean(self):
-        if self.discount_value <= 0:
-            raise ValidationError("Discount value must be greater than zero.")
+            MIN_ORDER_LIMIT = Decimal("100.00")  
+            if self.discount_value <= 0:
+                raise ValidationError({"discount_value": "Discount value must be greater than zero."})
 
-        if self.discount_type == "percent":
-            if self.discount_value > 100:
-                raise ValidationError("Percentage discount cannot exceed 100%.")
-            if not self.max_discount_amount:
-                raise ValidationError("Max discount amount is required for percentage coupons.")
-        else:
-            self.max_discount_amount = None
+            if self.min_order_amount < MIN_ORDER_LIMIT:
+                raise ValidationError({
+                    "min_order_amount": f"Minimum order amount must be at least ₹{MIN_ORDER_LIMIT}."
+                })
 
-        if self.min_order_amount <= 0:
-            raise ValidationError("Minimum order amount must be greater than zero.")
+            if self.valid_from >= self.valid_to:
+                raise ValidationError("Valid To must be after Valid From.")
 
-        if self.valid_from >= self.valid_to:
-            raise ValidationError("Invalid validity dates.")
+            if self.max_uses_per_user > self.usage_limit:
+                raise ValidationError({
+                    "max_uses_per_user": "Max uses per user cannot exceed usage limit."
+                })
+            if self.discount_type == "flat":
+                if self.discount_value >= self.min_order_amount:
+                    raise ValidationError({
+                        "discount_value": "Flat discount must be less than minimum order amount."
+                    })
+                self.max_discount_amount = None
+            if self.discount_type == "percent":
+                if self.discount_value > 90:
+                    raise ValidationError({
+                        "discount_value": "Percentage discount cannot exceed 90%."
+                    })
+
+                if not self.max_discount_amount or self.max_discount_amount <= 0:
+                    raise ValidationError({
+                        "max_discount_amount": "Max discount amount is required for percentage coupons."
+                    })
+
+                if self.max_discount_amount >= self.min_order_amount:
+                    raise ValidationError({
+                        "max_discount_amount": "Max discount must be less than minimum order amount."
+                    })
 
         
 

@@ -695,7 +695,46 @@ def update_suborder_status(request, item_id):
 
     item = get_object_or_404(OrderItem, id=item_id)
     action = request.POST.get("status")
+    
+    if action == "cancelled":
 
+        if item.status in ["cancelled", "returned"]:
+            return JsonResponse({
+                "success": False,
+                "message": "Item already cancelled or returned"
+            })
+
+        item.status = "cancelled"
+        item.save(update_fields=["status"])
+        if item.variant:
+            item.variant.stock += item.quantity
+            item.variant.save(update_fields=["stock"])
+
+        order = item.order
+        refund_amount = item.net_paid_amount
+        if order.payment_status == "paid" and refund_amount > 0:
+
+            wallet, _ = Wallet.objects.get_or_create(
+                user=order.user,
+                defaults={"balance": Decimal("0.00")}
+            )
+
+            wallet.balance += refund_amount
+            wallet.save(update_fields=["balance"])
+
+            WalletTransaction.objects.create(
+                wallet=wallet,
+                transaction_type=WalletTransaction.CREDIT,
+                amount=refund_amount,
+                order=order,
+                status="completed",
+                description=f"Refund for cancelled item {item.sub_order_id}"
+            )
+        order.recalculate_totals()
+        return JsonResponse({
+            "success": True,
+            "message": "Item cancelled and refund processed"
+        })
     if action == "delivered" and item.order.payment_method == "cod":
         item.order.payment_status = "paid"
         item.order.save(update_fields=["payment_status"])

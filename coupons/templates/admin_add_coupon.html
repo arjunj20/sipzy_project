@@ -5,13 +5,13 @@
 <div class="max-w-2xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
     <h3 class="text-2xl font-bold text-gray-900 mb-6">Add Coupon</h3>
 
-    <form method="POST" class="space-y-6">
+    <form method="POST" class="space-y-6" novalidate>
         {% csrf_token %}
 
         <!-- Coupon Code -->
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Coupon Code</label>
-            <input type="text" name="code" required
+            <input type="text" name="code" 
                    class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
             <small class="text-red-600">{{ errors.code }}</small>
         </div>
@@ -31,9 +31,13 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">
                 Discount Value
             </label>
-            <input type="number" step="0.01" name="discount_value" required
+            <input type="number" step="0.01" name="discount_value" 
                    class="w-full px-3 py-2 border rounded-md">
-            <small class="text-red-600">{{ errors.discount_value }}</small>
+{% if errors.discount_value %}
+    {% for error in errors.discount_value %}
+        <small class="text-red-600 block">{{ error }}</small>
+    {% endfor %}
+{% endif %}
         </div>
 
         <!-- Max Discount (only for percent) -->
@@ -51,7 +55,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">
                 Minimum Order Amount (₹)
             </label>
-            <input type="number" step="0.01" name="min_order_amount" required
+            <input type="number" step="0.01" name="min_order_amount" 
                    class="w-full px-3 py-2 border rounded-md">
             <small class="text-red-600">{{ errors.min_order_amount }}</small>
         </div>
@@ -73,7 +77,7 @@
         <!-- Usage -->
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Usage Limit</label>
-            <input type="number" name="usage_limit" required
+            <input type="number" name="usage_limit" 
                    class="w-full px-3 py-2 border rounded-md">
         </div>
 
@@ -82,7 +86,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">
                 Max Uses Per User
             </label>
-            <input type="number" name="max_uses_per_user" value="1" min="1" required
+            <input type="number" name="max_uses_per_user" value="1" min="1" 
                 class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
             <small class="text-gray-500">
                 How many times a single user can use this coupon

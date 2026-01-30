@@ -86,8 +86,6 @@ def order_invoice(request, order_id):
         id=order_id,
         user=request.user
     )
-
-    # Only delivered items should appear in invoice
     items = order.items.filter(status="delivered")
 
     if not items.exists():
@@ -96,37 +94,25 @@ def order_invoice(request, order_id):
             "Invoice is available only after delivery."
         )
         return redirect("order_detail", uuid=order.uuid)
-
-    # Address fields (safe fallback)
     full_name = order.full_name or ""
     address_line1 = order.address_line1 or "Address not available"
     city = order.city or ""
     state = order.state or ""
     pincode = order.pincode or ""
 
-    # ===============================
-    # AMOUNTS (USE DB VALUES ONLY)
-    # ===============================
-
-    # Sum of delivered item payments (already tax-inclusive)
     subtotal = items.aggregate(
         total=Sum("net_paid_amount")
     )["total"] or Decimal("0.00")
 
-    # Coupon applied on delivered items
+  
     total_coupon = items.aggregate(
         total=Sum("coupon_share")
     )["total"] or Decimal("0.00")
 
-    # IMPORTANT: Tax already calculated & stored in Order
     tax = order.tax
 
     shipping_fee = order.shipping_fee
     total = subtotal + shipping_fee
-
-    # ===============================
-    # PDF RESPONSE
-    # ===============================
 
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = (
@@ -136,8 +122,6 @@ def order_invoice(request, order_id):
     p = canvas.Canvas(response, pagesize=A4)
     width, height = A4
     y = height - 50
-
-    # ===== HEADER =====
     p.setFont("Helvetica-Bold", 20)
     p.drawString(30, y, "INVOICE")
 
@@ -150,8 +134,6 @@ def order_invoice(request, order_id):
         y,
         f"Order Date   : {order.created_at.strftime('%d-%m-%Y %H:%M')}"
     )
-
-    # ===== ADDRESS =====
     y -= 40
     p.setFont("Helvetica-Bold", 12)
     p.drawString(30, y, "Billing Address:")
@@ -165,8 +147,6 @@ def order_invoice(request, order_id):
     p.drawString(30, y, f"{city}, {state}".strip(", "))
     y -= 20
     p.drawString(30, y, pincode)
-
-    # ===== TABLE HEADER =====
     y -= 40
     p.setFont("Helvetica-Bold", 12)
     p.drawString(30, y, "Product")
@@ -176,8 +156,6 @@ def order_invoice(request, order_id):
     p.drawString(340, y, "Coupon")
     p.setFillColor(black)
     p.drawString(420, y, "Paid")
-
-    # ===== TABLE ROWS =====
     y -= 20
     p.setFont("Helvetica", 12)
 
@@ -200,8 +178,6 @@ def order_invoice(request, order_id):
         p.setFillColor(black)
         p.drawString(420, y, f"₹{item.net_paid_amount}")
         y -= 20
-
-    # ===== TOTALS =====
     y -= 30
     p.setFont("Helvetica-Bold", 12)
     p.drawString(330, y, "Subtotal:")
