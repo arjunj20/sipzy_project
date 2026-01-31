@@ -106,6 +106,7 @@ INSTALLED_APPS = [
     'dashboard',
     'reviews',
     'referal',
+    'errorhandlers',
 
     # allauth requirements
     'django.contrib.sites',

@@ -60,8 +60,8 @@ def user_profile(request):
 
 @login_required
 def edit_profile(request):
-
-    if request.user.is_superuser:
+    
+    if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
 
     user = request.user

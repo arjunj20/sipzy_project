@@ -287,7 +287,7 @@ def resend_otp(request):
 def user_homepage(request):
 
     if not request.user.is_authenticated or request.user.is_superuser:
-        return redirect("landing_page")
+        return redirect("user_login")
 
     user = request.user
     fullname = user.fullname
@@ -601,8 +601,18 @@ def resend_forgot_otp(request):
 
     return redirect("forgot_password_otp")
 
+# from django.http import HttpResponseBadRequest
 
+# from django.core.exceptions import BadRequest, PermissionDenied
 
+# def test_400(request):
+#     raise BadRequest
+
+# def test_403(request):
+#     raise PermissionDenied
+
+# def test_500(request):
+#     1 / 0
 
 
 

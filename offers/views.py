@@ -5,9 +5,13 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.core.paginator import Paginator
 from .utils import deactivate_expired_offers,deactivate_expired_category_offers
+from django.views.decorators.cache import never_cache
 
 
+@never_cache
 def offer_list(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("admin_login")
     deactivate_expired_offers()
     offers_qs = ProductOffer.objects.all().order_by("-created_at")
     paginator = Paginator(offers_qs, 8)
@@ -20,6 +24,7 @@ def offer_list(request):
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+@never_cache
 def add_product_offer(request):
 
     if not request.user.is_authenticated or not request.user.is_superuser:
@@ -118,8 +123,10 @@ def add_product_offer(request):
         "errors": errors
     })
 
-
+@never_cache
 def edit_product_offer(request, uuid):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("user_login")
 
     prod = get_object_or_404(ProductOffer, uuid=uuid)
     errors = {}
@@ -204,6 +211,7 @@ def edit_product_offer(request, uuid):
         "errors": errors
     })
 
+@never_cache
 def deactivate_product_offer(request, uuid):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect("admin_login")
@@ -213,6 +221,7 @@ def deactivate_product_offer(request, uuid):
 
     return redirect("offer_list")
 
+@never_cache
 def activate_product_offer(request, uuid):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect("admin_login")
@@ -232,7 +241,11 @@ def activate_product_offer(request, uuid):
 
     return redirect("offer_list")
 
+@never_cache
 def category_offer_list(request):  
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("user_login")
+
     deactivate_expired_category_offers()
 
     offers = CategoryOffer.objects.all()
@@ -244,6 +257,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils import timezone
 
+
+@never_cache
 def category_add_offer(request):
 
     if not request.user.is_authenticated or not request.user.is_superuser:
@@ -332,10 +347,10 @@ def category_add_offer(request):
         },
     )
 
-
+@never_cache
 def edit_category_offer(request, uuid):
 
-    if not request.user.is_authenticated or not request.user.is_superuser:
+    if  request.user.is_authenticated or not request.user.is_superuser:
         return redirect("admin_login")
 
     offer = get_object_or_404(CategoryOffer, uuid=uuid)
@@ -415,6 +430,8 @@ def edit_category_offer(request, uuid):
         },
     )
 
+
+@never_cache
 def deactivate_category_offer(request, uuid):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect("admin_login")
@@ -426,7 +443,7 @@ def deactivate_category_offer(request, uuid):
 
     return redirect("category_offer_list")
 
-
+@never_cache
 def deactivate_category_offer(request, uuid):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect("admin_login")
@@ -438,8 +455,9 @@ def deactivate_category_offer(request, uuid):
 
     return redirect("category_offer_list")
 
-
+@never_cache
 def activate_category_offer(request, uuid):
+
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect("admin_login")
 

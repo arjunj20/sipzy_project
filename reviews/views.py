@@ -2,7 +2,10 @@ from django.shortcuts import get_object_or_404, redirect, render, redirect
 from django.contrib import messages
 from orders.models import OrderItem
 from .models import ProductReview
+from django.views.decorators.cache import never_cache
 
+
+@never_cache
 def add_review(request, order_item_id):
 
     if not request.user.is_authenticated or request.user.is_superuser:

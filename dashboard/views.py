@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from authenticate.models import CustomUser
 from django.db.models import Count
 from orders.models import Order
-
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from orders.models import Order, OrderItem 
@@ -23,6 +22,7 @@ from datetime import timedelta
 def admin_dashboard(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
+    
     users_count = CustomUser.objects.aggregate(count=Count("fullname"))
 
     total_orders = Order.objects.aggregate(order_count=Count("uuid"))

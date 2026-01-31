@@ -30,7 +30,6 @@ from decimal import Decimal
 
 @never_cache
 def admin_login(request):
-
     if request.user.is_authenticated and request.user.is_superuser:
         return redirect("admin_dashboard")
 
@@ -64,6 +63,7 @@ def category_list(request):
 
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
+    
     search_query = request.GET.get("search", "")
 
     categories = Category.objects.all().order_by("-created_at")
@@ -207,6 +207,7 @@ def category_edit(request, id):
 
 @never_cache
 def admin_logout(request):
+    
     user = request.user
     if request.user.is_authenticated and request.user.is_superuser:
         user.is_loggedin = False
@@ -842,8 +843,10 @@ def update_suborder_status(request, item_id):
         "message": "Status updated successfully"
     })
 
-
+@never_cache
 def admin_variant_list(request, product_uuid):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("admin_login")
 
     product = get_object_or_404(Products, uuid=product_uuid)
     variants = product.variants.all()
@@ -910,8 +913,10 @@ def admin_variant_list(request, product_uuid):
         "success": success
             })
 
-
+@never_cache
 def admin_edit_variant(request, uuid):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("admin_login")
     variant = get_object_or_404(ProductVariants, uuid=uuid)
     errors = {}
     success = None
@@ -981,7 +986,10 @@ def variant_delete(request, uuid):
 
     return redirect("variant_list", product_uuid=product_uuid)
 
+@never_cache
 def admin_sales_report(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('admin_login')
     filter_type = request.GET.get("filter", "today")
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
@@ -1051,7 +1059,10 @@ from django.utils import timezone
 from datetime import timedelta
 from orders.models import Order
 
+@never_cache
 def sales_report_excel(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("admin_login")
     filter_type = request.GET.get("filter", "today")
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
@@ -1113,7 +1124,11 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
+@never_cache
 def sales_report_pdf(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("admin_login")
+    
     filter_type = request.GET.get("filter", "today")
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
@@ -1198,8 +1213,10 @@ def sales_report_pdf(request):
     doc.build(elements)
     return response
 
-
+@never_cache
 def admin_inventory(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect("admin_login")
     products = Products.objects.prefetch_related('variants').all().order_by('-created_at')
     
     context = {

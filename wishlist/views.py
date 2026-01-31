@@ -11,12 +11,14 @@ from cart.models import Cart, CartItems
 from django.views.decorators.http import require_POST
 from offers.utils import get_best_offer_for_product, apply_offer
 from django.http import JsonResponse
+from django.views.decorators.cache import never_cache
 
 
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 
+@never_cache
 @login_required
 def add_to_wishlist(request, product_uuid):
     if request.method == "POST":
@@ -41,7 +43,6 @@ def add_to_wishlist(request, product_uuid):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
-@login_required
 @require_POST
 def remove_from_wishlist(request, product_uuid):
     deleted, _ = Wishlist.objects.filter(

@@ -26,6 +26,18 @@ from django.views.decorators.cache import never_cache
 from offers.utils import get_best_offer_for_product, apply_offer
 from products.models import ProductVariants
 
+from django.views.decorators.cache import never_cache
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from cart.models import Cart, CartItems
+
+from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+from django.db import transaction
+from django.views.decorators.cache import never_cache
+
 @never_cache
 def cart_page(request):
     if not request.user.is_authenticated or request.user.is_superuser:
@@ -160,14 +172,9 @@ def ajax_delete_item(request):
     })
 
 
-from django.views.decorators.cache import never_cache
-from django.shortcuts import render, redirect
-from django.urls import reverse
-from cart.models import Cart, CartItems
-
-
 @never_cache
 def checkout_page(request):
+    
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")
 
@@ -197,12 +204,7 @@ def checkout_page(request):
     }
 
     return render(request, "checkout.html", context)
-from decimal import Decimal, ROUND_HALF_UP
-from decimal import Decimal, ROUND_HALF_UP
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib import messages
-from django.db import transaction
-from django.views.decorators.cache import never_cache
+
 @never_cache
 @transaction.atomic
 def place_order(request):

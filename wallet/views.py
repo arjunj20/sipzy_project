@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect
 from .models import Wallet, WalletTransaction
-
-
-
+from django.views.decorators.cache import never_cache
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator 
+from django.views.decorators.cache import never_cache
 
+@never_cache
 def wallet_page(request):
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("user_login")

@@ -16,6 +16,11 @@ urlpatterns = [
     path('reset-password/', views.reset_password, name="reset_password"),
     path("resend-forgot-otp/", views.resend_forgot_otp, name="resend_forgot_otp"),
 
+    # path("test-400/", views.test_400),
+    # path("test-403/", views.test_403),
+    # path("test-500/", views.test_500),
+
+
 
     
 ]

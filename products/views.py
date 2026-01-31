@@ -14,6 +14,11 @@ from django.urls import reverse
 from reviews.models import ProductReview
 from django.contrib import messages
 
+from decimal import Decimal, ROUND_HALF_UP
+from django.db import transaction
+from django.shortcuts import redirect, get_object_or_404
+from django.views.decorators.cache import never_cache
+
 
 
 @never_cache
@@ -290,10 +295,7 @@ def product_details(request, uuid):
     
     return render(request, 'userproduct_details.html', context)
 
-from decimal import Decimal, ROUND_HALF_UP
-from django.db import transaction
-from django.shortcuts import redirect, get_object_or_404
-from django.views.decorators.cache import never_cache
+
 
 @never_cache
 def add_to_cart(request):

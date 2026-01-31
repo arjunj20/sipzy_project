@@ -25,7 +25,7 @@ from reportlab.lib.colors import red, green, black
 @never_cache
 def order_list(request):
     if not request.user.is_authenticated or request.user.is_superuser:
-        return redirect("landing_page")
+        return redirect("user_login")
         
     q = request.GET.get('q', '')
     if q:
@@ -52,7 +52,7 @@ def order_list(request):
 def order_detail(request, uuid):
 
     if not request.user.is_authenticated or request.user.is_superuser:
-        return redirect("landing_page")
+        return redirect("user_login")
 
     order = get_object_or_404(
         Order,
@@ -81,6 +81,10 @@ def order_detail(request, uuid):
 
 def order_invoice(request, order_id):
 
+
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return redirect("user_login")
+    
     order = get_object_or_404(
         Order,
         id=order_id,
@@ -210,6 +214,7 @@ def order_invoice(request, order_id):
 @never_cache
 @transaction.atomic
 def cancel_item(request, uuid):
+
     if not request.user.is_authenticated or request.user.is_superuser:
         return redirect("landing_page")
 
@@ -287,7 +292,7 @@ from .models import OrderItem, ReturnRequest
 def submit_return_request(request, uuid):
 
     if not request.user.is_authenticated or request.user.is_superuser:
-        return redirect("landing_page")
+        return redirect("user_login")
 
     if request.method != "POST":
         return redirect("error_page")
