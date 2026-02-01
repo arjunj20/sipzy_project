@@ -43,3 +43,4 @@ handler404 = "errorhandlers.views.custom_404"
 handler500 = "errorhandlers.views.custom_500"
 handler400 = "errorhandlers.views.custom_400"
 handler403 = "errorhandlers.views.custom_403"
+CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
