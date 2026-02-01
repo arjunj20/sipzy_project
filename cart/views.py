@@ -45,6 +45,20 @@ def cart_page(request):
 
     cart = get_user_cart(request.user)
     now = timezone.now()
+    
+    if cart.applied_coupon:
+        min_order_amount = cart.applied_coupon.min_order_amount
+
+        if min_order_amount is not None:
+            if cart.item_subtotal < min_order_amount:
+                cart.applied_coupon = None
+                cart.coupon_discount = 0
+                cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+                recalculate_cart_totals(cart)
+                messages.error(request, "Coupon removed: minimum order amount not met")
+            
+    
     available_coupons = Coupon.objects.filter(
         is_active=True,
         valid_from__lte=now,
@@ -183,6 +197,35 @@ def checkout_page(request):
     cart = Cart.objects.get(user=request.user)
     cart_items = CartItems.objects.filter(cart=cart)
     wallet = Wallet.objects.filter(user=request.user).first()
+    if not cart_items.exists():
+        messages.error(request, "Your cart is empty")
+        return redirect("cart_page")
+    
+    if cart.applied_coupon:
+        min_order_amount = cart.applied_coupon.min_order_amount
+
+        if min_order_amount is not None:
+            if cart.item_subtotal < min_order_amount:
+                cart.applied_coupon = None
+                cart.coupon_discount = 0
+                cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+                recalculate_cart_totals(cart)
+                messages.error(request, "Coupon removed: minimum order amount not met")
+                return redirect("cart_page")
+
+    out_of_stock = False
+
+    for i in cart_items:
+        if i.quantity > i.variant.stock:
+            out_of_stock = True
+
+    if out_of_stock:
+        messages.error(
+            request,
+            "Some of your cart items are out of stock or selected more than the stock please manage that."
+        )
+        return redirect("cart_page")
 
     context = {
         "addresses": addresses,
@@ -236,13 +279,12 @@ def place_order(request):
 
     for i in cart_items:
         if i.quantity > i.variant.stock:
-            i.delete()
             out_of_stock = True
 
     if out_of_stock:
         messages.error(
             request,
-            "Some items were removed from your cart because they are out of stock. Please review your cart."
+            "Some of your cart items are out of stock or selected more than the stock please manage that."
         )
         return redirect("cart_page")
 

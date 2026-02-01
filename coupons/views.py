@@ -44,7 +44,6 @@ def add_coupon(request):
             discount_type = request.POST.get("discount_type")
             is_active = request.POST.get("is_active") == "on"
 
-            # ---------- BASIC VALIDATION ----------
             if not code:
                 errors["code"] = ["Coupon code is required."]
             elif Coupon.objects.filter(code=code).exists():
@@ -53,19 +52,16 @@ def add_coupon(request):
             if discount_type not in ["flat", "percent"]:
                 errors["discount_type"] = ["Invalid discount type."]
 
-            # ---------- DISCOUNT VALUE ----------
             try:
                 discount_value = Decimal(request.POST.get("discount_value"))
             except (InvalidOperation, TypeError):
                 errors["discount_value"] = ["Enter a valid discount value."]
 
-            # ---------- MIN ORDER AMOUNT ----------
             try:
                 min_order_amount = Decimal(request.POST.get("min_order_amount"))
             except (InvalidOperation, TypeError):
                 errors["min_order_amount"] = ["Enter a valid minimum order amount."]
 
-            # ---------- USAGE LIMITS ----------
             try:
                 usage_limit = int(request.POST.get("usage_limit"))
                 max_uses_per_user = int(request.POST.get("max_uses_per_user", 1))
@@ -83,7 +79,6 @@ def add_coupon(request):
                     "Max uses per user cannot exceed usage limit."
                 ]
 
-            # ---------- MAX DISCOUNT (PERCENT ONLY) ----------
             max_discount_amount = None
             if discount_type == "percent":
                 try:
@@ -95,7 +90,6 @@ def add_coupon(request):
                         "Max discount amount is required for percentage coupons."
                     ]
 
-            # ---------- VALIDITY DATES ----------
             valid_from_raw = request.POST.get("valid_from")
             valid_to_raw = request.POST.get("valid_to")
 
@@ -115,7 +109,6 @@ def add_coupon(request):
                 if valid_to < timezone.now():
                     errors["date"] = ["Valid To cannot be in the past."]
 
-            # ---------- STOP IF BASIC ERRORS ----------
             if errors:
                 return render(
                     request,
@@ -123,7 +116,6 @@ def add_coupon(request):
                     {"errors": errors}
                 )
 
-            # ---------- MODEL-LEVEL VALIDATION ----------
             coupon = Coupon(
                 code=code,
                 discount_type=discount_type,
@@ -138,7 +130,7 @@ def add_coupon(request):
             )
 
             try:
-                coupon.full_clean()   # calls Coupon.clean()
+                coupon.full_clean()   
                 coupon.save()
             except ValidationError as e:
                 if hasattr(e, "message_dict"):

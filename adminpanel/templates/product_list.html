@@ -215,10 +215,19 @@
 
             <input type="file" id="hiddenFilesInput" name="images[]" multiple style="display:none;">
           </div>
+          {% if errors.images %}
+            <p class="text-sm text-red-600 mt-1">{{ errors.images }}</p>
+            {% endif %}
         </div>
 
         <div class="mt-6 flex gap-3">
-          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Create Product</button>
+<button
+  type="submit"
+  id="createProductBtn"   
+  class="px-4 py-2 bg-blue-600 text-white rounded-lg"
+>
+  Create Product
+</button>
           <button type="button" onclick="closeCreateModal()" class="px-4 py-2 border rounded-lg">Cancel</button>
         </div>
       </form>
@@ -257,6 +266,31 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <script>
+
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const form = document.getElementById('createProductForm');
+    const submitBtn = document.getElementById('createProductBtn');
+    const imagesError = document.getElementById('imagesError');
+
+    if (!form) return; // safety guard
+
+    form.addEventListener('submit', function (e) {
+        if (hiddenInput.files.length < 3) {
+            e.preventDefault();
+            imagesError.classList.remove('hidden');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Creating...';
+        submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
+    });
+
+});
+
+
 function openCreateModal() {
   document.getElementById('createModal').classList.remove('hidden');
 }

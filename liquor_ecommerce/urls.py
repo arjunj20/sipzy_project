@@ -37,6 +37,8 @@ urlpatterns = [
 ]
 
 
+
+
 handler404 = "errorhandlers.views.custom_404"
 handler500 = "errorhandlers.views.custom_500"
 handler400 = "errorhandlers.views.custom_400"

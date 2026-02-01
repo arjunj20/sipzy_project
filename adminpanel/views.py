@@ -442,8 +442,8 @@ def product_create(request):
 
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
-    
-    products_qs = Products.objects.select_related('brand', 'category').all().order_by('-created_at')
+
+    products_qs = Products.objects.select_related('brand', 'category').order_by('-created_at')
     brands = Brand.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True)
     errors = {}
@@ -452,22 +452,47 @@ def product_create(request):
         name = request.POST.get("name", "").strip()
         brand_id = request.POST.get("brand") or None
         category_id = request.POST.get("category") or None
-        description = request.POST.get("description", "")
+        description = request.POST.get("description", "").strip()
         is_active = request.POST.get("is_active") == "on"
 
         if not name:
             errors["name"] = "Product name is required."
 
-        if Products.objects.filter(name__iexact=name).exists():
-            errors["name"] = "A product with this name already exists."
+        if not Brand.objects.filter(id=brand_id, is_active=True).exists():
+            errors["brand"] = "Invalid brand selected."
+
+        if not Category.objects.filter(id=category_id, is_active=True).exists():
+            errors["category"] = "Invalid category selected."
+
+        if Products.objects.filter(
+            name__iexact=name,
+            brand_id=brand_id
+        ).exists():
+            errors["name"] = "This product already exists for the selected brand."
 
         if len(description.split()) < 3:
             errors["description"] = "Description must contain at least 3 words."
 
         images = request.FILES.getlist("images[]")
+
         if len(images) < 3:
             errors["images"] = "Please upload at least 3 images."
-        paginator = Paginator(products_qs, 5)  
+        elif len(images) > 5:
+            errors["images"] = "You can upload a maximum of 5 images only."
+
+        allowed_types = ["image/jpeg", "image/png", "image/webp"]
+        max_size = 5 * 1024 * 1024  
+
+        for img in images:
+            if img.content_type not in allowed_types:
+                errors["images"] = "Only JPG, PNG, or WEBP images are allowed."
+                break
+
+            if img.size > max_size:
+                errors["images"] = "Each image must be under 5MB."
+                break
+
+        paginator = Paginator(products_qs, 5)
         page_number = request.GET.get("page")
         products = paginator.get_page(page_number)
 
@@ -477,8 +502,9 @@ def product_create(request):
                 "brands": brands,
                 "categories": categories,
                 "errors": errors,
-                "open_modal": True  
+                "open_modal": True
             })
+
         product = Products.objects.create(
             name=name,
             brand_id=brand_id,
@@ -492,13 +518,17 @@ def product_create(request):
             ProductImage.objects.create(product=product, image=url)
 
         return redirect("product_list")
-    return redirect("product_list") 
 
+    return redirect("product_list")
+
+
+from django.contrib import messages
+
+from django.contrib import messages
 
 @never_cache
 @transaction.atomic
 def product_edit(request, uuid):
-
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
     
@@ -506,38 +536,31 @@ def product_edit(request, uuid):
     brands = Brand.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True)
     variants = product.variants.all().order_by('-created_at')
-
     errors = {}
-    success = None
 
     if request.method == "POST":
-        action = request.POST.get("action")
+        name = request.POST.get("name", "").strip()
+        brand_id = request.POST.get("brand")
+        category_id = request.POST.get("category")
+        description = request.POST.get("description", "").strip()
+        is_active = request.POST.get("is_active") == "on"
+        new_images = request.FILES.getlist("images[]")
 
-        if action == "edit_product":
-            name = request.POST.get("name", "").strip()
-            brand_id = request.POST.get("brand")
-            category_id = request.POST.get("category")
-            description = request.POST.get("description", "").strip()
-            is_active = request.POST.get("is_active") == "on"
+        if not name:
+            errors["name"] = "Product name is required."
+        elif Products.objects.filter(name__iexact=name, brand_id=brand_id).exclude(id=product.id).exists():
+            errors["name"] = "A product with this name already exists for this brand."
 
-            if not name:
-                errors["name"] = "Product name is required."
-            if not brand_id:
-                errors["brand"] = "Brand is required."
-            if not category_id:
-                errors["category"] = "Category is required."
-            if len(description.split()) < 3:
-                errors["description"] = "Description must contain at least 3 words."
+        if len(description.split()) < 3:
+            errors["description"] = "Description must contain at least 3 words."
 
-            if errors:
-                return render(request, "product_edit.html", {
-                    "product": product,
-                    "brands": brands,
-                    "categories": categories,
-                    "variants": variants,
-                    "errors": errors
-                })
+        total_count = product.images.count() + len(new_images)
+        if total_count < 3:
+            errors["images"] = f"A product must have at least 3 images. You only have {total_count}."
+        elif total_count > 5:
+            errors["images"] = "Maximum 5 images allowed."
 
+        if not errors:
             product.name = name
             product.brand_id = brand_id
             product.category_id = category_id
@@ -545,61 +568,35 @@ def product_edit(request, uuid):
             product.is_active = is_active
             product.save()
 
-            success = "Product updated successfully!"
-            return redirect("product_edit", uuid=product.uuid)
-
-        elif action == "add_images":
-            new_images = request.FILES.getlist("images[]")
-
-            if not new_images:
-                errors["images"] = "Please select at least one image."
-                return render(request, "product_edit.html", {
-                    "product": product,
-                    "brands": brands,
-                    "categories": categories,
-                    "variants": variants,
-                    "errors": errors
-                })
-
             for img in new_images:
                 url = _upload_to_cloudinary(img, folder=f"products/{product.uuid}")
                 ProductImage.objects.create(product=product, image=url)
 
+            messages.success(request, "Product updated successfully.")
             return redirect("product_edit", uuid=product.uuid)
 
-   
     return render(request, "product_edit.html", {
-        "product": product,
-        "brands": brands,
-        "categories": categories,
-        "variants": variants
+        "product": product, "brands": brands, "categories": categories,
+        "variants": variants, "errors": errors
     })
-
-
-
 
 @never_cache
 @transaction.atomic
 def product_image_delete(request, image_id):
-
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
     
-    errors = {}
     image = get_object_or_404(ProductImage, pk=image_id)
-    uuid = image.product.uuid
-
+    product = image.product
+    
     if request.method == "POST":
-        if not image:
-            errors["image"] = "Image not found."
-            return render(request, "product_edit.html", {
-                "errors": errors
-            })
-
-        image.delete()
-        return redirect("product_edit", uuid=uuid)
-
-    return redirect("product_edit", uuid=uuid)
+        if product.images.count() <= 3:
+            messages.error(request, "Cannot delete. A product must have at least 3 images.")
+        else:
+            image.delete()
+            messages.success(request, "Image deleted.")
+            
+    return redirect("product_edit", uuid=product.uuid)
 
 @never_cache
 @transaction.atomic

@@ -7,127 +7,100 @@
 <style>
   .thumb { width: 90px; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
   .img-card { width: 160px; height: 160px; object-fit: cover; border-radius: 10px; }
+  .error-text { color: #dc2626; font-size: 0.8rem; margin-top: 4px; }
+  .input-error { border-color: #dc2626 !important; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="p-6 max-w-6xl mx-auto">
-
-  <!-- Header -->
   <div class="flex justify-between items-center mb-6">
-    <div>
-      <h1 class="text-2xl font-bold">Edit Product</h1>
-      <p class="text-gray-500">{{ product.name }}</p>
-    </div>
+    <h1 class="text-2xl font-bold">Edit Product</h1>
     <a href="{% url 'product_list' %}" class="px-4 py-2 border rounded-lg">Back</a>
   </div>
 
-  <!-- Product Form -->
-  <div class="bg-white p-6 rounded-xl shadow mb-6">
-    <form method="post">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="edit_product">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="mb-4 p-4 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
 
+  <form method="post" enctype="multipart/form-data" id="mainForm">
+    {% csrf_token %}
+    
+    <div class="bg-white p-6 rounded-xl shadow mb-6 border">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="text-sm">Name</label>
-          <input name="name" value="{{ product.name }}" class="w-full mt-1 border rounded-lg px-3 py-2">
+          <input name="name" value="{{ product.name }}" class="w-full mt-1 border rounded-lg px-3 py-2 {% if errors.name %}input-error{% endif %}">
+          {% if errors.name %}<p class="error-text">{{ errors.name }}</p>{% endif %}
         </div>
-
         <div>
           <label class="text-sm">Brand</label>
           <select name="brand" class="w-full mt-1 border rounded-lg px-3 py-2">
-            {% for b in brands %}
-              <option value="{{ b.id }}" {% if product.brand_id == b.id %}selected{% endif %}>
-                {{ b.name }}
-              </option>
-            {% endfor %}
+            {% for b in brands %}<option value="{{ b.id }}" {% if product.brand_id == b.id %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
           </select>
         </div>
-
         <div>
           <label class="text-sm">Category</label>
           <select name="category" class="w-full mt-1 border rounded-lg px-3 py-2">
-            {% for c in categories %}
-              <option value="{{ c.id }}" {% if product.category_id == c.id %}selected{% endif %}>
-                {{ c.name }}
-              </option>
-            {% endfor %}
+            {% for c in categories %}<option value="{{ c.id }}" {% if product.category_id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
           </select>
         </div>
-
         <div class="flex items-center mt-6">
           <input type="checkbox" name="is_active" {% if product.is_active %}checked{% endif %}>
           <span class="ml-2">Active</span>
         </div>
-
         <div class="md:col-span-2">
           <label class="text-sm">Description</label>
-          <textarea name="description" rows="3" class="w-full mt-1 border rounded-lg px-3 py-2">
-{{ product.description }}</textarea>
+          <textarea name="description" rows="3" class="w-full mt-1 border rounded-lg px-3 py-2 {% if errors.description %}input-error{% endif %}">{{ product.description }}</textarea>
+          {% if errors.description %}<p class="error-text">{{ errors.description }}</p>{% endif %}
         </div>
       </div>
-
-      <button class="mt-4 px-5 py-2 bg-blue-600 text-white rounded-lg">
-        Save Product
-      </button>
-    </form>
-  </div>
-
-  <!-- Images -->
-  <div class="bg-white p-6 rounded-xl shadow">
-    <h2 class="font-semibold mb-4">Product Images</h2>
-
-    <!-- Existing -->
-    <div class="flex gap-4 flex-wrap mb-6">
-      {% for img in product.images.all %}
-        <div class="relative">
-          <img src="{{ img.image.url }}" class="img-card">
-          <form method="post" action="{% url 'product_image_delete' img.id %}" class="absolute top-2 right-2">
-            {% csrf_token %}
-            <button class="bg-red-500 text-white px-2 rounded">×</button>
-          </form>
-        </div>
-      {% endfor %}
     </div>
 
-    <!-- Upload -->
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="add_images">
+    <div class="bg-white p-6 rounded-xl shadow border mb-6">
+      <h2 class="font-semibold mb-4">Images (Min 3, Max 5)</h2>
+      {% if errors.images %}<p class="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">{{ errors.images }}</p>{% endif %}
 
-      <input id="imageInput" type="file" accept="image/*" multiple>
-      <div id="hiddenInputs"></div>
+      <div class="flex gap-4 flex-wrap mb-6">
+        {% for img in product.images.all %}
+          <div class="relative group">
+            <img src="{{ img.image.url }}" class="img-card border">
+            <button type="button" onclick="confirmImageDelete('{{ img.id }}')" class="absolute top-2 right-2 bg-red-500 text-white px-2 rounded hover:bg-red-700">×</button>
+          </div>
+        {% endfor %}
+      </div>
 
-      <div id="preview" class="flex gap-3 flex-wrap mt-4"></div>
+      <div class="border-2 border-dashed p-6 text-center rounded-lg bg-gray-50">
+          <input id="imageInput" type="file" accept="image/*" multiple class="hidden">
+          <label for="imageInput" class="cursor-pointer text-blue-600 font-medium">Click to select new images</label>
+          <div id="hiddenInputs"></div>
+          <div id="preview" class="flex gap-3 flex-wrap mt-4 justify-center"></div>
+      </div>
+    </div>
 
-      <button class="mt-4 px-5 py-2 bg-green-600 text-white rounded-lg">
-        Add Images
-      </button>
-    </form>
-  </div>
+    <div class="flex justify-end">
+      <button type="submit" id="saveBtn" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold shadow hover:bg-blue-700 transition">Save Everything</button>
+    </div>
+  </form>
 </div>
 
-<!-- Crop Modal -->
+<form id="deleteForm" method="post" style="display:none;">{% csrf_token %}</form>
+
 <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-  <div class="bg-white p-4 rounded-xl w-full max-w-3xl">
-    <h3 class="font-semibold mb-2">
-      Crop Image <span id="counter"></span>
-    </h3>
-
-    <div class="h-[60vh] bg-gray-100 rounded overflow-hidden">
-      <img id="cropImg">
-    </div>
-
+  <div class="bg-white p-4 rounded-xl w-full max-w-2xl">
+    <h3 class="font-bold mb-2">Crop Image <span id="counter"></span></h3>
+    <div class="h-[50vh] bg-gray-100 rounded overflow-hidden"><img id="cropImg"></div>
     <div class="flex justify-between mt-4">
-      <div>
-        <button id="zoomIn" class="border px-3 py-1 rounded">+</button>
-        <button id="zoomOut" class="border px-3 py-1 rounded">−</button>
-        <button id="rotate" class="border px-3 py-1 rounded">↻</button>
+      <div class="flex gap-2">
+        <button id="zoomIn" type="button" class="border px-2 py-1 rounded">Zoom +</button>
+        <button id="zoomOut" type="button" class="border px-2 py-1 rounded">Zoom -</button>
+        <button id="rotate" type="button" class="border px-2 py-1 rounded">Rotate</button>
       </div>
-      <button id="done" class="bg-blue-600 text-white px-4 py-2 rounded">
-        Done
-      </button>
+      <button id="done" type="button" class="bg-blue-600 text-white px-6 py-2 rounded">Done</button>
     </div>
   </div>
 </div>
@@ -137,65 +110,77 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script>
 let files = [], cropped = [], index = 0, cropper;
-
 const input = document.getElementById('imageInput');
 const modal = document.getElementById('cropModal');
 const img = document.getElementById('cropImg');
-const counter = document.getElementById('counter');
 const hidden = document.getElementById('hiddenInputs');
 const preview = document.getElementById('preview');
+const saveBtn = document.getElementById('saveBtn');
 
 input.onchange = e => {
-  files = [...e.target.files];
-  cropped = [];
-  index = 0;
-  preview.innerHTML = '';
-  hidden.innerHTML = '';
-  openCrop();
+    files = [...e.target.files].filter(f => !cropped.some(c => c.name === f.name && c.size === f.size));
+    if(files.length === 0) return;
+    index = 0;
+    openCrop();
 };
 
 function openCrop() {
-  if (index >= files.length) {
-    cropped.forEach(f => {
-      const i = document.createElement('input');
-      i.type = 'file';
-      i.name = 'images[]';
-      const dt = new DataTransfer();
-      dt.items.add(f);
-      i.files = dt.files;
-      hidden.appendChild(i);
-
-      const img = document.createElement('img');
-      img.src = URL.createObjectURL(f);
-      img.className = 'thumb';
-      preview.appendChild(img);
-    });
-    return;
-  }
-
-  const r = new FileReader();
-  r.onload = e => {
-    img.src = e.target.result;
-    modal.classList.remove('hidden');
-    cropper?.destroy();
-    cropper = new Cropper(img, { aspectRatio: 1 });
-    counter.textContent = `(${index + 1}/${files.length})`;
-  };
-  r.readAsDataURL(files[index]);
+    if (index >= files.length) { updateUI(); return; }
+    const r = new FileReader();
+    r.onload = e => {
+        img.src = e.target.result;
+        modal.classList.remove('hidden');
+        cropper?.destroy();
+        cropper = new Cropper(img, { aspectRatio: 1 });
+        document.getElementById('counter').textContent = `(${index + 1}/${files.length})`;
+    };
+    r.readAsDataURL(files[index]);
 }
 
 document.getElementById('done').onclick = () => {
-  cropper.getCroppedCanvas({ width: 1000, height: 1000 }).toBlob(b => {
-    cropped.push(new File([b], `img_${index}.jpg`, { type: 'image/jpeg' }));
-    cropper.destroy();
-    modal.classList.add('hidden');
-    index++;
-    openCrop();
-  });
+    cropper.getCroppedCanvas({ width: 800, height: 800 }).toBlob(b => {
+        cropped.push(new File([b], files[index].name, { type: 'image/jpeg' }));
+        cropper.destroy();
+        modal.classList.add('hidden');
+        index++;
+        openCrop();
+    }, 'image/jpeg');
 };
 
-zoomIn.onclick = () => cropper.zoom(0.1);
-zoomOut.onclick = () => cropper.zoom(-0.1);
-rotate.onclick = () => cropper.rotate(90);
+function updateUI() {
+    hidden.innerHTML = '';
+    preview.innerHTML = '';
+    cropped.forEach((f, i) => {
+        const inp = document.createElement('input');
+        inp.type = 'file'; inp.name = 'images[]'; inp.style.display = 'none';
+        const dt = new DataTransfer(); dt.items.add(f); inp.files = dt.files;
+        hidden.appendChild(inp);
+        const div = document.createElement('div');
+        div.className = 'relative';
+        div.innerHTML = `<img src="${URL.createObjectURL(f)}" class="thumb">
+                         <button type="button" onclick="removeCropped(${i})" class="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-4 h-4 text-xs">×</button>`;
+        preview.appendChild(div);
+    });
+}
+
+function removeCropped(i) { cropped.splice(i, 1); updateUI(); }
+
+function confirmImageDelete(imgId) {
+    if(confirm('Delete this image permanently?')) {
+        const f = document.getElementById('deleteForm');
+        // FIX: Matches your URL pattern "images/<int:image_id>/delete/"
+        f.action = `/admin-panel/images/${imgId}/delete/`; 
+        f.submit();
+    }
+}
+
+document.getElementById('mainForm').onsubmit = () => {
+    saveBtn.disabled = true;
+    saveBtn.innerText = "Saving...";
+};
+
+document.getElementById('zoomIn').onclick = () => cropper.zoom(0.1);
+document.getElementById('zoomOut').onclick = () => cropper.zoom(-0.1);
+document.getElementById('rotate').onclick = () => cropper.rotate(90);
 </script>
 {% endblock %}

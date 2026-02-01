@@ -25,13 +25,18 @@
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
   }
+
+  /* Style for disabled state */
+  button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="flex-1 p-6 md:p-8 overflow-y-auto">
 
-  <!-- Header -->
   <div class="mb-6 flex items-center justify-between animate-fade-in">
     <div>
       <h1 class="text-2xl font-bold text-gray-800">
@@ -48,17 +53,14 @@
     </a>
   </div>
 
-  <!-- Success Message -->
   {% if success %}
   <div class="mb-4 px-4 py-3 bg-green-100 text-green-700 rounded-lg border border-green-300">
     {{ success }}
   </div>
   {% endif %}
 
-  <!-- Variant Section -->
   <div class="bg-white rounded-xl shadow-md p-6 animate-fade-in">
 
-    <!-- Add Variant Button -->
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold">Product Variants</h2>
       <button id="openVariantFormBtn"
@@ -68,14 +70,12 @@
       </button>
     </div>
 
-    <!-- Add Variant Form -->
     <div id="variantFormWrap" class="hidden bg-gray-50 p-4 rounded-lg mb-6">
-      <form method="post" enctype="multipart/form-data">
+      <form method="post" enctype="multipart/form-data" id="variantForm">
         {% csrf_token %}
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          <!-- Variant Name -->
           <div>
             <label class="block text-sm font-medium text-gray-700">Variant Name</label>
             <input name="variant"
@@ -87,7 +87,6 @@
             {% endif %}
           </div>
 
-          <!-- Price -->
           <div>
             <label class="block text-sm font-medium text-gray-700">Price</label>
             <input name="price"
@@ -100,7 +99,6 @@
             {% endif %}
           </div>
 
-          <!-- Stock -->
           <div>
             <label class="block text-sm font-medium text-gray-700">Stock</label>
             <input name="stock"
@@ -112,7 +110,6 @@
             {% endif %}
           </div>
 
-          <!-- Primary Image -->
           <div>
             <label class="block text-sm font-medium text-gray-700">Primary Image</label>
 
@@ -138,6 +135,7 @@
 
         <div class="mt-4">
           <button type="submit"
+                  id="saveVariantBtn"
                   class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
             Save Variant
           </button>
@@ -150,7 +148,6 @@
       </form>
     </div>
 
-    <!-- Variants Table -->
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead>
@@ -159,7 +156,7 @@
             <th class="py-3 px-4 text-left">Price</th>
             <th class="py-3 px-4 text-left">Stock</th>
             <th class="py-3 px-4 text-left">Image</th>
-            <th class="py-3 px-4 text-center">Action</th>
+            <th class="py-3 px-4 text-center">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -175,23 +172,22 @@
                 <span class="text-sm text-gray-500">-</span>
               {% endif %}
             </td>
-            <td class="px-4 py-2">
-    <a href="{% url 'edit_variant' v.uuid %}"
-       class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">
-        Edit
-    </a>
-</td>
-
             <td class="py-3 px-4 text-center">
-              <form method="post"
-                    action="{% url 'variant_delete' v.uuid %}"
-                    onsubmit="return confirm('Delete this variant?');">
-                {% csrf_token %}
-                <button type="submit"
-                        class="px-3 py-1 bg-red-100 text-red-600 rounded-lg hover:bg-red-200">
-                  Delete
-                </button>
-              </form>
+              <div class="flex items-center justify-center space-x-2">
+                <a href="{% url 'edit_variant' v.uuid %}"
+                   class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">
+                    Edit
+                </a>
+                <form method="post"
+                      action="{% url 'variant_delete' v.uuid %}"
+                      onsubmit="return confirm('Delete this variant?');">
+                  {% csrf_token %}
+                  <button type="submit"
+                          class="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 text-sm">
+                    Delete
+                  </button>
+                </form>
+              </div>
             </td>
           </tr>
           {% empty %}
@@ -208,7 +204,6 @@
   </div>
 </div>
 
-<!-- Crop Modal -->
 <div id="cropModal" class="fixed inset-0 z-50 hidden">
   <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-4">
@@ -250,9 +245,18 @@ let cropper = null;
 const rawInput = document.getElementById("rawVariantImage");
 const hiddenInput = document.getElementById("hiddenVariantPrimary");
 const preview = document.getElementById("variantPreview");
+const variantForm = document.getElementById("variantForm");
+const saveBtn = document.getElementById("saveVariantBtn");
 
 const cropModal = document.getElementById("cropModal");
 const cropImage = document.getElementById("cropImage");
+
+// Prevent Multiple Clicks on Save
+variantForm.onsubmit = function() {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = "Saving...";
+    return true; 
+};
 
 document.getElementById("openVariantFormBtn").onclick = () => {
   document.getElementById("variantFormWrap").classList.remove("hidden");
