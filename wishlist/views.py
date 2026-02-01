@@ -18,6 +18,12 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 
+
+from decimal import Decimal
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect
+
 @never_cache
 @login_required
 def add_to_wishlist(request, product_uuid):
@@ -63,32 +69,38 @@ def remove_from_wishlist(request, product_uuid):
 
 
 
+
+TAX_RATE = Decimal("0.18")
+
+
 @login_required
 @transaction.atomic
 def move_to_cart(request, product_uuid):
     product = get_object_or_404(Products, uuid=product_uuid)
 
     variant = product.variants.order_by("price").first()
-
     if not variant:
-        return redirect("wishlist")  
+        return redirect("wishlist")
 
     cart, _ = Cart.objects.get_or_create(user=request.user)
 
     cart_item, created = CartItems.objects.get_or_create(
         cart=cart,
-        variant=variant,  
+        variant=variant,
         defaults={
             "quantity": 1,
             "unit_price": variant.price,
             "total_price": variant.price,
-            "tax_amount": Decimal("0.00"),
+            "tax_amount": (variant.price * TAX_RATE).quantize(Decimal("0.01")),
         }
     )
 
     if not created:
         cart_item.quantity += 1
         cart_item.total_price = cart_item.quantity * cart_item.unit_price
+        cart_item.tax_amount = (
+            cart_item.total_price * TAX_RATE
+        ).quantize(Decimal("0.01"))
         cart_item.save()
 
     Wishlist.objects.filter(
