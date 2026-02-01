@@ -105,7 +105,7 @@ def wishlist_page(request):
         return redirect("user_login")
     wishlist_items = (
         Wishlist.objects
-        .filter(user=request.user)
+        .filter(user=request.user, product__is_active=True)
         .select_related("product")
         .prefetch_related("product__variants")
     )
