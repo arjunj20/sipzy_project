@@ -413,6 +413,7 @@ def _upload_to_cloudinary(image_file, folder):
     )
     return result["secure_url"]
 
+import re
 
 @never_cache
 def product_list(request):
@@ -436,6 +437,7 @@ def product_list(request):
         "categories": categories,
     })
 
+
 @never_cache
 @transaction.atomic
 def product_create(request):
@@ -443,9 +445,13 @@ def product_create(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
 
-    products_qs = Products.objects.select_related('brand', 'category').order_by('-created_at')
+    products_qs = Products.objects.select_related(
+        'brand', 'category'
+    ).order_by('-created_at')
+
     brands = Brand.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True)
+
     errors = {}
 
     if request.method == "POST":
@@ -457,6 +463,8 @@ def product_create(request):
 
         if not name:
             errors["name"] = "Product name is required."
+        elif not re.fullmatch(r"[A-Za-z ]+", name):
+            errors["name"] = "Product name can contain only letters and spaces."
 
         if not Brand.objects.filter(id=brand_id, is_active=True).exists():
             errors["brand"] = "Invalid brand selected."
@@ -464,7 +472,7 @@ def product_create(request):
         if not Category.objects.filter(id=category_id, is_active=True).exists():
             errors["category"] = "Invalid category selected."
 
-        if Products.objects.filter(
+        if name and brand_id and Products.objects.filter(
             name__iexact=name,
             brand_id=brand_id
         ).exists():
@@ -482,7 +490,6 @@ def product_create(request):
 
         allowed_types = ["image/jpeg", "image/png", "image/webp"]
         max_size = 5 * 1024 * 1024  
-
         for img in images:
             if img.content_type not in allowed_types:
                 errors["images"] = "Only JPG, PNG, or WEBP images are allowed."
@@ -497,13 +504,18 @@ def product_create(request):
         products = paginator.get_page(page_number)
 
         if errors:
-            return render(request, "product_list.html", {
-                "products": products,
-                "brands": brands,
-                "categories": categories,
-                "errors": errors,
-                "open_modal": True
-            })
+            return render(
+                request,
+                "product_list.html",
+                {
+                    "products": products,
+                    "brands": brands,
+                    "categories": categories,
+                    "errors": errors,
+                    "open_modal": True,
+                },
+                status=400
+            )
 
         product = Products.objects.create(
             name=name,
@@ -514,8 +526,14 @@ def product_create(request):
         )
 
         for img in images:
-            url = _upload_to_cloudinary(img, folder=f"products/{product.id}")
-            ProductImage.objects.create(product=product, image=url)
+            url = _upload_to_cloudinary(
+                img,
+                folder=f"products/{product.id}"
+            )
+            ProductImage.objects.create(
+                product=product,
+                image=url
+            )
 
         return redirect("product_list")
 
@@ -529,13 +547,15 @@ from django.contrib import messages
 @never_cache
 @transaction.atomic
 def product_edit(request, uuid):
+
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('admin_login')
-    
+
     product = get_object_or_404(Products, uuid=uuid)
     brands = Brand.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True)
     variants = product.variants.all().order_by('-created_at')
+
     errors = {}
 
     if request.method == "POST":
@@ -545,21 +565,26 @@ def product_edit(request, uuid):
         description = request.POST.get("description", "").strip()
         is_active = request.POST.get("is_active") == "on"
         new_images = request.FILES.getlist("images[]")
-
         if not name:
             errors["name"] = "Product name is required."
-        elif Products.objects.filter(name__iexact=name, brand_id=brand_id).exclude(id=product.id).exists():
+        elif not re.fullmatch(r"[A-Za-z ]+", name):
+            errors["name"] = "Product name can contain only letters and spaces."
+        elif Products.objects.filter(
+            name__iexact=name,
+            brand_id=brand_id
+        ).exclude(id=product.id).exists():
             errors["name"] = "A product with this name already exists for this brand."
-
         if len(description.split()) < 3:
             errors["description"] = "Description must contain at least 3 words."
-
         total_count = product.images.count() + len(new_images)
+
         if total_count < 3:
-            errors["images"] = f"A product must have at least 3 images. You only have {total_count}."
+            errors["images"] = (
+                f"A product must have at least 3 images. "
+                f"You only have {total_count}."
+            )
         elif total_count > 5:
             errors["images"] = "Maximum 5 images allowed."
-
         if not errors:
             product.name = name
             product.brand_id = brand_id
@@ -569,16 +594,29 @@ def product_edit(request, uuid):
             product.save()
 
             for img in new_images:
-                url = _upload_to_cloudinary(img, folder=f"products/{product.uuid}")
-                ProductImage.objects.create(product=product, image=url)
+                url = _upload_to_cloudinary(
+                    img,
+                    folder=f"products/{product.uuid}"
+                )
+                ProductImage.objects.create(
+                    product=product,
+                    image=url
+                )
 
             messages.success(request, "Product updated successfully.")
             return redirect("product_edit", uuid=product.uuid)
 
-    return render(request, "product_edit.html", {
-        "product": product, "brands": brands, "categories": categories,
-        "variants": variants, "errors": errors
-    })
+    return render(
+        request,
+        "product_edit.html",
+        {
+            "product": product,
+            "brands": brands,
+            "categories": categories,
+            "variants": variants,
+            "errors": errors,
+        }
+    )
 
 @never_cache
 @transaction.atomic
