@@ -37,6 +37,8 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
 from django.views.decorators.cache import never_cache
+from django.utils import timezone
+
 
 @never_cache
 def cart_page(request):
@@ -47,17 +49,45 @@ def cart_page(request):
     now = timezone.now()
     
     if cart.applied_coupon:
-        min_order_amount = cart.applied_coupon.min_order_amount
+        coupon = cart.applied_coupon
+        now = timezone.now()
 
-        if min_order_amount is not None:
-            if cart.item_subtotal < min_order_amount:
-                cart.applied_coupon = None
-                cart.coupon_discount = 0
-                cart.save(update_fields=["applied_coupon", "coupon_discount"])
+        if not coupon.is_active:
+            cart.applied_coupon = None
+            cart.coupon_discount = 0
+            cart.save(update_fields=["applied_coupon", "coupon_discount"])
 
-                recalculate_cart_totals(cart)
-                messages.error(request, "Coupon removed: minimum order amount not met")
-            
+            recalculate_cart_totals(cart)
+            messages.error(request, "Coupon removed: coupon is inactive")
+
+        elif coupon.valid_to < now:
+            cart.applied_coupon = None
+            cart.coupon_discount = 0
+            cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+            recalculate_cart_totals(cart)
+            messages.error(request, "Coupon removed: coupon has expired")
+
+        elif coupon.valid_from > now:
+            cart.applied_coupon = None
+            cart.coupon_discount = 0
+            cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+            recalculate_cart_totals(cart)
+            messages.error(request, "Coupon removed: coupon not valid yet")
+
+        else:
+            min_order_amount = coupon.min_order_amount
+
+            if min_order_amount is not None:
+                if cart.item_subtotal < min_order_amount:
+                    cart.applied_coupon = None
+                    cart.coupon_discount = 0
+                    cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+                    recalculate_cart_totals(cart)
+                    messages.error(request, "Coupon removed: minimum order amount not met")
+                
     
     available_coupons = Coupon.objects.filter(
         is_active=True,
@@ -202,17 +232,44 @@ def checkout_page(request):
         return redirect("cart_page")
     
     if cart.applied_coupon:
-        min_order_amount = cart.applied_coupon.min_order_amount
+        coupon = cart.applied_coupon
+        now = timezone.now()
 
-        if min_order_amount is not None:
-            if cart.item_subtotal < min_order_amount:
-                cart.applied_coupon = None
-                cart.coupon_discount = 0
-                cart.save(update_fields=["applied_coupon", "coupon_discount"])
+        if not coupon.is_active:
+            cart.applied_coupon = None
+            cart.coupon_discount = 0
+            cart.save(update_fields=["applied_coupon", "coupon_discount"])
 
-                recalculate_cart_totals(cart)
-                messages.error(request, "Coupon removed: minimum order amount not met")
-                return redirect("cart_page")
+            recalculate_cart_totals(cart)
+            messages.error(request, "Coupon removed: coupon is inactive")
+
+        elif coupon.valid_to < now:
+            cart.applied_coupon = None
+            cart.coupon_discount = 0
+            cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+            recalculate_cart_totals(cart)
+            messages.error(request, "Coupon removed: coupon has expired")
+
+        elif coupon.valid_from > now:
+            cart.applied_coupon = None
+            cart.coupon_discount = 0
+            cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+            recalculate_cart_totals(cart)
+            messages.error(request, "Coupon removed: coupon not valid yet")
+
+        else:
+            min_order_amount = coupon.min_order_amount
+
+            if min_order_amount is not None:
+                if cart.item_subtotal < min_order_amount:
+                    cart.applied_coupon = None
+                    cart.coupon_discount = 0
+                    cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+                    recalculate_cart_totals(cart)
+                    messages.error(request, "Coupon removed: minimum order amount not met")
 
     out_of_stock = False
 
@@ -274,6 +331,51 @@ def place_order(request):
     if not cart_items.exists():
         messages.error(request, "Your cart is empty")
         return redirect("cart_page")
+    
+    if cart.applied_coupon:
+        coupon = cart.applied_coupon
+        now = timezone.now()
+
+        if not coupon.is_active:
+            cart.applied_coupon = None
+            cart.coupon_discount = 0
+            cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+            recalculate_cart_totals(cart)
+            messages.error(request, "Coupon removed: coupon is inactive")
+            return redirect("checkout_page")
+
+        elif coupon.valid_to < now:
+            cart.applied_coupon = None
+            cart.coupon_discount = 0
+            cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+            recalculate_cart_totals(cart)
+            messages.error(request, "Coupon removed: coupon has expired")
+            return redirect("checkout_page")
+
+        elif coupon.valid_from > now:
+            cart.applied_coupon = None
+            cart.coupon_discount = 0
+            cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+            recalculate_cart_totals(cart)
+            messages.error(request, "Coupon removed: coupon not valid yet")
+            return redirect("checkout_page")
+
+        else:
+            min_order_amount = coupon.min_order_amount
+
+            if min_order_amount is not None:
+                if cart.item_subtotal < min_order_amount:
+                    cart.applied_coupon = None
+                    cart.coupon_discount = 0
+                    cart.save(update_fields=["applied_coupon", "coupon_discount"])
+
+                    recalculate_cart_totals(cart)
+                    messages.error(request, "Coupon removed: minimum order amount not met")
+                    return redirect("checkout_page")
+
 
     out_of_stock = False
 
